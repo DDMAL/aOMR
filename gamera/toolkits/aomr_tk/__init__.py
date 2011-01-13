@@ -44,12 +44,14 @@ import math
 import uuid
 import sys
 
+from gamera import toolkit
 
 
 if has_gui.has_gui:
+    print 'has gui OK'
     from gamera.gui import var_name
     import wx 
-    import aruspix_module_icon
+    import aomr_module_icon
 
     class Aomr_tkMenu(toolkit.CustomMenu):
         _items = ["Aomr_tk Toolkit",
@@ -60,7 +62,46 @@ if has_gui.has_gui:
         def _OnAomr_tk_Toolkit_2(self, event):
             wx.MessageDialog(None, "You clicked on Aomr_tk Toolkit 2!").ShowModal()
             main.main()
+            
+    class AomrModuleIcon(toolkit.CustomIcon):
         
+        def __init__(self, *args, **kwargs):
+            toolkit.CustomIcon.__init__(self, *args, **kwargs)
+            
+        def get_icon():
+            return toolkit.CustomIcon.toicon(\
+                    aomr_module_icon.getBitmap())
+        get_icon = staticmethod(get_icon)
+
+        def check(data):
+            import inspect
+            return inspect.ismodule(data) and\
+                    data.__name__.endswith("aomr")
+        check = staticmethod(check)
+
+        def right_click(self, parent, event, shell):
+            self._shell=shell
+            x, y = event.GetPoint()
+            menu = wx.Menu()
+
+            # create the menu entry for each class listed in
+            # 'classes' (they all point to the same method but
+            # can be distinguished by their menu index)
+            for index, entry in enumerate(self.classes):
+                menu.Append(self._menuids[index],
+                        "Create a %s object" % entry)
+                wx.EVT_MENU(parent, self._menuids[index],\
+                        self.createMusicStavesObj)
+            parent.PopupMenu(menu, wx.Point(x, y))
+
+        def double_click(self):
+            pass
+            
+            
+    AomrModuleIcon.register()  
+    
+      
 aomr_tk_menu = Aomr_tkMenu()
+AomrModuleIcon.register()  
 print 'OK!'
 #shu
