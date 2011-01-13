@@ -1,0 +1,7 @@
+#!/opt/local/Library/Frameworks/Python.framework/Versions/2.6/Resources/Python.app/Contents/MacOS/Python
+
+# This just simply runs the aomr_tk toolkits main function
+
+from gamera.toolkits.aomr_tk import main
+
+main.main()
