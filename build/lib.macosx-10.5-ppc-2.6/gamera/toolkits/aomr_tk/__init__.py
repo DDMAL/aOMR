@@ -27,8 +27,15 @@ from gamera.toolkits.aruspix.ax_file import AxFile
 from gamera.toolkits.aruspix.ax_page import AxPage
 from gamera.toolkits.aruspix.ax_staff import AxStaff
 
+from gamera.toolkits.aomr_tk.staff_position import AOMR_Staff_Position
+# from gamera.toolkits.aomr_tk.staff_removal import AOMR_Staff_Removal
+# from gamera.toolkits.aomr_tk.classification import AOMR_Classification
+# from gamera.toolkits.aomr_tk.pitchfinder import AOMR_Pitchfinder
+
+
 
 from gamera.core import *
+from gamera.args import *
 from gamera.toolkits import musicstaves
 from gamera.toolkits.musicstaves import stafffinder_miyao
 
@@ -44,45 +51,62 @@ import math
 import uuid
 import sys
 
+import re
+from os import path
+
 from gamera import toolkit
-from gamera.toolkits.aomr.plugins import *
+
 
 if has_gui.has_gui:
-    print 'has gui OK'
     from gamera.gui import var_name
     import wx 
-    import aomr_module_icon
 
-    class Aomr_tkMenu(toolkit.CustomMenu):
-        _items = ["Aomr_tk Toolkit",
-                  "Aomr_tk Toolkit 2"]
-        def _OnAomr_tk_Toolkit(self, event):
-            wx.MessageDialog(None, "You clicked on Aomr_tk Toolkit!").ShowModal()
-            main.main()
-        def _OnAomr_tk_Toolkit_2(self, event):
-            wx.MessageDialog(None, "You clicked on Aomr_tk Toolkit 2!").ShowModal()
-            main.main()
+    import aomr_module_icon
+    
+    # class Aomr_tkMenu(toolkit.CustomMenu):
+    #     _items = ["Aomr_tk Toolkit",
+    #               "Aomr_tk Toolkit 2"]
+    #     def _OnAomr_tk_Toolkit(self, event):
+    #         wx.MessageDialog(None, "You clicked on Aomr_tk Toolkit!").ShowModal()
+    #         main.main()
+    #     def _OnAomr_tk_Toolkit_2(self, event):
+    #         wx.MessageDialog(None, "You clicked on Aomr_tk Toolkit 2!").ShowModal()
+    #         main.main()
             
     class AomrModuleIcon(toolkit.CustomIcon):
         
         def __init__(self, *args, **kwargs):
             toolkit.CustomIcon.__init__(self, *args, **kwargs)
+
+            #
+            # list containing all classes derived from
+            # AOMR, add your own class name to this list
+            # and it will appear in the menu of the AOMR
+            # icon
+            #
+            self.classes = ["AOMR_Staff_Position",
+                    "AOMR_Staff_Removal",
+                    "AOMR_Classification",
+                    "AOMR_Pitchfinder"]
+            # menu id's for creating classes over popup menu
+            self._menuids = []
+            for c in self.classes:
+                self._menuids.append(wx.NewId())
             
-        def get_icon():
-            return toolkit.CustomIcon.toicon(\
-                    aomr_module_icon.getBitmap())
+        def get_icon(): ### Working here to display the Module Icon in Gamera's window 
+            return toolkit.CustomIcon.to_icon(aomr_module_icon.getBitmap())
         get_icon = staticmethod(get_icon)
 
         def check(data):
             import inspect
             return inspect.ismodule(data) and\
-                    data.__name__.endswith("aomr")
+                    data.__name__.endswith("aomr_tk")
         check = staticmethod(check)
 
         def right_click(self, parent, event, shell):
             self._shell=shell
-            x, y = event.GetPoint()
-            menu = wx.Menu()
+            x, y=event.GetPoint()
+            menu=wx.Menu()
 
             # create the menu entry for each class listed in
             # 'classes' (they all point to the same method but
@@ -91,17 +115,91 @@ if has_gui.has_gui:
                 menu.Append(self._menuids[index],
                         "Create a %s object" % entry)
                 wx.EVT_MENU(parent, self._menuids[index],\
-                        self.createMusicStavesObj)
+                        self.createAOMRobj)
             parent.PopupMenu(menu, wx.Point(x, y))
+
 
         def double_click(self):
             pass
             
-            
+
+        def createAOMRobj(self, event):
+            # find class belonging to menu entry
+            index = -1
+            for i, m in enumerate(self._menuids):
+                if m == event.GetId():
+                    index = i
+                    break
+            if index < 0:
+                return
+            ms_module=self.classes[index]
+
+            # ask for parameters
+            dialog=Args([FileOpen("Image file", "", "*.*"),\
+                    Check("Printed Neume Style", "True")],
+                    # Int("Staffline height"),\
+                    # Int("Staffspace height")],\
+                    "Create a %s object" % ms_module)
+            params=dialog.show()
+
+            if params != None:
+                if params[0] != None:
+                    #
+                    # load the image here and load it
+                    # into the gamera shell, too. this is
+                    # done because for checking whether
+                    # it is a onebit image or not.
+                    #
+                    filename=params[0]
+                    imagename = path.basename(params[0])
+                    imagename=imagename.split('.')[0]
+                    # substitute special characters
+                    imagename=re.sub('[^a-zA-Z0-9]', '_',\
+                            imagename)
+                    imagename=re.sub('^[0-9]', '_',\
+                            imagename)
+                    test = r"test\t"
+                    test2 = "test\t"
+                    image=load_image(filename)
+                    #self._shell.run(imagename + ' = load_image(r"' + filename + '") ') 
+                    self._shell.run('%s = load_image(r"%s")'\
+                            % (imagename, filename))
+                    if image.data.pixel_type != ONEBIT:
+                        self._shell.run("%s = %s.to_onebit()"\
+                                % (imagename,\
+                                imagename))
+
+                    # still exists in the gamera shell
+                    del image
+
+                    # choose a name for the variable in
+                    # the GUI
+                    # if ms_module.startswith("StaffFinder"):
+                    #     name=var_name.get("stafffinder",\
+                    #         self._shell.locals)
+                    # else:
+                    #     name=var_name.get("musicstaves",\
+                    #         self._shell.locals)
+
+                    # if name is "" or name is None:
+                    #     return
+                    
+
+                    # create an instance of the specified
+                    # MusicStaves_XXX class
+                    self._shell.run("%s = %s.%s(%s, %d)"\
+                            % (imagename,\
+                            self.label,\
+                            ms_module,\
+                            imagename,\
+                            params[1]))
+
+
     AomrModuleIcon.register()  
-    
+
       
-aomr_tk_menu = Aomr_tkMenu()
-AomrModuleIcon.register()  
+# aomr_tk_menu = Aomr_tkMenu()
+# AomrModuleIcon.register()  
+
 print 'OK!'
 #shu

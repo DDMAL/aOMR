@@ -13,7 +13,6 @@ from sys import stdout
 def main():
     """This is a top-level function for the toolkit.  It doesn't
 really do anything..."""
-    print 'aaaaa'
     stdout.write("Processing (well, not really...)")
     for i in range(5):
         stdout.write(".")
