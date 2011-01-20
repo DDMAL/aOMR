@@ -93,7 +93,7 @@ if has_gui.has_gui:
             for c in self.classes:
                 self._menuids.append(wx.NewId())
             
-        def get_icon(): ### Working here to display the Module Icon in Gamera's window 
+        def get_icon():
             return toolkit.CustomIcon.to_icon(aomr_module_icon.getBitmap())
         get_icon = staticmethod(get_icon)
 
@@ -136,11 +136,14 @@ if has_gui.has_gui:
 
             # ask for parameters
             dialog=Args([FileOpen("Image file", "", "*.*"),\
-                    Check("Printed Neume Style", "True")],
+                    Check("Printed Neume Style", "True"),
+                    Check("Display Original File", "True")],
                     # Int("Staffline height"),\
                     # Int("Staffspace height")],\
-                    "Create a %s object" % ms_module)
+                    "Create an %s object" % ms_module)
             params=dialog.show()
+            
+            aomr_file = AOMR_Staff_Position(params[0], params[1])
 
             if params != None:
                 if params[0] != None:
@@ -158,19 +161,23 @@ if has_gui.has_gui:
                             imagename)
                     imagename=re.sub('^[0-9]', '_',\
                             imagename)
-                    test = r"test\t"
-                    test2 = "test\t"
+                    # test = r"test\t"
+                    # test2 = "test\t"
                     image=load_image(filename)
-                    #self._shell.run(imagename + ' = load_image(r"' + filename + '") ') 
-                    self._shell.run('%s = load_image(r"%s")'\
-                            % (imagename, filename))
+                    # self._shell.run(imagename + ' = load_image(r"' + filename + '") ') 
+                    self._shell.run("%s = load_image(r'%s')"\
+                                                % (imagename, filename))
                     if image.data.pixel_type != ONEBIT:
                         self._shell.run("%s = %s.to_onebit()"\
                                 % (imagename,\
                                 imagename))
-
+                                
+                    # self._shell.run("%s.display(%s)"\ GVM. It doesn't work. Check.
+                    #             % (imagename,\
+                    #             imagename))
+                    
                     # still exists in the gamera shell
-                    del image
+                    # del image
 
                     # choose a name for the variable in
                     # the GUI
@@ -186,7 +193,7 @@ if has_gui.has_gui:
                     
 
                     # create an instance of the specified
-                    # MusicStaves_XXX class
+                    # AOMR_XXX class
                     self._shell.run("%s = %s.%s(%s, %d)"\
                             % (imagename,\
                             self.label,\
@@ -194,6 +201,11 @@ if has_gui.has_gui:
                             imagename,\
                             params[1]))
 
+                if params[1] != None:
+                    # print 'Image Size from init'
+                    # self._shell.run("%s.image_size()"\
+                            # % (imagename))
+                    aomr_file.image_size()                 
 
     AomrModuleIcon.register()  
 
@@ -201,5 +213,4 @@ if has_gui.has_gui:
 # aomr_tk_menu = Aomr_tkMenu()
 # AomrModuleIcon.register()  
 
-print 'OK!'
-#shu
+# r'/Users/gabriel/Documents/imgs/Liber_Usualis_WORK/processed_tifs/433__Liber_Usualis.tif'
