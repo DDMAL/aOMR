@@ -27,7 +27,7 @@ from gamera.toolkits.aruspix.ax_file import AxFile
 from gamera.toolkits.aruspix.ax_page import AxPage
 from gamera.toolkits.aruspix.ax_staff import AxStaff
 
-from gamera.toolkits.aomr_tk.staff_position import AOMR_Staff_Position
+from gamera.toolkits.aomr_tk.aomr_object import AomrObject
 # from gamera.toolkits.aomr_tk.staff_removal import AOMR_Staff_Removal
 # from gamera.toolkits.aomr_tk.classification import AOMR_Classification
 # from gamera.toolkits.aomr_tk.pitchfinder import AOMR_Pitchfinder
@@ -84,10 +84,7 @@ if has_gui.has_gui:
             # and it will appear in the menu of the AOMR
             # icon
             #
-            self.classes = ["AOMR_Staff_Position",
-                    "AOMR_Staff_Removal",
-                    "AOMR_Classification",
-                    "AOMR_Pitchfinder"]
+            self.classes = ["AomrObject"]
             # menu id's for creating classes over popup menu
             self._menuids = []
             for c in self.classes:
@@ -136,14 +133,27 @@ if has_gui.has_gui:
 
             # ask for parameters
             dialog=Args([FileOpen("Image file", "", "*.*"),\
-                    Check("Printed Neume Style", "True"),
-                    Check("Display Original File", "True")],
-                    # Int("Staffline height"),\
-                    # Int("Staffspace height")],\
+                    Check("Printed Neume Style"), # Check("Printed Neume Style", "True"),
+                    Check("Display Original File"),
+                    Check("Retrieve Staff Position"),
+                    Check("Staff Removal"),
+                    Int("Number of staves")], # Int("Staffline height"),\ # Int("Staffspace height")],\
                     "Create an %s object" % ms_module)
             params=dialog.show()
             
-            aomr_file = AOMR_Staff_Position(params[0], params[1])
+            print str(params)
+            
+            dialog_args = {
+                "filename": params[0],
+                "neume_type": params[1],
+                "display_image": params[2],
+                "staff_position": params[3],
+                "staff_removal": params[4],
+                "number_of_staves": params[5]
+            }
+            
+            aomr_file = AomrObject(**dialog_args)
+            print aomr_file
 
             if params != None:
                 if params[0] != None:
@@ -201,11 +211,28 @@ if has_gui.has_gui:
                             imagename,\
                             params[1]))
 
-                if params[1] != None:
+                if params[1] != False:
+                    aomr_file.image_size()
                     # print 'Image Size from init'
                     # self._shell.run("%s.image_size()"\
                             # % (imagename))
-                    aomr_file.image_size()                 
+
+                if params[2] != False:
+                    self._shell.run("%s = load_image(r'%s')"\
+                        % (imagename,\
+                        filename))
+                    
+                    # aomr_file.get_img()
+                    
+                if params[3] != False:
+                    staff_position = aomr_file.staff_position()
+                    print staff_position
+                
+                if params[4] != False:
+                    i_no_st = aomr_file.staff_removal()
+                    self._shell.run("%s_NO_ST=load_image(r'%s')"\
+                        % (imagename,\
+                        i_no_st))
 
     AomrModuleIcon.register()  
 
