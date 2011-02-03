@@ -57,6 +57,20 @@ from os import path
 from gamera import toolkit
 
 
+import pdb
+import logging
+lg = logging.getLogger('aomr')
+f = logging.Formatter("%(levelname)s %(asctime)s On Line: %(lineno)d %(message)s")
+h = logging.StreamHandler()
+h.setFormatter(f)
+
+lg.setLevel(logging.DEBUG)
+lg.addHandler(h)
+
+
+
+
+
 if has_gui.has_gui:
     from gamera.gui import var_name
     import wx 
@@ -122,6 +136,9 @@ if has_gui.has_gui:
 
         def createAOMRobj(self, event):
             # find class belonging to menu entry
+            # global swap
+            tmpdir = ""
+            
             index = -1
             for i, m in enumerate(self._menuids):
                 if m == event.GetId():
@@ -133,11 +150,12 @@ if has_gui.has_gui:
 
             # ask for parameters
             dialog=Args([FileOpen("Image file", "", "*.*"),\
-                    Check("Printed Neume Style"), # Check("Printed Neume Style", "True"),
-                    Check("Display Original File"),
+                    Check("Printed Neume Style / Img_Size"), # Check("Printed Neume Style", "True"),
+                    Check("Display Original File", "", True),
                     Check("Retrieve Staff Position"),
                     Check("Staff Removal"),
-                    Int("Number of staves")], # Int("Staffline height"),\ # Int("Staffspace height")],\
+                    Int("Number of staves"),
+                    Directory("Temporal directory (optional)", tmpdir)], # Int("Staffline height"),\ # Int("Staffspace height")],\
                     "Create an %s object" % ms_module)
             params=dialog.show()
             
@@ -149,8 +167,13 @@ if has_gui.has_gui:
                 "display_image": params[2],
                 "staff_position": params[3],
                 "staff_removal": params[4],
-                "number_of_staves": params[5]
+                "number_of_staves": params[5],
+                "tmpdir": params[6]
             }
+            
+            if dialog_args['filename'] == None:
+                raise Exception("You must supply a filename.")
+            
             
             aomr_file = AomrObject(**dialog_args)
             print aomr_file
@@ -212,10 +235,12 @@ if has_gui.has_gui:
                             params[1]))
 
                 if params[1] != False:
-                    aomr_file.image_size()
+                    img_size = aomr_file.image_size()
+                    # self._shell.run("Image Size is %i times %i"\
+                    #     % (img_size[0], img_size[1]))
                     # print 'Image Size from init'
                     # self._shell.run("%s.image_size()"\
-                            # % (imagename))
+                    #         % (imagename))
 
                 if params[2] != False:
                     self._shell.run("%s = load_image(r'%s')"\
@@ -229,15 +254,19 @@ if has_gui.has_gui:
                     print staff_position
                 
                 if params[4] != False:
-                    i_no_st = aomr_file.staff_removal()
-                    self._shell.run("%s_NO_ST=load_image(r'%s')"\
-                        % (imagename,\
-                        i_no_st))
+                    img_no_st = aomr_file.staff_removal()
+                    # a= img_no_st.get_img()
+                    # print a
+                    # im = load_image(img_no_st)
+                    # swap = aomr_file.get_img()
+                    # name = var_name.get("img_no_st",\
+                    #                         self._shell.locals)
+                    # im = load_image(img_no_st)
+                    self._shell.run("%s_no_st = load_image(r'%s')" \
+                        % (imagename, img_no_st))                    
 
     AomrModuleIcon.register()  
 
       
-# aomr_tk_menu = Aomr_tkMenu()
-# AomrModuleIcon.register()  
 
 # r'/Users/gabriel/Documents/imgs/Liber_Usualis_WORK/processed_tifs/433__Liber_Usualis.tif'
