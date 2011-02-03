@@ -7,7 +7,6 @@ that would be called from the command line.
 This module is not strictly necessary.
 """
 from gamera.core import *
-
 from gamera.toolkits import musicstaves
 from gamera.toolkits.musicstaves import stafffinder_miyao
 
@@ -88,9 +87,14 @@ class AomrObject:
         musicstaves_no_staves.remove_staves(u'all', self.no_of_staves)
         img_no_st = musicstaves_no_staves.image   
         
-        tfile = tempfile.mkstemp()
-        save_image(musicstaves_no_staves.image, tfile)
-        return tfile
+        #mkstemp returns a tuple with (filedescriptor, path)
+        tmpfile = tempfile.mkstemp()
+        tf = os.fdopen(tmpfile[0], 'wb')
+        save_image(musicstaves_no_staves.image, tf)
+        tf.close()
+        
+        # now we return just the path to be re-opened on the other end.
+        return tmpfile[1]
         
         
         # print img_no_st 
