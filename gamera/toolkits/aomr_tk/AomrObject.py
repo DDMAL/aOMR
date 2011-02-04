@@ -89,9 +89,9 @@ class AomrObject:
         
         #mkstemp returns a tuple with (filedescriptor, path)
         tmpfile = tempfile.mkstemp()
-        tf = os.fdopen(tmpfile[0], 'wb')
-        save_image(musicstaves_no_staves.image, tf)
-        tf.close()
+        # tf = os.fdopen(tmpfile[0], 'wb')
+        save_image(musicstaves_no_staves.image, tmpfile[1])
+        # tf.close()
         
         # now we return just the path to be re-opened on the other end.
         return tmpfile[1]
