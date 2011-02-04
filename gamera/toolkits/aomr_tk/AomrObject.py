@@ -1,11 +1,3 @@
-"""
-The main function for the Aomr_tk Gamera toolkit
-
-This is a good place for top-level functions, such as things
-that would be called from the command line.
-
-This module is not strictly necessary.
-"""
 from gamera.core import *
 from gamera.toolkits import musicstaves
 from gamera.toolkits.musicstaves import stafffinder_miyao
@@ -22,41 +14,32 @@ class AomrObject:
     """
     Manipulates an Aomr file and stores its information
     """
-    def __init__(self, filename, neume_type=None, display_image=None, staff_position=None, staff_removal=None, number_of_staves=4, tmpdir=None):
+    def __init__(self, filename, **kwargs):
         """
-        Constructs and returns an *Aomr* object
+            Constructs and returns an AOMR object
         """
         self.filename = filename
-        self.deletedir = False
-
-        if not tmpdir:
-            self.tmpdir = tempfile.mkdtemp()
-            self.deletedir = True        
-        else:
-            self.tmpdir = tmpdir
-            
-        self.no_of_staves = number_of_staves
-        print "__init__"
         
-    def image_size(self):
-        i = load_image(self.filename)
-        img_size = []
-        img_size.append(i.ncols)
-        img_size.append(i.nrows)
-        print 'Image size is', img_size[0], '*', img_size[1]  
-        return img_size
+        self.neume_type = kwargs['neume_type']
+        self.display_image = kwargs['display_image']
+        self.staff_position = kwargs['staff_position']
+        self.staff_removal = kwargs['staff_removal']
+        self.number_of_staves = kwargs['number_of_staves']
         
-    def get_img(self):
-        return load_image(self.filename)
-
+        self.tmpdir = tempfile.mkdtemp()
+        
+        # cache this once so we don't have to constantly load it
+        self.image = load_image(self.filename)
+        self.image_size = [self.image.ncols, self.image.nrows]
+        
     def staff_position(self):
-        stavelines = []
-        i = load_image(self.filename)
-        s = stafffinder_miyao.StaffFinder_miyao(i)
+        s = stafffinder_miyao.StaffFinder_miyao(self.image)
         s.find_staves()
-        print s
-        print 'Staffspace height is', s.staffspace_height
         staves = s.get_average()
+        stavelines = []
+        
+        lg.debug("{0}".format(s))
+        lg.debug('Staffspace height is {0}'.format(s.staffspace_height))
         #no_of_staves = 4            # convert to a variable in the module
         
         for i, staff in enumerate(staves):
@@ -82,10 +65,9 @@ class AomrObject:
         
             Returns a file object of the image with staves removed.
         """
-        i = load_image(self.filename)
-        musicstaves_no_staves = musicstaves.MusicStaves_rl_fujinaga(i, 0, 0)
-        musicstaves_no_staves.remove_staves(u'all', self.no_of_staves)
-        img_no_st = musicstaves_no_staves.image   
+        musicstaves_no_staves = musicstaves.MusicStaves_rl_fujinaga(self.image, 0, 0)
+        musicstaves_no_staves.remove_staves(u'all', self.number_of_staves)
+        img_no_st = musicstaves_no_staves.image
         
         #mkstemp returns a tuple with (filedescriptor, path)
         tmpfile = tempfile.mkstemp()
@@ -95,14 +77,3 @@ class AomrObject:
         
         # now we return just the path to be re-opened on the other end.
         return tmpfile[1]
-        
-        
-        # print img_no_st 
-        # save_image(musicstaves_no_staves.image, self.filename+'_test')
-        # return img_no_st
-        
-        
-    # def save(self, filename):
-    #     f = open(os.path.join(self.tmpdir, "test_img.tif"), 'w')
-    #     f.write(filename)
-    #     f.close

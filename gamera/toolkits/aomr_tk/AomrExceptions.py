@@ -7,3 +7,8 @@ class AomrError(Exception):
         return repr(self.message)
 
 class AomrFilePathNotSetError(AomrError): pass
+
+# AOMR MEI errors
+class AomrMeiFormNotFoundError(AomrError): pass
+class AomrMeiPitchNotFoundError(AomrError): pass
+class AomrMeiNoteIntervalMismatchError(AomrError): pass

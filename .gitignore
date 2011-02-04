@@ -1,2 +1,4 @@
 *.pyc
 build/
+
+/gamera/toolkits/.DS_Store
