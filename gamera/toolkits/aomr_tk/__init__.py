@@ -117,7 +117,8 @@ if has_gui.has_gui:
                     Int("Number of staves"),
                     
                     # I don't think this is needed anymore if we handle tempdirs automatically...
-                    # Directory("Temporal directory (optional)", tmpdir)], # Int("Staffline height"),\ # Int("Staffspace height")],\
+                    # Directory("Temporal directory (optional)", tmpdir)
+                    ], # Int("Staffline height"),\ # Int("Staffspace height")],\
                     "Create an %s object" % ms_module)
             params=dialog.show()
             

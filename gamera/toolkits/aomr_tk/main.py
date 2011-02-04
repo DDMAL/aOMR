@@ -1,5 +1,5 @@
 """
-The main function for the Gamera_mei Gamera toolkit
+The main function for the aOMR Gamera toolkit
 
 This is a good place for top-level functions, such as things
 that would be called from the command line.
