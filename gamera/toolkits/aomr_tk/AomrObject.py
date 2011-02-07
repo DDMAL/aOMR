@@ -35,6 +35,11 @@ class AomrObject(object):
         self.image = load_image(self.filename)
         self.image_size = [self.image.ncols, self.image.nrows]
         
+        self.page_result = {
+            'staves': {},
+            'dimensions': self.image_size
+        }
+        
     def get_staff_positions(self):
         s = stafffinder_miyao.StaffFinder_miyao(self.image)
         s.find_staves()
@@ -46,14 +51,27 @@ class AomrObject(object):
             leftx = [x.left_x for x in staff]
             rightx = [x.right_x for x in staff]
             
-            # grab the staff coords with some extra padding
+            # grab the staff coords with some extra padding to account for
+            # staff curvature and some ledger lines.
             ulx,uly = min(leftx), min(yvals) - s.staffspace_height
             lrx,lry = max(rightx), max(yvals) + s.staffspace_height
-            self.page_result[i] = {
+            
+            line_positions = [(leftx[j], rightx[j], yvals[j]) for j in xrange(len(staff))]
+            
+            
+            
+            pdb.set_trace()
+            lg.debug("I is : {0}".format(i))
+            
+            self.page_result['staves'][i] = {
                 'coords': [ulx, uly, lrx, lry],
                 'num_lines': len(staff),
+                'line_pos': line_positions,
+                'contents': []
             }
-            
+        
+        lg.debug(self.page_result)
+        
     def remove_staves(self):
         """ Removes staves. 
             Returns a file object of the image with staves removed.
