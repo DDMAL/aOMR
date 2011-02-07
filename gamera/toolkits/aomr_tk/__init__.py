@@ -64,6 +64,8 @@ if has_gui.has_gui:
             self._menuids = []
             for c in self.classes:
                 self._menuids.append(wx.NewId())
+                
+            self.aomr_file = None
             
         def get_icon():
             return toolkit.CustomIcon.to_icon(aomr_module_icon.getBitmap())
@@ -164,11 +166,13 @@ if has_gui.has_gui:
                 
             if dialog_args['staff_position']:
                 # do processing with staff position if set
-                staff_position = aomr_file.staff_position()
+                staff_position = aomr_file.get_staff_positions()
                 lg.debug(staff_position)
                 
             if dialog_args['staff_removal']:
                 # process staff removal if set
-                img_no_st = aomr_file.staff_removal()
+                pdb.set_trace()
+                img_no_st = aomr_file.remove_staves()
                 self._shell.run("{0}_no_st = load_image(r'{1}')".format(imagename, img_no_st))                    
+                
     AomrModuleIcon.register()

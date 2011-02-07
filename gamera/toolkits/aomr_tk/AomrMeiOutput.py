@@ -1,5 +1,5 @@
 from gamera.plugin import *
-from gamera.toolkits.aomr_tk.AomrMeiExceptions import *
+from gamera.toolkits.aomr_tk.AomrExceptions import *
 
 
 from pymei.Components import MeiDocument
@@ -56,17 +56,52 @@ class AomrMeiOutput(object):
     
     def __init__(self, incoming_data):
         self._recognition_results = incoming_data
-        self.meidoc = mod.mei_()
+        self.mei = mod.mei_()
         self.staff = None
         self.glyph = None
         
         self._note_elements = None
         self._neume_pitches = []
         
-        self._global_graphic_element = self._create_graphic_element('foo.jpg')
-        self.meidoc.add_child(self._global_graphic_element)
+        # set up a basic MEI document structure
+        
+        # header
+        self.meihead = mod.meihead_()
+        self.filedesc = mod.filedesc_()
+        self.meihead.add_child(self.filedesc)
+        
+        self.encodingdesc = mod.encodingdesc_()
+        self.meihead.add_child(self.encodingdesc)
+        self.mei.add_child(self.meihead)
+        
+        self.graphic = self._create_graphic_element('foo.jpg')
+        self.meihead.add_child(self.graphic)
+        
+        
+        
+        # music
+        self.music = mod.music_()
+        self.body = mod.body_()
+        self.music.add_child(self.body)
+        
+        self.mdiv = mod.mdiv_()        
+        self.body.add_child(self.mdiv)
+        
+        self.score = mod.score_()
+        self.mdiv.add_child(self.score)
+        
+        self.scoredef = mod.scoredef_()
+        self.score.add_child(self.scoredef)
+        
+        self.section = mod.section_()
+        self.score.add_child(self.section)
         
         for snum,stf in self._recognition_results.iteritems():
+            self.staffdef = self._create_staffdef_element()
+            self.staffdef.attributes = { 'n': snum }
+            self.scoredef.add_child(self.staffdef)
+            
+            
             self.staff = stf
             self.staffel = self._parse_staff(snum, stf)
             z = mod.zone_()
@@ -74,13 +109,15 @@ class AomrMeiOutput(object):
             z.attributes = {'ulx': self.staff['coord'][0], 'uly': self.staff['coord'][1], \
                                 'lrx': self.staff['coord'][2], 'lry': self.staff['coord'][3]}
             
-            self._global_graphic_element.add_child(z)
+            self.graphic.add_child(z)
             self.staffel.facs = z.id
             
-            self.meidoc.add_child(self.staffel)
+            self.section.add_child(self.staffel)
+        
+        self.mei.add_child(self.music)
         
         self.md = MeiDocument.MeiDocument()
-        self.md.addelement(self.meidoc)
+        self.md.addelement(self.mei)
         
         
     def _parse_staff(self, stfnum, stf):
@@ -114,8 +151,13 @@ class AomrMeiOutput(object):
         zone.id = self._idgen()
         zone.attributes = {'ulx': self.glyph['coord'][0], 'uly': self.glyph['coord'][1], \
                             'lrx': self.glyph['coord'][2], 'lry': self.glyph['coord'][3]}
-        self._global_graphic_element.add_child(zone)
+        self.graphic.add_child(zone)
         return zone
+    
+    def _create_staffdef_element(self):
+        stfdef = mod.staffdef_()
+        return stfdef
+        
     
     def _create_staff_element(self):
         staff = mod.staff_()
