@@ -32,7 +32,7 @@ from gamera.toolkits.musicstaves import stafffinder_miyao
 from gamera.toolkits.aomr_tk import main
 from gamera.toolkits.aomr_tk.AomrObject import AomrObject
 from gamera.toolkits.aomr_tk.AomrExceptions import *
-from gamera.toolkits.aomr_tk import AomrModuleIcon
+from gamera.toolkits.aomr_tk import AomrIcon
 
 import wx
 
@@ -68,7 +68,7 @@ if has_gui.has_gui:
             self.aomr_file = None
             
         def get_icon():
-            return toolkit.CustomIcon.to_icon(aomr_module_icon.getBitmap())
+            return toolkit.CustomIcon.to_icon(AomrIcon.getBitmap())
         get_icon = staticmethod(get_icon)
         
         def check(data):
@@ -108,11 +108,18 @@ if has_gui.has_gui:
             
             # ask for parameters
             dialog=Args([FileOpen("Image file", "", "*.*"),
-                    Check("Printed Neume Style / Img_Size"),
-                    Check("Display Original File", "", True),
-                    Check("Retrieve Staff Position"),
-                    Check("Staff Removal"),
-                    Int("Number of staves")],
+                    Choice("Staff Finder Algorithm", choices=[
+                        'Miyao',
+                        'Dalitz',
+                        'Projections',
+                    ], default=0),
+                    Choice("Staff Removal Algorithm", choices=[
+                        'Roach Tatem',
+                        'Fujinaga',
+                        'Linetracking',
+                        'Carter'
+                    ], default=0),
+                    Int("Number of staves", default=4)],
                     "Create an %s object" % ms_module)
             params=dialog.show()
             
@@ -120,11 +127,13 @@ if has_gui.has_gui:
             
             dialog_args = {
                 "filename": params[0],
-                "neume_type": params[1],
-                "display_image": params[2],
-                "staff_position": params[3],
-                "staff_removal": params[4],
-                "number_of_staves": params[5],
+                "staff_finder": params[1],
+                "staff_removal": params[2],
+                "number_of_staves": params[3],
+                # "neume_type": params[1],
+                # "display_image": params[2],
+                # "staff_position": params[3],
+                # "staff_removal": params[4],
             }
             # this checks to see if the filename has been set.
             # we could also check here to see if the file is an image, if
@@ -152,27 +161,28 @@ if has_gui.has_gui:
             if image.data.pixel_type != ONEBIT:
                 self._shell.run("{0} = {0}.to_onebit()".format(imagename))
                 
-            self._shell.run("{0} = {1}.{2}({3}, {4})".format(imagename, self.label,
-                                                        ms_module, imagename, dialog_args['neume_type']))
+            # self._shell.run("{0} = {1}.{2}({3}, {4})".format(imagename, self.label,
+            #                                             ms_module, imagename, dialog_args['neume_type']))
             
-            if dialog_args['neume_type']:
-                # process neume type stuff if the checkbox is set
-                img_size = aomr_file.image_size()
+            res = aomr_file.process_image()
+            # if dialog_args['neume_type']:
+            #     # process neume type stuff if the checkbox is set
+            #     img_size = aomr_file.image_size()
                 
-            if dialog_args['display_image']:
-                # display image if checkbox is set
-                self._shell.run("{0} = load_image(r'{1}')".format(imagename, filename))
-                # aomr_file.get_img()
+            # if dialog_args['display_image']:
+            #     # display image if checkbox is set
+            #     self._shell.run("{0} = load_image(r'{1}')".format(imagename, filename))
+            #     # aomr_file.get_img()
                 
-            if dialog_args['staff_position']:
-                # do processing with staff position if set
-                staff_position = aomr_file.get_staff_positions()
-                lg.debug(staff_position)
+            # if dialog_args['staff_position']:
+            #     # do processing with staff position if set
+            #     staff_position = aomr_file.get_staff_positions()
+            #     lg.debug(staff_position)
                 
-            if dialog_args['staff_removal']:
-                # process staff removal if set
-                pdb.set_trace()
-                img_no_st = aomr_file.remove_staves()
-                self._shell.run("{0}_no_st = load_image(r'{1}')".format(imagename, img_no_st))                    
+            # if dialog_args['staff_removal']:
+            #     # process staff removal if set
+            #     pdb.set_trace()
+            #     img_no_st = aomr_file.remove_staves()
+            #     self._shell.run("{0}_no_st = load_image(r'{1}')".format(imagename, img_no_st))                    
                 
     AomrModuleIcon.register()
