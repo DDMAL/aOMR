@@ -44,6 +44,7 @@ class AomrObject(object):
         s = stafffinder_miyao.StaffFinder_miyao(self.image)
         s.find_staves()
         staves = s.get_average()
+        print staves
         
         for i, staff in enumerate(staves):
             lg.debug("Staff {0} ({1} lines)".format(i+1, len(staff)))
@@ -88,3 +89,100 @@ class AomrObject(object):
         
         # now we return just the path to be re-opened on the other end.
         return tmpfile[1]
+        
+    def glyph_classification(self):
+        """ Glyph classification.
+            Returns a list of the classified glyphs with its position and size.
+        """
+        cknn = knn.kNNInteractive([],
+                                ["area", 
+                                "aspect_ratio",
+                                "black_area", 
+                                "compactness", 
+                                "moments", 
+                                "ncols_feature", 
+                                "nholes", 
+                                "nholes_extended", 
+                                "nrows_feature", 
+                                "skeleton_features", 
+                                "top_bottom", 
+                                "volume", 
+                                "volume16regions", 
+                                "volume64regions", 
+                                "zernike_moments"], 
+                                8))
+        cknn.from_xml_filename(self.filename)
+        # cknn.load_settings() # Option for loading the features and weights of the training stage.
+        css = image_no_st.cc_analysis()
+        grouping_function = classify.ShapedGroupingFunction(16) # variable ?
+        classified_image = cknn.group_and_update_list_automatic(ccs, grouping_function, max_parts_per_group = 4) # variable ?
+        return classified_image
+
+
+    def pitch_finding(self):
+        """ Pitch finding.
+            Returns a list of pitches for a list of classified glyphs.
+        """
+        
+        for c in class_im:
+
+            staff_number = '' 
+            uod = ''
+            staff_number = '' 
+            line_number = ''
+            note = ''
+            mid = 0
+            if c.nrows<10 and c.ncols<10: # If error found
+                er = er + 1
+            else:
+                sep_c = c.get_main_id().split('.')
+                if len(sep_c) <= 3:
+                    for i in range(3-len(sep_c)):
+                        sep_c.append('')
+
+                if sep_c[0] == 'neume':
+                    uod = up_or_down(sep_c[1], sep_c[2])
+                    neume_count = neume_count + 1
+                    for i, stave in enumerate(stavelines):
+                        if uod == 'D':
+                            if stave[2] > (c.offset_y - 4): # 4 is the value is for excluding notes touching the line
+                                staff_number = stave[0]
+                                line_number = stave[1]
+                                note = notes[line_number]
+                                break
+                        elif uod == 'U':
+                            if stave[2] > (c.offset_y + c.nrows - 4): # 4 is the value is for excluding notes touching the line
+                                staff_number = stave[0]
+                                line_number = stavelines[i-1][1] # we want the previous line
+                                note = notes[line_number]
+                                break
+
+                elif sep_c[0] == 'clef':
+                    for stave in stavelines:
+                        if abs((c.offset_y + c.nrows/2) - stave[2]) <= 4:
+                            staff_number = stave[0]
+                            line_number = stave[1]
+
+                else:
+                    uod = ''
+                    staff_number = '' 
+                    line_number = ''
+                    note = ''
+
+                glyph_kind = sep_c[0]
+                actual_glyph = sep_c[1] 
+                glyph_char = sep_c[2:]
+                glyph_list.append([staff_number, #Which one of these do we actually need?
+                                    c.offset_x, 
+                                    c.offset_y, 
+                                    note, 
+                                    line_number, 
+                                    glyph_kind, 
+                                    actual_glyph, 
+                                    glyph_char, 
+                                    uod, 
+                                    c.ncols, 
+                                    c.nrows])
+
+        glyph_list.sort()
+        return glyph_list
