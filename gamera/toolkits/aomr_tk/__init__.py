@@ -32,7 +32,7 @@ from gamera.toolkits.musicstaves import stafffinder_miyao
 from gamera.toolkits.aomr_tk import main
 from gamera.toolkits.aomr_tk.AomrObject import AomrObject
 from gamera.toolkits.aomr_tk.AomrExceptions import *
-from gamera.toolkits.aomr_tk import aomr_module_icon
+from gamera.toolkits.aomr_tk import AomrModuleIcon
 
 import wx
 
