@@ -1,6 +1,6 @@
 from gamera.core import *
 from gamera.toolkits import musicstaves
-from gamera.toolkits.musicstaves import stafffinder_miyao
+from gamera.toolkits.aomr_tk.AomrExceptions import *
 
 import zipfile
 import os
@@ -22,11 +22,9 @@ class AomrObject(object):
         """
         self.filename = filename
         
-        self.neume_type = kwargs['neume_type']
-        self.display_image = kwargs['display_image']
-        self.staff_position = kwargs['staff_position']
-        self.staff_removal = kwargs['staff_removal']
         self.number_of_staves = kwargs['number_of_staves']
+        self.sfnd_algorithm = kwargs['staff_finder']
+        self.srmv_algorithm = kwargs['staff_removal']
         
         self.page_result = {}
         
@@ -40,8 +38,18 @@ class AomrObject(object):
             'dimensions': self.image_size
         }
         
-    def get_staff_positions(self):
-        s = stafffinder_miyao.StaffFinder_miyao(self.image)
+    def process_image(self):
+        lg.debug(self.sfnd_algorithm)
+        
+        if self.sfnd_algorithm is 0:
+            s = musicstaves.StaffFinder_miyao(self.image)
+        elif self.sfnd_algorithm is 1:
+            s = musicstaves.StaffFinder_dalitz(self.image)
+        elif self.sfnd_algorithm is 2:
+            s = musicstaves.StaffFinder_projections(self.image)
+        else:
+            raise AomrStaffFinderNotFoundError("The staff finding algorithm was not found.")
+            
         s.find_staves()
         staves = s.get_average()
         print staves
@@ -59,9 +67,7 @@ class AomrObject(object):
             
             line_positions = [(leftx[j], rightx[j], yvals[j]) for j in xrange(len(staff))]
             
-            
-            
-            pdb.set_trace()
+            # pdb.set_trace()
             lg.debug("I is : {0}".format(i))
             
             self.page_result['staves'][i] = {

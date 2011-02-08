@@ -7,6 +7,7 @@ class AomrError(Exception):
         return repr(self.message)
 
 class AomrFilePathNotSetError(AomrError): pass
+class AomrStaffFinderNotFoundError(AomrError): pass
 
 # AOMR MEI errors
 class AomrMeiFormNotFoundError(AomrError): pass
