@@ -6,6 +6,8 @@ import zipfile
 import os
 import warnings
 import tempfile
+import copy
+import itertools
 
 import logging
 lg = logging.getLogger('aomr')
@@ -25,9 +27,11 @@ class AomrObject(object):
         self.number_of_staves = kwargs['number_of_staves']
         self.sfnd_algorithm = kwargs['staff_finder']
         self.srmv_algorithm = kwargs['staff_removal']
+        self.classifier_glyphs = kwargs["glyphs"]
+        self.classifier_weights = kwargs["weights"]
         
-        self.page_result = {}
-        
+        # the result of the staff finder. Mostly for convenience
+        self.staves = None 
         
         # cache this once so we don't have to constantly load it
         self.image = load_image(self.filename)
@@ -38,9 +42,10 @@ class AomrObject(object):
             'dimensions': self.image_size
         }
         
-    def process_image(self):
-        lg.debug(self.sfnd_algorithm)
+        self._find_staves()
+        self._remove_stafflines()
         
+    def _find_staves(self):
         if self.sfnd_algorithm is 0:
             s = musicstaves.StaffFinder_miyao(self.image)
         elif self.sfnd_algorithm is 1:
@@ -51,40 +56,90 @@ class AomrObject(object):
             raise AomrStaffFinderNotFoundError("The staff finding algorithm was not found.")
             
         s.find_staves()
-        staves = s.get_average()
-        print staves
         
-        for i, staff in enumerate(staves):
+        # get a polygon object. This stores a set of vertices for x,y values along the staffline.
+        self.staves = s.get_polygon()
+        
+        for i, staff in enumerate(self.staves):
             lg.debug("Staff {0} ({1} lines)".format(i+1, len(staff)))
-            yvals = [y.average_y for y in staff]
-            leftx = [x.left_x for x in staff]
-            rightx = [x.right_x for x in staff]
             
-            # grab the staff coords with some extra padding to account for
-            # staff curvature and some ledger lines.
-            ulx,uly = min(leftx), min(yvals) - s.staffspace_height
-            lrx,lry = max(rightx), max(yvals) + s.staffspace_height
+            yv = []
+            xv = []
             
-            line_positions = [(leftx[j], rightx[j], yvals[j]) for j in xrange(len(staff))]
+            # linepoints is an array of arrays of vertices describing the 
+            # stafflines in the staves.
+            #
+            # For the staff, we end up with something like this:
+            # [
+            #   [ (x,y), (x,y), (x,y), ... ],
+            #   [ (x,y), (x,y), (x,y), ... ],
+            #   ...
+            # ]
+            line_positions = []
             
-            # pdb.set_trace()
-            lg.debug("I is : {0}".format(i))
+            for staffline in staff:
+                pts = staffline.vertices
+                yv += [p.y for p in pts]
+                xv += [p.x for p in pts]
+                line_positions.append([(p.x,p.y) for p in pts])
+            
+            ulx,uly = min(xv),min(yv)
+            lrx,lry = max(xv),max(yv)
+            
+            # To accurately interpret objects above and below, we need to project 
+            # ledger lines on the top and bottom. To do this, we estimate points
+            # based on the line positions we already have.
+            #
+            # Since we can't *actually* get the points, we'll predict based on the
+            # first and last positions of the top and bottom lines.
+            # first, get the top two and bottom two positions
+            ledger_lines_top = line_positions[0:2]
+            ledger_lines_bottom = line_positions[-2:]
+            
+            imaginary_lines = []
+            
+            # take the second line. we'll then subtract each point from the corresponding
+            # value in the first.
+            i_line_1 = []
+            i_line_2 = []
+            for j,point in enumerate(ledger_lines_top[1]):
+                diff_y = point[1] - ledger_lines_top[0][j][1]
+                pt_x = point[0]
+                pt_y_1 = ledger_lines_top[0][j][1] - diff_y
+                pt_y_2 = pt_y_1 - diff_y
+                i_line_1.append((pt_x, pt_y_1))
+                i_line_2.append((pt_x, pt_y_2))
+            
+            # insert these. Make sure the highest line is added last.
+            line_positions.insert(0, i_line_1)
+            line_positions.insert(0, i_line_2)
+            i_line_1 = []
+            i_line_2 = []
+            for k,point in enumerate(ledger_lines_bottom[1]):
+                diff_y = point[1] - ledger_lines_bottom[0][k][1]
+                pt_x = point[0]
+                pt_y_1 = ledger_lines_bottom[1][k][1] + diff_y
+                pt_y_2 = pt_y_1 + diff_y
+                i_line_1.append((pt_x, pt_y_1))
+                i_line_2.append((pt_x, pt_y_2))
+            line_positions.extend([i_line_1, i_line_2])
             
             self.page_result['staves'][i] = {
                 'coords': [ulx, uly, lrx, lry],
                 'num_lines': len(staff),
-                'line_pos': line_positions,
-                'contents': []
+                'line_positions': line_positions,
+                'contents': [],
+                'clef_shape': None,
+                'clef_line': None
             }
-        
-        lg.debug(self.page_result)
-        
-    def remove_staves(self):
+        pdb.set_trace()
+            
+    def _remove_stafflines(self):
         """ Removes staves. 
             Returns a file object of the image with staves removed.
         """
         musicstaves_no_staves = musicstaves.MusicStaves_rl_fujinaga(self.image, 0, 0)
-        musicstaves_no_staves.remove_staves(u'all', self.number_of_staves)
+        musicstaves_no_staves.remove_staves(u'all', len(self.staves))
         img_no_st = musicstaves_no_staves.image
         
         #mkstemp returns a tuple with (filedescriptor, path)
@@ -116,9 +171,11 @@ class AomrObject(object):
                                 "volume16regions", 
                                 "volume64regions", 
                                 "zernike_moments"], 
-                                8))
-        cknn.from_xml_filename(self.filename)
-        # cknn.load_settings() # Option for loading the features and weights of the training stage.
+                                8)
+        
+        cknn.from_xml_filename(self.classifier_glyphs)
+        cknn.load_settings(self.classifier_weights) # Option for loading the features and weights of the training stage.
+        
         css = image_no_st.cc_analysis()
         grouping_function = classify.ShapedGroupingFunction(16) # variable ?
         classified_image = cknn.group_and_update_list_automatic(ccs, grouping_function, max_parts_per_group = 4) # variable ?
@@ -192,3 +249,23 @@ class AomrObject(object):
 
         glyph_list.sort()
         return glyph_list
+    
+    
+    def _find_pitch(self, staff, x, y):
+        """ 
+            Placeholder for a possible pitch finding method; that is,
+            given an staff number and an x,y coordinate of a glyph, figure
+            out the pitch in relation to the staff's clef.
+            
+            If we're smart about it, we won't need to store a pitch's "space line" --
+            that is, the line that bisects a staff space.
+            
+            Lotsa work to do here.
+        """
+        pass
+        
+        
+        
+    
+    
+    

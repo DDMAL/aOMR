@@ -87,7 +87,7 @@ if has_gui.has_gui:
             for index, entry in enumerate(self.classes):
                 menu.Append(self._menuids[index],
                         "Create a {0} object".format(entry))
-                wx.EVT_MENU(parent, self._menuids[index], self.createAOMRobj)
+                wx.EVT_MENU(parent, self._menuids[index], self.createAOMRobj) # figure out cancel behaviour...
             parent.PopupMenu(menu, wx.Point(x, y))
             
         def double_click(self):
@@ -119,10 +119,15 @@ if has_gui.has_gui:
                         'Linetracking',
                         'Carter'
                     ], default=0),
-                    Int("Number of staves", default=4)],
+                    Int("Number of staves", default=4),
+                    FileOpen("Classifier Glyphs", "", "*.xml"),
+                    FileOpen("Optimized Classifier Weights", "", "*.xml")],
                     "Create an %s object" % ms_module)
             params=dialog.show()
             
+            if params is None:
+                return
+                
             lg.debug("The Parameters returned were {0}".format(params))
             
             dialog_args = {
@@ -130,6 +135,8 @@ if has_gui.has_gui:
                 "staff_finder": params[1],
                 "staff_removal": params[2],
                 "number_of_staves": params[3],
+                "glyphs": params[4],
+                "weights": params[5]
                 # "neume_type": params[1],
                 # "display_image": params[2],
                 # "staff_position": params[3],
@@ -138,13 +145,15 @@ if has_gui.has_gui:
             # this checks to see if the filename has been set.
             # we could also check here to see if the file is an image, if
             # it's a directory, blah blah blah.
-            if dialog_args['filename'] == None:
-                raise AomrFilePathNotSetError("You must supply a filename.")
+            if dialog_args['filename'] is None:
+                raise AomrFilePathNotSetError("You must supply an image filename.")
+            # if dialog_args['glyphs'] is None:
+            #     raise AomrFilePathNotSetError("You must supply a classifier glyphs filename.")
+            # if dialog_args['weights'] is None:
+            #     raise AomrFilePathNotSetError("You must supply a glyph weights filename.")
             
             # create an Aruspix OMR object
             aomr_file = AomrObject(**dialog_args)
-            
-            lg.debug("Loaded AOMR File: {0}".format(aomr_file))
             
             # since we would have raised an exception if the 
             filename = dialog_args['filename']
@@ -164,7 +173,7 @@ if has_gui.has_gui:
             # self._shell.run("{0} = {1}.{2}({3}, {4})".format(imagename, self.label,
             #                                             ms_module, imagename, dialog_args['neume_type']))
             
-            res = aomr_file.process_image()
+            # res = aomr_file.process_image()
             # if dialog_args['neume_type']:
             #     # process neume type stuff if the checkbox is set
             #     img_size = aomr_file.image_size()
