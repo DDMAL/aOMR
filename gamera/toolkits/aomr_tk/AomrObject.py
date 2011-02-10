@@ -10,6 +10,7 @@ import warnings
 import tempfile
 import copy
 import itertools
+import random
 
 import logging
 lg = logging.getLogger('aomr')
@@ -43,6 +44,7 @@ class AomrObject(object):
         # cache this once so we don't have to constantly load it
         self.image = load_image(self.filename)
         if self.image.data.pixel_type != ONEBIT:
+            self.image = self.image.to_greyscale()
             bintypes = ['threshold',
                     'otsu_threshold',
                     'sauvola_threshold',
@@ -57,6 +59,7 @@ class AomrObject(object):
         
         # store the image without stafflines
         self.img_no_st = None
+        self.rgb = None
         
         self.page_result = {
             'staves': {},
@@ -220,21 +223,47 @@ class AomrObject(object):
         
         ### TODO: Write a couple methods to color the image with the recognized 
         # glyphs and staves. There's something funny going on here.
+        self.rgb = Image(self.image, RGB)
+        # for k,s in self.page_result['staves'].iteritems():
+        #     staffcolor = RGBPixel(190 + (11*k) % 66, \
+        #                           190 + (31*(k + 1)) % 66, \
+        #                           190 + (51*(k + 2)) % 66)
+        #     self.rgb.draw_filled_rect((s['coords'][0], s['coords'][1]), (s['coords'][2], s['coords'][3]), staffcolor)
         
         
-        pdb.set_trace()
         for i,c in enumerate(self.classified_image):
-            # this is measured in 10ths of a mm.
-            if self._m10(c.nrows) < self.discard_size and self._m10(c.ncols) < self.discard_size:
-                lg.debug("Discarding: {0} at index {1}".format(c.get_main_id(), i))
-                del self.classified_image[i]
+            name = c.get_main_id().split(".")
+            if len(name) > 1:
+                name = name[1]
+            else:
+                name = name[0]
+            neumecolor = RGBPixel(190 + (11*i) % 66, \
+                                  190 + (31*(i + 1)) % 66, \
+                                  190 + (51*(i + 2)) % 66)
+            self.rgb.draw_filled_rect((c.ul_x - 5, c.ul_y - 5), (c.lr_x + 5, c.lr_y + 5), neumecolor)
+            self.rgb.draw_text((c.ul_x - 20, c.ul_y - random.randint(10,40)), "{0}".format(name), RGBPixel(0,0,0), 10, 0, False, False, 0)
+            
+        tfile = tempfile.mkstemp()
+        self.rgb.highlight(self.image, RGBPixel(0, 0, 0))
         
-        for c in self.classified_image:
-            
-            snum = self._get_staff_by_coordinates(c.center_x, c.center_y)
-            glyph_name = c.get_main_id().split('.')
-            
-            lg.debug("C is a {0} at {1},{2} and is on staff {3}".format(glyph_name, c.center_x, c.center_y, snum))
+        save_image(self.rgb, tfile[1])
+        self.rgb_filename = tfile[1]
+        
+        # lg.debug(dir(self.rgb))
+        
+        # pdb.set_trace()
+        # for i,c in enumerate(self.classified_image):
+        #     # this is measured in 10ths of a mm.
+        #     if self._m10(c.nrows) < self.discard_size and self._m10(c.ncols) < self.discard_size:
+        #         lg.debug("Discarding: {0} at index {1}".format(c.get_main_id(), i))
+        #         del self.classified_image[i]
+        # 
+        # for c in self.classified_image:
+        #     
+        #     snum = self._get_staff_by_coordinates(c.center_x, c.center_y)
+        #     glyph_name = c.get_main_id().split('.')
+        #     
+        #     lg.debug("C is a {0} at {1},{2} and is on staff {3}".format(glyph_name, c.center_x, c.center_y, snum))
             
         
         
