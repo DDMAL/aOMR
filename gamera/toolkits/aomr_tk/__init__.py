@@ -108,6 +108,17 @@ if has_gui.has_gui:
             
             # ask for parameters
             dialog=Args([FileOpen("Image file", "", "*.*"),
+                    Choice("Binarization", choices=[
+                        'Global',
+                        'Otsu',
+                        'Sauvola',
+                        'Niblack',
+                        'Gatos',
+                        'DjVu',
+                        'Abutaleb',
+                        'Tsai',
+                        'White and Rohrer'
+                    ]),
                     Choice("Staff Finder Algorithm", choices=[
                         'Miyao',
                         'Dalitz',
@@ -117,30 +128,30 @@ if has_gui.has_gui:
                         'Roach Tatem',
                         'Fujinaga',
                         'Linetracking',
-                        'Carter'
+                        'Carter',
+                        'Simple'
                     ], default=0),
                     Int("Number of staves", default=4),
                     FileOpen("Classifier Glyphs", "", "*.xml"),
-                    FileOpen("Optimized Classifier Weights", "", "*.xml")],
+                    FileOpen("Optimized Classifier Weights", "", "*.xml"),
+                    Int("Discard Glyph Size (mm10)", default=6)],
                     "Create an %s object" % ms_module)
             params=dialog.show()
             
             if params is None:
                 return
                 
-            lg.debug("The Parameters returned were {0}".format(params))
+            # lg.debug("The Parameters returned were {0}".format(params))
             
             dialog_args = {
                 "filename": params[0],
-                "staff_finder": params[1],
-                "staff_removal": params[2],
-                "number_of_staves": params[3],
-                "glyphs": params[4],
-                "weights": params[5]
-                # "neume_type": params[1],
-                # "display_image": params[2],
-                # "staff_position": params[3],
-                # "staff_removal": params[4],
+                "binarization": params[1],
+                "staff_finder": params[2],
+                "staff_removal": params[3],
+                "number_of_staves": params[4],
+                "glyphs": params[5],
+                "weights": params[6],
+                "discard_size": params[7]
             }
             # this checks to see if the filename has been set.
             # we could also check here to see if the file is an image, if
@@ -152,23 +163,23 @@ if has_gui.has_gui:
             # if dialog_args['weights'] is None:
             #     raise AomrFilePathNotSetError("You must supply a glyph weights filename.")
             
-            # create an Aruspix OMR object
+            # create an Aruspix OMR object and start the processing.
             aomr_file = AomrObject(**dialog_args)
+            aomr_file.run()
             
-            # since we would have raised an exception if the 
-            filename = dialog_args['filename']
-            imagename = os.path.basename(os.path.splitext(filename)[0])
-            lg.debug("Raw imagename: {0}".format(imagename))
-            
-            imagename = re.sub(r'[^a-zA-Z0-9]', "_", imagename)
-            lg.debug("Imagename after formatting: {0}".format(imagename))
+            # filename = dialog_args['filename']
+            # imagename = os.path.basename(os.path.splitext(filename)[0])
+            # lg.debug("Raw imagename: {0}".format(imagename))
+            # 
+            # imagename = re.sub(r'[^a-zA-Z0-9]', "_", imagename)
+            # lg.debug("Imagename after formatting: {0}".format(imagename))
             
             # load the image into gamera
-            image = load_image(filename)
-            self._shell.run("{0} = load_image(r'{1}')".format(imagename, filename))
+            # image = load_image(filename)
+            # self._shell.run("{0} = load_image(r'{1}')".format(imagename, filename))
             
-            if image.data.pixel_type != ONEBIT:
-                self._shell.run("{0} = {0}.to_onebit()".format(imagename))
+            # if image.data.pixel_type != ONEBIT:
+            #     self._shell.run("{0} = {0}.to_onebit()".format(imagename))
                 
             # self._shell.run("{0} = {1}.{2}({3}, {4})".format(imagename, self.label,
             #                                             ms_module, imagename, dialog_args['neume_type']))

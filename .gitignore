@@ -1,6 +1,7 @@
 *.pyc
 build/
 
+classifier_glyphs_533.xml
 /gamera/toolkits/.DS_Store
 /.DS_Store
 .DS_Store
