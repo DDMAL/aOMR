@@ -253,6 +253,8 @@ class AomrObject(object):
         #     self.rgb.draw_text((c.ul_x, c.ul_y), "{0},{1}".format(c.ul_x, c.ul_y), RGBPixel(0,0,0), 9, 0, False, False, 0)
         #     self.rgb.draw_text((c.lr_x, c.lr_y), "{0},{1}".format(c.lr_x, c.lr_y), RGBPixel(0,0,0), 9, 0, False, False, 0)
         # 
+        
+        glyph_list = {}
         for i,c in enumerate(self.classified_image):
             snum = self._get_staff_by_coordinates(c.center_x, c.center_y)
             
@@ -261,8 +263,21 @@ class AomrObject(object):
             #     neumecolor = RGBPixel(240, 10, 10)
             #     self.rgb.draw_filled_rect((c.ul_x - 5, c.ul_y - 5), (c.lr_x + 5, c.lr_y + 5), neumecolor)
             
-            glyph_name = c.get_main_id().split('.')
-            lg.debug("C is a {0} at {1},{2}, has a width and height of {3}x{4} and is on staff {5}, idx {6}".format(glyph_name, c.center_x, c.center_y, c.width, c.height, snum, i))
+            # assemble a glyph list so we can sort the glyphs. The way we get
+            # the proper order is by putting the x value as the first element.
+            # The sort method will sort by this value, so elements that are
+            # further to the left will sort first.
+            # We'll keep the original glyph object around. It may come in 
+            # handy in a few steps.
+            if snum is not None:
+                if snum not in glyph_list.keys():
+                    glyph_list[snum] = []
+                glyph_list[snum].append([c.ul_x, c._ul_y, c])
+        
+        for gl in glyph_list.itervalues():
+             gl.sort()
+            
+        # lg.debug("C is a {0} at {1},{2}, has a width and height of {3}x{4} and is on staff {5}, idx {6}".format(glyph_name, c.center_x, c.center_y, c.width, c.height, snum, i))
             
         # DEBUGGING: Create temp files so that we can see this in the 
         # Gamera shell.
