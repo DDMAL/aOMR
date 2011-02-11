@@ -184,9 +184,10 @@ class AomrObject(object):
         musicstaves_no_staves.remove_staves(u'all', num_stafflines)
         self.img_no_st = musicstaves_no_staves.image
         
-        tfile = tempfile.mkstemp()
-        save_image(self.img_no_st, tfile[1])
-        self.nost_filename = tfile[1]
+        # DEBUGGING: Shows a file with the staves removed.
+        # tfile = tempfile.mkstemp()
+        # save_image(self.img_no_st, tfile[1])
+        # self.nost_filename = tfile[1]
         
         
     def _glyph_classification(self):
@@ -368,7 +369,6 @@ class AomrObject(object):
         for k,v in self.page_result['staves'].iteritems():
             top_coord = v['line_positions'][0][0]
             bot_coord = v['line_positions'][-1][-1]
-            # lg.debug("Staff {0} tops and bots: {1},{2}".format(k, top_coord, bot_coord))
             
             # y is the most important for finding which staff it's on
             if top_coord[1] <= y <= bot_coord[1]:

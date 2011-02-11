@@ -179,8 +179,9 @@ if has_gui.has_gui:
             aomr_file = AomrObject(**dialog_args)
             aomr_file.run()
             
-            self._shell.run("rgb = load_image(r'{0}')".format(aomr_file.rgb_filename))
-            self._shell.run("img_no_st = load_image(r'{0}')".format(aomr_file.nost_filename))
+            # DEBUGGING: Shows intermediate files from the object in the Gamera shell.
+            # self._shell.run("rgb = load_image(r'{0}')".format(aomr_file.rgb_filename))
+            # self._shell.run("img_no_st = load_image(r'{0}')".format(aomr_file.nost_filename))
             
             # filename = dialog_args['filename']
             # imagename = os.path.basename(os.path.splitext(filename)[0])
