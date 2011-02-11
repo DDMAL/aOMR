@@ -184,6 +184,11 @@ class AomrObject(object):
         musicstaves_no_staves.remove_staves(u'all', num_stafflines)
         self.img_no_st = musicstaves_no_staves.image
         
+        tfile = tempfile.mkstemp()
+        save_image(self.img_no_st, tfile[1])
+        self.nost_filename = tfile[1]
+        
+        
     def _glyph_classification(self):
         """ Glyph classification.
             Returns a list of the classified glyphs with its position and size.
@@ -217,55 +222,55 @@ class AomrObject(object):
         """ Pitch finding.
             Returns a list of pitches for a list of classified glyphs.
         """
-        lg.debug("Starting to find pitches.")
+        # this filters glyphs under a certain size. Remember we're working 
+        # in tenths of a mm and not aboslute pixels
+        def __check_size(c):
+            return self._m10(c.width) > self.discard_size or self._m10(c.height) > self.discard_size
+        cls_img = [c for c in self.classified_image if __check_size(c)]
+        self.classified_image = cls_img
         
-        lg.debug("C: ")
-        
-        ### TODO: Write a couple methods to color the image with the recognized 
-        # glyphs and staves. There's something funny going on here.
-        self.rgb = Image(self.image, RGB)
+        # self.rgb = Image(self.image, RGB)
+        # DEBUGGING: Color the staves
         # for k,s in self.page_result['staves'].iteritems():
         #     staffcolor = RGBPixel(190 + (11*k) % 66, \
         #                           190 + (31*(k + 1)) % 66, \
         #                           190 + (51*(k + 2)) % 66)
-        #     self.rgb.draw_filled_rect((s['coords'][0], s['coords'][1]), (s['coords'][2], s['coords'][3]), staffcolor)
+        #     self.rgb.draw_filled_rect((s['line_positions'][0][0][0] - self._m10(20), s['line_positions'][0][0][1]), (s['line_positions'][-1][-1][0] + self._m10(20), s['line_positions'][-1][-1][1]), staffcolor)
         
         
-        for i,c in enumerate(self.classified_image):
-            name = c.get_main_id().split(".")
-            if len(name) > 1:
-                name = name[1]
-            else:
-                name = name[0]
-            neumecolor = RGBPixel(190 + (11*i) % 66, \
-                                  190 + (31*(i + 1)) % 66, \
-                                  190 + (51*(i + 2)) % 66)
-            self.rgb.draw_filled_rect((c.ul_x - 5, c.ul_y - 5), (c.lr_x + 5, c.lr_y + 5), neumecolor)
-            self.rgb.draw_text((c.ul_x - 20, c.ul_y - random.randint(10,40)), "{0}".format(name), RGBPixel(0,0,0), 10, 0, False, False, 0)
-            
-        tfile = tempfile.mkstemp()
-        self.rgb.highlight(self.image, RGBPixel(0, 0, 0))
-        
-        save_image(self.rgb, tfile[1])
-        self.rgb_filename = tfile[1]
-        
-        # lg.debug(dir(self.rgb))
-        
-        # pdb.set_trace()
+        # DEBUGGING: Color the glyphs
         # for i,c in enumerate(self.classified_image):
-        #     # this is measured in 10ths of a mm.
-        #     if self._m10(c.nrows) < self.discard_size and self._m10(c.ncols) < self.discard_size:
-        #         lg.debug("Discarding: {0} at index {1}".format(c.get_main_id(), i))
-        #         del self.classified_image[i]
+        #     name = c.get_main_id().split(".")
+        #     if len(name) > 1:
+        #         name = name[1]
+        #     else:
+        #         name = name[0]
+        #     neumecolor = RGBPixel(190 + (11*i) % 66, \
+        #                           190 + (31*(i + 1)) % 66, \
+        #                           190 + (51*(i + 2)) % 66)
+        #     self.rgb.draw_filled_rect((c.ul_x - 5, c.ul_y - 5), (c.lr_x + 5, c.lr_y + 5), neumecolor)
+        #     # self.rgb.draw_text((c.ul_x - 20, c.ul_y - random.randint(10,40)), "{0}".format(name), RGBPixel(0,0,0), 10, 0, False, False, 0)
+        #     self.rgb.draw_text((c.ul_x, c.ul_y), "{0},{1}".format(c.ul_x, c.ul_y), RGBPixel(0,0,0), 9, 0, False, False, 0)
+        #     self.rgb.draw_text((c.lr_x, c.lr_y), "{0},{1}".format(c.lr_x, c.lr_y), RGBPixel(0,0,0), 9, 0, False, False, 0)
         # 
-        # for c in self.classified_image:
-        #     
-        #     snum = self._get_staff_by_coordinates(c.center_x, c.center_y)
-        #     glyph_name = c.get_main_id().split('.')
-        #     
-        #     lg.debug("C is a {0} at {1},{2} and is on staff {3}".format(glyph_name, c.center_x, c.center_y, snum))
+        for i,c in enumerate(self.classified_image):
+            snum = self._get_staff_by_coordinates(c.center_x, c.center_y)
             
-        
+            # DEBUGGING: Highlight the glyphs that are not found on a staff
+            # if snum is None:
+            #     neumecolor = RGBPixel(240, 10, 10)
+            #     self.rgb.draw_filled_rect((c.ul_x - 5, c.ul_y - 5), (c.lr_x + 5, c.lr_y + 5), neumecolor)
+            
+            glyph_name = c.get_main_id().split('.')
+            lg.debug("C is a {0} at {1},{2}, has a width and height of {3}x{4} and is on staff {5}, idx {6}".format(glyph_name, c.center_x, c.center_y, c.width, c.height, snum, i))
+            
+        # DEBUGGING: Create temp files so that we can see this in the 
+        # Gamera shell.
+        # tfile = tempfile.mkstemp()
+        # self.rgb.highlight(self.image, RGBPixel(0, 0, 0))
+        # 
+        # save_image(self.rgb, tfile[1])
+        # self.rgb_filename = tfile[1]
         
         # for c in class_im:
         # 
@@ -346,12 +351,16 @@ class AomrObject(object):
     
     def _get_staff_by_coordinates(self, x, y):
         for k,v in self.page_result['staves'].iteritems():
-            ulx,uly,lrx,lry = v['coords']
-            lg.debug("Staff {0} at {1},{2}".format(k, [ulx,uly], [lrx,lry]))
-            if (ulx <= x <= lrx) and (uly <= y <= lry):
-                return k
-            else:
-                continue
+            top_coord = v['line_positions'][0][0]
+            bot_coord = v['line_positions'][-1][-1]
+            # lg.debug("Staff {0} tops and bots: {1},{2}".format(k, top_coord, bot_coord))
+            
+            # y is the most important for finding which staff it's on
+            if top_coord[1] <= y <= bot_coord[1]:
+                # add 20 mm10 to the x values, since musicstaves doesn't 
+                # seem to accurately guess the starts and ends of staves.
+                if top_coord[0] - self._m10(20) <= x <= bot_coord[0] + self._m10(20):
+                    return k
         return None
     
     

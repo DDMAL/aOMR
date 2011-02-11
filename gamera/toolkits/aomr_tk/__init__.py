@@ -58,12 +58,12 @@ if has_gui.has_gui:
             # and it will appear in the menu of the AOMR
             # icon
             #
-            self.classes = ["AomrObject"]
+            # self.classes = ["AomrObject"]
             # menu id's for creating classes over popup menu
 
-            self._menuids = []
-            for c in self.classes:
-                self._menuids.append(wx.NewId())
+            # self._menuids = []
+            # for c in self.classes:
+            #     self._menuids.append(wx.NewId())
                 
             self.aomr_file = None
             
@@ -84,10 +84,23 @@ if has_gui.has_gui:
             # create the menu entry for each class listed in
             # 'classes' (they all point to the same method but
             # can be distinguished by their menu index)
-            for index, entry in enumerate(self.classes):
-                menu.Append(self._menuids[index],
-                        "Create a {0} object".format(entry))
-                wx.EVT_MENU(parent, self._menuids[index], self.createAOMRobj) # figure out cancel behaviour...
+            # for index, entry in enumerate(self.classes):
+            #     menu.Append(self._menuids[index],
+            #             "Create a {0} object".format(entry))
+            #     wx.EVT_MENU(parent, self._menuids[index], self.createAOMRobj) # figure out cancel behaviour...
+            
+            img_process_id = wx.NewId()
+            menu.Append(img_process_id, "Process an Image")
+            wx.EVT_MENU(parent, img_process_id, self.createAOMRobj)
+            
+            axz_process_id = wx.NewId()
+            menu.Append(axz_process_id, "Open an Aruspix AXZ file")
+            wx.EVT_MENU(parent, axz_process_id, self.openAxzFile)
+            
+            oip_process_id = wx.NewId()
+            menu.Append(oip_process_id, "Open an MEI OIP file")
+            wx.EVT_MENU(parent, oip_process_id, self.openOipFile)
+            
             parent.PopupMenu(menu, wx.Point(x, y))
             
         def double_click(self):
@@ -96,25 +109,24 @@ if has_gui.has_gui:
         def createAOMRobj(self, event):
             # find class belonging to menu entry
             # global swap
-            tmpdir = None
-            index = -1
-            for i, m in enumerate(self._menuids):
-                if m == event.GetId():
-                    index = i
-                    break
-            if index < 0:
-                return
-            ms_module=self.classes[index]
+            # tmpdir = None
+            # index = -1
+            # for i, m in enumerate(self._menuids):
+            #     if m == event.GetId():
+            #         index = i
+            #         break
+            # if index < 0:
+            #     return
+            # ms_module=self.classes[index]
             
             # ask for parameters
             dialog=Args([FileOpen("Image file", "", "*.*"),
-                    Choice("Binarization", choices=[
+                    Choice("Binarization (If necessary)", choices=[
                         'Global',
                         'Otsu',
                         'Sauvola',
                         'Niblack',
                         'Gatos',
-                        'DjVu',
                         'Abutaleb',
                         'Tsai',
                         'White and Rohrer'
@@ -135,7 +147,7 @@ if has_gui.has_gui:
                     FileOpen("Classifier Glyphs", "", "*.xml"),
                     FileOpen("Optimized Classifier Weights", "", "*.xml"),
                     Int("Discard Glyph Size (mm10)", default=6)],
-                    "Create an %s object" % ms_module)
+                    "Select Recognition Options")
             params=dialog.show()
             
             if params is None:
@@ -168,6 +180,7 @@ if has_gui.has_gui:
             aomr_file.run()
             
             self._shell.run("rgb = load_image(r'{0}')".format(aomr_file.rgb_filename))
+            self._shell.run("img_no_st = load_image(r'{0}')".format(aomr_file.nost_filename))
             
             # filename = dialog_args['filename']
             # imagename = os.path.basename(os.path.splitext(filename)[0])
@@ -206,5 +219,10 @@ if has_gui.has_gui:
             #     pdb.set_trace()
             #     img_no_st = aomr_file.remove_staves()
             #     self._shell.run("{0}_no_st = load_image(r'{1}')".format(imagename, img_no_st))                    
-                
+        
+        def openAxzFile(self):
+            pass
+        
+        def openOipFile(self):
+            pass
     AomrModuleIcon.register()
