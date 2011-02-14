@@ -230,7 +230,7 @@ class AomrObject(object):
         cls_img = [c for c in self.classified_image if __check_size(c)]
         self.classified_image = cls_img
         
-        # self.rgb = Image(self.image, RGB)
+        self.rgb = Image(self.image, RGB)
         # DEBUGGING: Color the staves
         # for k,s in self.page_result['staves'].iteritems():
         #     staffcolor = RGBPixel(190 + (11*k) % 66, \
@@ -273,20 +273,48 @@ class AomrObject(object):
             if snum is not None:
                 if snum not in glyph_list.keys():
                     glyph_list[snum] = []
-                glyph_list[snum].append([c.ul_x, c._ul_y, c])
+                glyph_list[snum].append([c.ul_x, c.ul_y, c])
         
-        for gl in glyph_list.itervalues():
-             gl.sort()
+        
+        for staff,glyphs in glyph_list.iteritems():
+            glyphs.sort()
+            # lines for this staff
+            line_coords = self.page_result['staves'][staff]['line_positions']
+            for glyph in glyphs:
+                # we need to figure out if this is on a space or a line
+                
+                # slice the list to start at the second line. We can then
+                # grab the coordinates of the previous line without worrying
+                # about out-of-bounds errors.
+                
+                
+                    
+                    
+                # for lnum, line in enumerate(line_coords[1:]):
+                #     for pnum, point in enumerate(line):
+                        
+                        
+                        # if glyph[2].contains_y(point[1]):
+                        #     lg.debug("On Line")
+                        #     self.rgb.draw_filled_rect((glyph[0] - 5, glyph[1] - 5), (glyph[2].lr_x + 5, glyph[2].lr_y + 5), RGBPixel(190, 0, 0))
+                        #     continue
+                        # elif glyph[2].ul_y 
+                        #     lg.debug("On Space")
+                        #     self.rgb.draw_filled_rect((glyph[0] - 5, glyph[1] - 5), (glyph[2].lr_x + 5, glyph[2].lr_y + 5), RGBPixel(0,0,190))
+                        # else:
+                        #     lg.debug("UNKNOWN.")
+                
+             
             
         # lg.debug("C is a {0} at {1},{2}, has a width and height of {3}x{4} and is on staff {5}, idx {6}".format(glyph_name, c.center_x, c.center_y, c.width, c.height, snum, i))
             
         # DEBUGGING: Create temp files so that we can see this in the 
         # Gamera shell.
-        # tfile = tempfile.mkstemp()
-        # self.rgb.highlight(self.image, RGBPixel(0, 0, 0))
-        # 
-        # save_image(self.rgb, tfile[1])
-        # self.rgb_filename = tfile[1]
+        tfile = tempfile.mkstemp()
+        self.rgb.highlight(self.image, RGBPixel(0, 0, 0))
+        
+        save_image(self.rgb, tfile[1])
+        self.rgb_filename = tfile[1]
         
         # for c in class_im:
         # 

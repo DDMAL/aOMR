@@ -5,3 +5,6 @@ classifier_glyphs_533.xml
 /gamera/toolkits/.DS_Store
 /.DS_Store
 .DS_Store
+
+/bin/classifier_weights.xml
+/bin/optimized_classifier.xml
