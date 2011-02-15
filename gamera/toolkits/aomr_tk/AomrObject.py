@@ -43,6 +43,8 @@ class AomrObject(object):
         
         # cache this once so we don't have to constantly load it
         self.image = load_image(self.filename)
+        self.image_resolution = self.image.resolution
+        
         if self.image.data.pixel_type != ONEBIT:
             self.image = self.image.to_greyscale()
             bintypes = ['threshold',
@@ -54,7 +56,10 @@ class AomrObject(object):
                     'tsai_moment_preserving_threshold',
                     'white_rohrer_threshold']
             self.image = getattr(self.image, bintypes[self.binarization])(0)
-        
+            # BUGFIX: sometimes an image loses its resolution after being binarized.
+            if self.image.resolution < 1:
+                self.image.resolution = self.image_resolution
+                
         self.image_size = [self.image.ncols, self.image.nrows]
         
         # store the image without stafflines
@@ -230,7 +235,7 @@ class AomrObject(object):
         cls_img = [c for c in self.classified_image if __check_size(c)]
         self.classified_image = cls_img
         
-        # self.rgb = Image(self.image, RGB)
+        self.rgb = Image(self.image, RGB)
         # DEBUGGING: Color the staves
         # for k,s in self.page_result['staves'].iteritems():
         #     staffcolor = RGBPixel(190 + (11*k) % 66, \
@@ -273,20 +278,25 @@ class AomrObject(object):
             if snum is not None:
                 if snum not in glyph_list.keys():
                     glyph_list[snum] = []
-                glyph_list[snum].append([c.ul_x, c._ul_y, c])
-        
-        for gl in glyph_list.itervalues():
-             gl.sort()
+                glyph_list[snum].append([c.ul_x, c.ul_y, c])
+                
+        for staff, glyphs in glyph_list.iteritems():
+             glyphs.sort()
+             for g, glyph in enumerate(glyphs):
+                 self.rgb.draw_text((glyph[2].ll_x, glyph[2].ll_y), "X-{0}".format(g), RGBPixel(255, 0, 0), 12, 0, False, False, 0)
             
         # lg.debug("C is a {0} at {1},{2}, has a width and height of {3}x{4} and is on staff {5}, idx {6}".format(glyph_name, c.center_x, c.center_y, c.width, c.height, snum, i))
-            
+        
+        
+        
+        
         # DEBUGGING: Create temp files so that we can see this in the 
         # Gamera shell.
-        # tfile = tempfile.mkstemp()
-        # self.rgb.highlight(self.image, RGBPixel(0, 0, 0))
-        # 
-        # save_image(self.rgb, tfile[1])
-        # self.rgb_filename = tfile[1]
+        tfile = tempfile.mkstemp()
+        self.rgb.highlight(self.image, RGBPixel(0, 0, 0))
+        
+        save_image(self.rgb, tfile[1])
+        self.rgb_filename = tfile[1]
         
         # for c in class_im:
         # 
