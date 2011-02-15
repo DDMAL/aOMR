@@ -27,12 +27,18 @@ class AomrObject(object):
         """
         self.filename = filename
         
-        self.number_of_staves = kwargs['number_of_staves']
+        print "loading ", self.filename
+        
+        self.lines_per_staff = kwargs['lines_per_staff']
         self.sfnd_algorithm = kwargs['staff_finder']
         self.srmv_algorithm = kwargs['staff_removal']
         self.binarization = kwargs["binarization"]
-        self.classifier_glyphs = kwargs["glyphs"]
-        self.classifier_weights = kwargs["weights"]
+        
+        if "glyphs" in kwargs.values():
+            self.classifier_glyphs = kwargs["glyphs"]
+        if "weights" in kwargs.values():
+            self.classifier_weights = kwargs["weights"]
+            
         self.discard_size = kwargs["discard_size"]
         
         # the result of the staff finder. Mostly for convenience
@@ -72,13 +78,12 @@ class AomrObject(object):
         }
         
     def run(self):
-        self._find_staves()
-        self._remove_stafflines()
-        self._glyph_classification()
-        self._pitch_finding()
+        self.find_staves()
+        self.remove_stafflines()
+        self.glyph_classification()
+        self.pitch_finding()
     
-    ### protected
-    def _find_staves(self):
+    def find_staves(self):
         if self.sfnd_algorithm is 0:
             s = musicstaves.StaffFinder_miyao(self.image)
         elif self.sfnd_algorithm is 1:
@@ -129,6 +134,9 @@ class AomrObject(object):
             ledger_lines_top = line_positions[0:2]
             ledger_lines_bottom = line_positions[-2:]
             
+            lg.debug("LL Top: {0}".format(ledger_lines_top))
+            
+            
             imaginary_lines = []
             
             # take the second line. we'll then subtract each point from the corresponding
@@ -136,6 +144,10 @@ class AomrObject(object):
             i_line_1 = []
             i_line_2 = []
             for j,point in enumerate(ledger_lines_top[1]):
+                
+                lg.debug("Point 1: {0}".format(point[1]))
+                
+                
                 diff_y = point[1] - ledger_lines_top[0][j][1]
                 pt_x = point[0]
                 pt_y_1 = ledger_lines_top[0][j][1] - diff_y
@@ -168,7 +180,7 @@ class AomrObject(object):
                 'clef_line': None
             }
             
-    def _remove_stafflines(self):
+    def remove_stafflines(self):
         """ 
             Removes staves. Stores the resulting image.
         """
@@ -195,7 +207,7 @@ class AomrObject(object):
         # self.nost_filename = tfile[1]
         
         
-    def _glyph_classification(self):
+    def glyph_classification(self):
         """ Glyph classification.
             Returns a list of the classified glyphs with its position and size.
         """
@@ -224,7 +236,7 @@ class AomrObject(object):
         grouping_function = classify.ShapedGroupingFunction(16) # variable ?
         self.classified_image = cknn.group_and_update_list_automatic(ccs, grouping_function, max_parts_per_group = 4) # variable ?
         
-    def _pitch_finding(self):
+    def pitch_finding(self):
         """ Pitch finding.
             Returns a list of pitches for a list of classified glyphs.
         """

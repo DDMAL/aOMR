@@ -16,6 +16,9 @@ import re
 from gamera.knn_editing import edit_mnn_cnn
 from gamera.toolkits.aruspix.ax_file import AxFile
 from gamera.toolkits.aomr_tk import AomrObject
+from gamera import knn
+from gamera import classify
+import tempfile
 
 
 def process_directory(directory):
@@ -42,30 +45,56 @@ def build_classifier(gly):
     k.start_optimizing()
     return k
 
-def process_axz_directory(directory, class_glyphs, class_weights):
+def process_axz_directory(directory, class_glyphs, class_weights, outputdir):
+    print "Processing AXZ Folder"
     for dirpath, dirnames, filenames in os.walk(directory):
-        if os.path.abspath(directory) == os.path.abspath(dirpath):
-            continue
+        
+        # if os.path.abspath(directory) == os.path.abspath(dirpath):
+        #     continue
+            
         for f in filenames:
+            if f == ".DS_Store":
+                continue
+            pagenum = f.split("_")[0]
+            print "Loading page ", str(pagenum)
             axzfile = os.path.join(dirpath, f)
+            
+            # if Caylin hasn't corrected this file yet...
+            if not os.path.getmtime(axzfile) > time.mktime(time.strptime("08 Jan 2011", "%d %b %Y")):
+                continue
+                
             ax = AxFile(axzfile, "")
             axtmp = ax.tmpdir
             staves = ax.get_img0().extract(0)
+            
+            tfile = tempfile.mkstemp()
+            save_image(staves, tfile[1])
+            
             # grab and remove the staves
             aomr_opts = {
-                'number_of_stafflines': 4,
+                'lines_per_staff': 4,
                 'staff_finder': 0,
                 'staff_removal': 0,
                 'binarization': 0,
-                'glyphs': "optimized_classifier.xml",
-                'weights': "classifier_weights.xml",
                 'discard_size': 6
             }
             
-            aomr_obj = AomrObject(staves, **aomr_opts)
+            aomr_obj = AomrObject(tfile[1], **aomr_opts)
             aomr_obj.find_staves()
             aomr_obj.remove_stafflines()
-            aomr_obj.glyph_classification()
+            
+            cknn = knn.kNNNonInteractive(class_glyphs, 'all', True, 8)
+            cknn.load_settings(class_weights)
+            ccs = staves.cc_analysis()
+            grouping_function = classify.ShapedGroupingFunction(16)
+            classified_image = cknn.group_and_update_list_automatic(ccs, grouping_function, max_parts_per_group=4)
+            
+            # create an output directory
+            os.mkdir(os.path.join(outputdir, pagenum))
+            
+            # save all the files into this directory
+            
+            # done!
             
             
 if __name__ == "__main__":
@@ -73,7 +102,7 @@ if __name__ == "__main__":
     parser = OptionParser(usage)
     (options, args) = parser.parse_args()
     
-    if len(args) != 1:
+    if len(args) < 1:
         parser.error("You need to supply a directory of pages.")
     
     if not os.path.isdir(args[0]):
@@ -86,12 +115,12 @@ if __name__ == "__main__":
     
     classifiers = []
     glyphs = process_directory(args[0])
-    for x in xrange(4):
+    for x in xrange(2):
         print "Starting optimizer {0}".format(x)
         classifiers.append(build_classifier(glyphs))
     
     starttime = datetime.datetime.now()
-    endtime = starttime + datetime.timedelta(minutes=2)
+    endtime = starttime + datetime.timedelta(minutes=1)
     while endtime > datetime.datetime.now():
         time.sleep(10)
         print "I'm still alive."
@@ -122,7 +151,7 @@ if __name__ == "__main__":
     ##### finished creating a classifier.
     
     ##### Load up the AXZ Files
-    axz = process_axz_directory(args[1])
+    axz = process_axz_directory(args[1], "optimized_classifier.xml", "classifier_weights.xml", args[2])
     
     
     
