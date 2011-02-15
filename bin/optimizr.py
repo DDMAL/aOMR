@@ -6,33 +6,21 @@
 #  - spits out a new set of classifier glyphs and weights.
 from optparse import OptionParser
 import os
+from gamera.core import *
 from gamera import gamera_xml
 from gamera import knn
 import threading
 import datetime
 import time
+import re
 from gamera.knn_editing import edit_mnn_cnn
+from gamera.toolkits.aruspix.ax_file import AxFile
+from gamera.toolkits.aomr_tk import AomrObject
+
 
 def process_directory(directory):
-    features = ["area", 
-    "aspect_ratio",
-    "black_area", 
-    "compactness", 
-    "moments", 
-    "ncols_feature",
-    "nholes", 
-    "nholes_extended", 
-    "nrows_feature", 
-    "skeleton_features", 
-    "top_bottom", 
-    "volume", 
-    "volume16regions", 
-    "volume64regions", 
-    "zernike_moments"]
-    
-    filename = "page_glyphs.xml"
     glyphs = None
-    
+    filename = "page_glyphs.xml"
     # create a super-classifier
     for dirpath, dirnames, filenames in os.walk(directory):
         if os.path.abspath(dirpath) == os.path.abspath(directory):
@@ -41,22 +29,47 @@ def process_directory(directory):
             glyphs = gamera_xml.glyphs_from_xml(os.path.join(dirpath, filename))
         else:
             glyphs.extend(gamera_xml.glyphs_from_xml(os.path.join(dirpath, filename)))
-    # 
+    
+    searchstr = r'(\'|\\\\)'
+    
+    gg1 = [g for g in glyphs if not re.search(searchstr, g.get_main_id())]
+    glyphs = [g for g in gg1 if not g.get_main_id() == "UNCLASSIFIED"]
+    
     return glyphs
 
 def build_classifier(gly):
     k = knn.kNNNonInteractive(gly, 'all', True, 8)
     k.start_optimizing()
-    # p = Pool()
-    # result = p.map_async(__optimize, (glyphs,))
-    # result.wait(5)
-    # p.close()
-    # p.terminate()
     return k
 
-    
+def process_axz_directory(directory, class_glyphs, class_weights):
+    for dirpath, dirnames, filenames in os.walk(directory):
+        if os.path.abspath(directory) == os.path.abspath(dirpath):
+            continue
+        for f in filenames:
+            axzfile = os.path.join(dirpath, f)
+            ax = AxFile(axzfile, "")
+            axtmp = ax.tmpdir
+            staves = ax.get_img0().extract(0)
+            # grab and remove the staves
+            aomr_opts = {
+                'number_of_stafflines': 4,
+                'staff_finder': 0,
+                'staff_removal': 0,
+                'binarization': 0,
+                'glyphs': "optimized_classifier.xml",
+                'weights': "classifier_weights.xml",
+                'discard_size': 6
+            }
+            
+            aomr_obj = AomrObject(staves, **aomr_opts)
+            aomr_obj.find_staves()
+            aomr_obj.remove_stafflines()
+            aomr_obj.glyph_classification()
+            
+            
 if __name__ == "__main__":
-    usage = "usage: %prog [options] directory"
+    usage = "usage: %prog [options] input_directory axz_directory output_directory"
     parser = OptionParser(usage)
     (options, args) = parser.parse_args()
     
@@ -64,24 +77,29 @@ if __name__ == "__main__":
         parser.error("You need to supply a directory of pages.")
     
     if not os.path.isdir(args[0]):
-        parser.error("The supplied directory is not a directory.")
+        parser.error("The supplied input directory is not a directory.")
+    
+    if not os.path.isdir(args[1]):
+        parser.error("The supplied axz directory is not a directory.")
+    
+    init_gamera()
     
     classifiers = []
+    glyphs = process_directory(args[0])
     for x in xrange(4):
         print "Starting optimizer {0}".format(x)
-        glyphs = process_directory(args[0])
         classifiers.append(build_classifier(glyphs))
     
     starttime = datetime.datetime.now()
-    endtime = starttime + datetime.timedelta(minutes=10)
+    endtime = starttime + datetime.timedelta(minutes=2)
     while endtime > datetime.datetime.now():
         time.sleep(10)
         print "I'm still alive."
     
-    # once it's done, kill off the threads.
+    # once it's done, kill off the threads and get the results
     best_result = 0
     best_classifier = None
-    print "CHecking for the best results"
+    print "Checking for the best results"
     for c,clsfr in enumerate(classifiers):
         print "Checking classifier {0}".format(c)
         res = clsfr.stop_optimizing()
@@ -100,6 +118,14 @@ if __name__ == "__main__":
     edited_classifier.to_xml_filename("optimized_classifier.xml")
     print "Saving weights"
     edited_classifier.save_settings("classifier_weights.xml")
+    
+    ##### finished creating a classifier.
+    
+    ##### Load up the AXZ Files
+    axz = process_axz_directory(args[1])
+    
+    
+    
     
     print "Done!"
     

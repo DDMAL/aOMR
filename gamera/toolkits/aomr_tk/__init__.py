@@ -160,7 +160,7 @@ if has_gui.has_gui:
                 "binarization": params[1],
                 "staff_finder": params[2],
                 "staff_removal": params[3],
-                "number_of_staves": params[4],
+                "lines_per_staff": params[4],
                 "glyphs": params[5],
                 "weights": params[6],
                 "discard_size": params[7]

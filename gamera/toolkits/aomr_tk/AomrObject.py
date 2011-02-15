@@ -27,7 +27,7 @@ class AomrObject(object):
         """
         self.filename = filename
         
-        self.number_of_staves = kwargs['number_of_staves']
+        self.number_of_staves = kwargs['lines_per_staff']
         self.sfnd_algorithm = kwargs['staff_finder']
         self.srmv_algorithm = kwargs['staff_removal']
         self.binarization = kwargs["binarization"]
@@ -67,13 +67,13 @@ class AomrObject(object):
         }
         
     def run(self):
-        self._find_staves()
-        self._remove_stafflines()
-        self._glyph_classification()
-        self._pitch_finding()
+        self.find_staves()
+        self.remove_stafflines()
+        self.glyph_classification()
+        # self._pitch_finding()
     
     ### protected
-    def _find_staves(self):
+    def find_staves(self):
         if self.sfnd_algorithm is 0:
             s = musicstaves.StaffFinder_miyao(self.image)
         elif self.sfnd_algorithm is 1:
@@ -163,7 +163,7 @@ class AomrObject(object):
                 'clef_line': None
             }
             
-    def _remove_stafflines(self):
+    def remove_stafflines(self):
         """ 
             Removes staves. Stores the resulting image.
         """
@@ -190,7 +190,7 @@ class AomrObject(object):
         # self.nost_filename = tfile[1]
         
         
-    def _glyph_classification(self):
+    def glyph_classification(self):
         """ Glyph classification.
             Returns a list of the classified glyphs with its position and size.
         """
@@ -210,7 +210,7 @@ class AomrObject(object):
                                 "volume16regions", 
                                 "volume64regions", 
                                 "zernike_moments"], 
-                                8)
+                                num_k=8)
         
         cknn.from_xml_filename(self.classifier_glyphs)
         cknn.load_settings(self.classifier_weights) # Option for loading the features and weights of the training stage.
@@ -218,6 +218,7 @@ class AomrObject(object):
         ccs = self.img_no_st.cc_analysis()
         grouping_function = classify.ShapedGroupingFunction(16) # variable ?
         self.classified_image = cknn.group_and_update_list_automatic(ccs, grouping_function, max_parts_per_group = 4) # variable ?
+        
         
     def _pitch_finding(self):
         """ Pitch finding.
