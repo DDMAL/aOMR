@@ -134,8 +134,48 @@ class AomrObject(object):
             ledger_lines_top = line_positions[0:2]
             ledger_lines_bottom = line_positions[-2:]
             
-            lg.debug("LL Top: {0}".format(ledger_lines_top))
+            lg.debug("Len 0: {0}".format(len(ledger_lines_top[0])))
+            lg.debug("Len 1: {0}".format(len(ledger_lines_top[1])))
             
+            # fix their lengths to be equal
+            if len(ledger_lines_top[0]) != len(ledger_lines_top[1]):
+                if len(ledger_lines_top[0]) > len(ledger_lines_top[1]):
+                    longest_line = ledger_lines_top[0]
+                    shortest_line = ledger_lines_top[1]
+                else:
+                    longest_line = ledger_lines_top[1]
+                    shortest_line = ledger_lines_top[0]
+                
+                lendiff = len(longest_line) - len(shortest_line)
+                
+                # slice off a chunk of the shortest line
+                short_end = shortest_line[-lendiff:]
+                long_end = longest_line[-lendiff:]
+                
+                for p,pt in enumerate(long_end):
+                    pt_x = pt[0]
+                    pt_y = short_end[p][1]
+                    short_end[p] = (pt_x, pt_y)
+                
+                shortest_line.extend(short_end)
+                
+            # fix their lengths to be equal
+            if len(ledger_lines_bottom[0]) != len(ledger_lines_bottom[1]):
+                if len(ledger_lines_bottom[0]) > len(ledger_lines_bottom[1]):
+                    longest_line = ledger_lines_bottom[0]
+                    shortest_line = ledger_lines_bottom[1]
+                else:
+                    longest_line = ledger_lines_bottom[1]
+                    shortest_line = ledger_lines_bottom[0]
+                lendiff = len(longest_line) - len(shortest_line)
+                # slice off a chunk of the shortest line
+                short_end = shortest_line[-lendiff:]
+                long_end = longest_line[-lendiff:]
+                for p,pt in enumerate(long_end):
+                    pt_x = pt[0]
+                    pt_y = short_end[p][1]
+                    short_end[p] = (pt_x, pt_y)
+                shortest_line.extend(short_end)
             
             imaginary_lines = []
             
@@ -146,7 +186,7 @@ class AomrObject(object):
             for j,point in enumerate(ledger_lines_top[1]):
                 
                 lg.debug("Point 1: {0}".format(point[1]))
-                
+                lg.debug("LL TOP is: {0}".format(ledger_lines_top[0][j][1]))
                 
                 diff_y = point[1] - ledger_lines_top[0][j][1]
                 pt_x = point[0]
