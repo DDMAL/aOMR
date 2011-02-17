@@ -27,7 +27,7 @@ class AomrObject(object):
         """
         self.filename = filename
         
-        print "loading ", self.filename
+        # print "loading ", self.filename
         
         self.lines_per_staff = kwargs['lines_per_staff']
         self.sfnd_algorithm = kwargs['staff_finder']
@@ -92,11 +92,25 @@ class AomrObject(object):
             s = musicstaves.StaffFinder_projections(self.image)
         else:
             raise AomrStaffFinderNotFoundError("The staff finding algorithm was not found.")
-            
+        
+        
         s.find_staves()
+        
+        # lg.debug("Linelist is {0}".format(s.linelist))
+        
+        if len(self._flatten(s.linelist)) == 0:
+            # no lines were found
+            return None
         
         # get a polygon object. This stores a set of vertices for x,y values along the staffline.
         self.staves = s.get_polygon()
+        
+        if len(self.staves) < self.lines_per_staff:
+            # the number of lines found was less than expected.
+            return None
+        
+        
+        # lg.debug("Staves is {0}".format(self.staves))
         
         for i, staff in enumerate(self.staves):
             # lg.debug("Staff {0} ({1} lines)".format(i+1, len(staff)))
@@ -134,8 +148,8 @@ class AomrObject(object):
             ledger_lines_top = line_positions[0:2]
             ledger_lines_bottom = line_positions[-2:]
             
-            lg.debug("Len 0: {0}".format(len(ledger_lines_top[0])))
-            lg.debug("Len 1: {0}".format(len(ledger_lines_top[1])))
+            # lg.debug("Len 0: {0}".format(len(ledger_lines_top[0])))
+            # lg.debug("Len 1: {0}".format(len(ledger_lines_top[1])))
             
             # fix their lengths to be equal
             if len(ledger_lines_top[0]) != len(ledger_lines_top[1]):
@@ -185,8 +199,8 @@ class AomrObject(object):
             i_line_2 = []
             for j,point in enumerate(ledger_lines_top[1]):
                 
-                lg.debug("Point 1: {0}".format(point[1]))
-                lg.debug("LL TOP is: {0}".format(ledger_lines_top[0][j][1]))
+                # lg.debug("Point 1: {0}".format(point[1]))
+                # lg.debug("LL TOP is: {0}".format(ledger_lines_top[0][j][1]))
                 
                 diff_y = point[1] - ledger_lines_top[0][j][1]
                 pt_x = point[0]
@@ -219,6 +233,7 @@ class AomrObject(object):
                 'clef_shape': None,
                 'clef_line': None
             }
+        return True
             
     def remove_stafflines(self):
         """ 
@@ -287,7 +302,7 @@ class AomrObject(object):
         cls_img = [c for c in self.classified_image if __check_size(c)]
         self.classified_image = cls_img
         
-        self.rgb = Image(self.image, RGB)
+        # self.rgb = Image(self.image, RGB)
         # DEBUGGING: Color the staves
         # for k,s in self.page_result['staves'].iteritems():
         #     staffcolor = RGBPixel(190 + (11*k) % 66, \
@@ -344,11 +359,11 @@ class AomrObject(object):
         
         # DEBUGGING: Create temp files so that we can see this in the 
         # Gamera shell.
-        tfile = tempfile.mkstemp()
-        self.rgb.highlight(self.image, RGBPixel(0, 0, 0))
-        
-        save_image(self.rgb, tfile[1])
-        self.rgb_filename = tfile[1]
+        # tfile = tempfile.mkstemp()
+        # self.rgb.highlight(self.image, RGBPixel(0, 0, 0))
+        # 
+        # save_image(self.rgb, tfile[1])
+        # self.rgb_filename = tfile[1]
         
         # for c in class_im:
         # 
@@ -439,5 +454,20 @@ class AomrObject(object):
                 if top_coord[0] - self._m10(20) <= x <= bot_coord[0] + self._m10(20):
                     return k
         return None
+    
+    def _flatten(self, l, ltypes=(list, tuple)):
+        ltype = type(l)
+        l = list(l)
+        i = 0
+        while i < len(l):
+            while isinstance(l[i], ltypes):
+                if not l[i]:
+                    l.pop(i)
+                    i -= 1
+                    break
+                else:
+                    l[i:i + 1] = l[i]
+            i += 1
+        return ltype(l)
     
     
