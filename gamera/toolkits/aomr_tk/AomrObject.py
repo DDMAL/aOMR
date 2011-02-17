@@ -33,10 +33,11 @@ class AomrObject(object):
         self.sfnd_algorithm = kwargs['staff_finder']
         self.srmv_algorithm = kwargs['staff_removal']
         self.binarization = kwargs["binarization"]
-        
-        if "glyphs" in kwargs.values():
+        print kwargs
+        if "glyphs" in kwargs.keys():
             self.classifier_glyphs = kwargs["glyphs"]
-        if "weights" in kwargs.values():
+            print self.classifier_glyphs
+        if "weights" in kwargs.keys():
             self.classifier_weights = kwargs["weights"]
             
         self.discard_size = kwargs["discard_size"]
@@ -134,8 +135,8 @@ class AomrObject(object):
             ledger_lines_top = line_positions[0:2]
             ledger_lines_bottom = line_positions[-2:]
             
-            lg.debug("Len 0: {0}".format(len(ledger_lines_top[0])))
-            lg.debug("Len 1: {0}".format(len(ledger_lines_top[1])))
+            # lg.debug("Len 0: {0}".format(len(ledger_lines_top[0])))
+            # lg.debug("Len 1: {0}".format(len(ledger_lines_top[1])))
             
             # fix their lengths to be equal
             if len(ledger_lines_top[0]) != len(ledger_lines_top[1]):
@@ -267,7 +268,8 @@ class AomrObject(object):
                                 "volume16regions", 
                                 "volume64regions", 
                                 "zernike_moments"], 
-                                8)
+                                "True",
+                                1)
         
         cknn.from_xml_filename(self.classifier_glyphs)
         cknn.load_settings(self.classifier_weights) # Option for loading the features and weights of the training stage.
