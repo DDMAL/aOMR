@@ -90,6 +90,7 @@ def process_axz_directory(directory, class_glyphs, class_weights, outputdir):
             
             # if Caylin hasn't corrected this file yet...
             if not os.path.getmtime(axzfile) > time.mktime(time.strptime("08 Jan 2011", "%d %b %Y")):
+                os.rmdir(outdir)
                 continue
                 
             ax = AxFile(axzfile, "")
@@ -118,16 +119,22 @@ def process_axz_directory(directory, class_glyphs, class_weights, outputdir):
                 s = aomr_obj.find_staves()
             except:
                 lg.debug("CAAAANNNNOOOT PARRSSSEEEE: {0}".format(pagenum))
+                os.remove(sfile)
+                os.rmdir(outdir)
                 continue
             
             if not s:
                 # no staves were found
+                os.remove(sfile)
+                os.rmdir(outdir)
                 continue
             
             try:
                 aomr_obj.remove_stafflines()
             except:
                 lg.debug("CAAAANNNNOOOT PARRSSSEEEE: {0}".format(pagenum))
+                os.remove(sfile)
+                os.rmdir(outdir)
                 continue
             
             cknn = knn.kNNNonInteractive(class_glyphs, 'all', True, 1)
