@@ -90,6 +90,7 @@ def process_axz_directory(directory, class_glyphs, class_weights, outputdir):
             
             # if Caylin hasn't corrected this file yet...
             if not os.path.getmtime(axzfile) > time.mktime(time.strptime("08 Jan 2011", "%d %b %Y")):
+                lg.debug("I haven't been touched.")
                 os.rmdir(outdir)
                 continue
                 
@@ -100,6 +101,7 @@ def process_axz_directory(directory, class_glyphs, class_weights, outputdir):
             # shutil.move(tfile[1], os.path.join(outdir, "original_image.tiff"))
             
             sfile = os.path.join(outdir, "original_image.tiff")
+
             save_image(staves, sfile)
             
             # lg.debug("Tempfile is: {0}".format(tfile[1]))
@@ -110,12 +112,14 @@ def process_axz_directory(directory, class_glyphs, class_weights, outputdir):
                 'staff_finder': 0,
                 'staff_removal': 0,
                 'binarization': 0,
-                'discard_size': 6
+                'discard_size': 12 # GVM, was 6 
             }
             
             aomr_obj = AomrObject(sfile, **aomr_opts)
+
             
             try:
+                lg.debug("Finding Staves")
                 s = aomr_obj.find_staves()
             except:
                 lg.debug("CAAAANNNNOOOT PARRSSSEEEE: {0}".format(pagenum))
@@ -123,8 +127,9 @@ def process_axz_directory(directory, class_glyphs, class_weights, outputdir):
                 os.rmdir(outdir)
                 continue
             
+            lg.debug("S is: {0}".format(s))
             if not s:
-                # no staves were found
+                lg.debug("no staves were found")
                 os.remove(sfile)
                 os.rmdir(outdir)
                 continue
@@ -137,13 +142,15 @@ def process_axz_directory(directory, class_glyphs, class_weights, outputdir):
                 os.rmdir(outdir)
                 continue
             
+            lg.debug("Creating a classifier")
             cknn = knn.kNNNonInteractive(class_glyphs, 'all', True, 1)
             cknn.load_settings(class_weights)
+
             ccs = aomr_obj.img_no_st.cc_analysis()
             grouping_function = classify.ShapedGroupingFunction(16)
             classified_image = cknn.group_and_update_list_automatic(ccs, grouping_function, max_parts_per_group=4)
             
-            # save all the files into this directory
+            lg.debug("save all the files into this directory")
             cknn.save_settings(os.path.join(outdir, "classifier_settings.xml"))
             
             cknn.generate_features_on_glyphs(classified_image)
@@ -152,10 +159,28 @@ def process_axz_directory(directory, class_glyphs, class_weights, outputdir):
                s.add("_split." + split[0])
             s.add("_group")
             s.add("_group._part")
-            for g in cknn.get_glyphs():
-                for idx in g.id_name:
-                    s.add(idx[1])
-                    
+            
+            
+            
+            
+            avg_punctum_col = aomr_obj.average_punctum(cknn.get_glyphs())
+            print 'average punctum column size = ', avg_punctum_col
+
+            glyphs_center_of_mass = aomr_obj.x_projection_vector(cknn.get_glyphs(), avg_punctum_col, aomr_opts.get('discard_size'))
+            print 'center of mass for each glyph  = ', glyphs_center_of_mass
+
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
             gamera_xml.WriteXMLFile(glyphs=classified_image, with_features=True).write_filename(os.path.join(outdir, "page_glyphs.xml"))
             gamera_xml.WriteXMLFile(symbol_table=s).write_filename(os.path.join(outdir, "symbol_table.xml"))
             cknn.to_xml_filename(os.path.join(outdir, "classifier_glyphs.xml"), with_features=True)
@@ -236,7 +261,8 @@ if __name__ == "__main__":
     ##### finished creating a classifier.
     
     ##### Load up the AXZ Files
-    axz = process_axz_directory(args[1], os.path.join(args[2], "optimized_classifier_Feb16.xml"), os.path.join(args[2], "classifier_weights_Feb16.xml"), args[2])
+
+    axz = process_axz_directory(args[0], os.path.join(args[1], "optimized_classifier_Feb16.xml"), os.path.join(args[1], "classifier_weights_Feb16.xml"), args[1])
     
     
     
