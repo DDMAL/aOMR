@@ -137,11 +137,19 @@ def process_axz_directory(directory, class_glyphs, class_weights, outputdir):
                 os.rmdir(outdir)
                 continue
             
-            cknn = knn.kNNNonInteractive(class_glyphs, 'all', True, 1)
-            cknn.load_settings(class_weights)
+            cknn = knn.kNNNonInteractive(class_glyphs, 'all', 1)
+            # cknn.load_settings(class_weights)
             ccs = aomr_obj.img_no_st.cc_analysis()
-            grouping_function = classify.ShapedGroupingFunction(16)
-            classified_image = cknn.group_and_update_list_automatic(ccs, grouping_function, max_parts_per_group=4)
+            func = classify.BoundingBoxGroupingFunction(4)
+            # classified_image = cknn.group_and_update_list_automatic(ccs, grouping_function, max_parts_per_group=4, max_graph_size=16)
+            classified_image = cknn.group_and_update_list_automatic(
+                ccs,
+                grouping_function=func,
+                max_parts_per_group=4,
+                max_graph_size=16
+            )
+            
+            
             
             # save all the files into this directory
             cknn.save_settings(os.path.join(outdir, "classifier_settings.xml"))

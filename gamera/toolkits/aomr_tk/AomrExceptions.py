@@ -13,3 +13,7 @@ class AomrStaffFinderNotFoundError(AomrError): pass
 class AomrMeiFormNotFoundError(AomrError): pass
 class AomrMeiPitchNotFoundError(AomrError): pass
 class AomrMeiNoteIntervalMismatchError(AomrError): pass
+
+# AOMR Aruspix Errors
+class AomrNotAnAruspixFileError(AomrError): pass
+class AomrAruspixPackageError(AomrError): pass
