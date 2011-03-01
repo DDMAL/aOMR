@@ -31,7 +31,8 @@ class AomrAxFile(object):
         # unzip the AXZ file.
         zip = zipfile.ZipFile(self.filename, 'r')
         for name in zip.namelist():
-            f = file(os.path.join(self.tmpdir, name), 'wb').write(zip.read(name))
+            f = file(os.path.join(self.tmpdir, name), 'wb')
+            f.write(zip.read(name))
             f.close()
         zip.close()
         
