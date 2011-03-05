@@ -69,7 +69,7 @@ lg.addHandler(h)
     # k.start_optimizing()
     # return (k, kval)
 
-def process_axz_directory(directory, class_glyphs, class_weights, outputdir, cleaned_outputdir):
+def process_axz_directory(directory, class_glyphs, class_weights, outputdir):
     print "Processing AXZ Folder"
     for dirpath, dirnames, filenames in os.walk(directory):
         
@@ -238,7 +238,7 @@ if __name__ == "__main__":
     ##### finished creating a classifier.
     
     ##### Load up the AXZ Files
-    axz = process_axz_directory(args[1], os.path.join(args[2], "classifier_glyphs_gp_cleaned.xml"), os.path.join(args[2], "classifier_weights_Feb16.xml"), args[2], args[3])
+    axz = process_axz_directory(args[1], os.path.join(args[2], "classifier_glyphs_gp_cleaned.xml"), os.path.join(args[2], "classifier_weights_Feb16.xml"), args[2])
     
     
     
