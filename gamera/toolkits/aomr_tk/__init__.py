@@ -101,6 +101,12 @@ if has_gui.has_gui:
             menu.Append(oip_process_id, "Open an MEI OIP file")
             wx.EVT_MENU(parent, oip_process_id, self.openOipFile)
             
+            menu.AppendSeparator()
+            
+            send_to_ax_id = wx.NewId()
+            menu.Append(send_to_ax_id, "Send TIFF Files to Aruspix for Preprocessing")
+            wx.EVT_MENU(parent, send_to_ax_id, self.sendToAruspix)
+            
             parent.PopupMenu(menu, wx.Point(x, y))
             
         def double_click(self):
@@ -180,7 +186,7 @@ if has_gui.has_gui:
             aomr_file.run()
             
             # DEBUGGING: Shows intermediate files from the object in the Gamera shell.
-            # self._shell.run("rgb = load_image(r'{0}')".format(aomr_file.rgb_filename))
+            self._shell.run("rgb = load_image(r'{0}')".format(aomr_file.rgb_filename))
             # self._shell.run("img_no_st = load_image(r'{0}')".format(aomr_file.nost_filename))
             
             # filename = dialog_args['filename']
@@ -226,4 +232,28 @@ if has_gui.has_gui:
         
         def openOipFile(self):
             pass
+        
+        def sendToAruspix(self, event):
+            from gamera.toolkits.aomr_tk.AomrAruspixIntegration import AomrAruspixIntegration
+            dialog=Args(
+                [
+                 Directory("Path to Aruspix.app", os.path.join("/Applications", "Aruspix.app"), "*.*"),
+                 Directory("Directory of TIFF Files", "", "*.*"),
+                 Directory("Output directory", "", "*.*"),
+                ],
+                "Select Aruspix Options"
+            )
+            params=dialog.show()
+            if params is None:
+                return
+            
+            dialog_args = {
+                "path_to_ax": params[0],
+                "input_dir": params[1],
+                "output_dir": params[2],
+            }
+            proc = AomrAruspixIntegration(**dialog_args)
+            proc.run()
+            
+            
     AomrModuleIcon.register()

@@ -69,7 +69,7 @@ lg.addHandler(h)
     # k.start_optimizing()
     # return (k, kval)
 
-def process_axz_directory(directory, class_glyphs, class_weights, outputdir):
+def process_axz_directory(directory, class_glyphs, class_weights, outputdir, cleaned_outputdir):
     print "Processing AXZ Folder"
     for dirpath, dirnames, filenames in os.walk(directory):
         
@@ -79,7 +79,7 @@ def process_axz_directory(directory, class_glyphs, class_weights, outputdir):
         for f in filenames:
             if f == ".DS_Store":
                 continue
-            pagenum = f.split("_")[0]
+            pagenum = f.split("_")[-1].strip('.axz')
             print "Loading page ", str(pagenum)
             
             # create an output directory
@@ -89,10 +89,10 @@ def process_axz_directory(directory, class_glyphs, class_weights, outputdir):
             axzfile = os.path.join(dirpath, f)
             
             # if Caylin hasn't corrected this file yet...
-            if not os.path.getmtime(axzfile) > time.mktime(time.strptime("08 Jan 2011", "%d %b %Y")):
-                os.rmdir(outdir)
-                continue
-                
+            # if not os.path.getmtime(axzfile) > time.mktime(time.strptime("01 Mar 2011", "%d %b %Y")):
+            #     os.rmdir(outdir)
+            #     continue
+            
             ax = AxFile(axzfile, "")
             axtmp = ax.tmpdir
             staves = ax.get_img0().extract(0)
@@ -117,31 +117,33 @@ def process_axz_directory(directory, class_glyphs, class_weights, outputdir):
             
             try:
                 s = aomr_obj.find_staves()
-            except:
-                lg.debug("CAAAANNNNOOOT PARRSSSEEEE: {0}".format(pagenum))
-                os.remove(sfile)
-                os.rmdir(outdir)
+            except Exception, e:
+                lg.debug("Cannot find staves: {0} because {1}".format(pagenum, e))
                 continue
             
             if not s:
                 # no staves were found
-                os.remove(sfile)
-                os.rmdir(outdir)
                 continue
             
             try:
                 aomr_obj.remove_stafflines()
-            except:
-                lg.debug("CAAAANNNNOOOT PARRSSSEEEE: {0}".format(pagenum))
-                os.remove(sfile)
-                os.rmdir(outdir)
+            except Exception, e:
+                lg.debug("Cannot remove stafflines: {0} because {1}".format(pagenum, e))
                 continue
             
-            cknn = knn.kNNNonInteractive(class_glyphs, 'all', True, 1)
-            cknn.load_settings(class_weights)
+            cknn = knn.kNNNonInteractive(class_glyphs, 'all', 1)
+            # cknn.load_settings(class_weights)
             ccs = aomr_obj.img_no_st.cc_analysis()
-            grouping_function = classify.ShapedGroupingFunction(16)
-            classified_image = cknn.group_and_update_list_automatic(ccs, grouping_function, max_parts_per_group=4)
+            func = classify.BoundingBoxGroupingFunction(4)
+            # classified_image = cknn.group_and_update_list_automatic(ccs, grouping_function, max_parts_per_group=4, max_graph_size=16)
+            classified_image = cknn.group_and_update_list_automatic(
+                ccs,
+                grouping_function=func,
+                max_parts_per_group=4,
+                max_graph_size=16
+            )
+            
+            
             
             # save all the files into this directory
             cknn.save_settings(os.path.join(outdir, "classifier_settings.xml"))
@@ -157,8 +159,8 @@ def process_axz_directory(directory, class_glyphs, class_weights, outputdir):
                     s.add(idx[1])
                     
             gamera_xml.WriteXMLFile(glyphs=classified_image, with_features=True).write_filename(os.path.join(outdir, "page_glyphs.xml"))
-            gamera_xml.WriteXMLFile(symbol_table=s).write_filename(os.path.join(outdir, "symbol_table.xml"))
-            cknn.to_xml_filename(os.path.join(outdir, "classifier_glyphs.xml"), with_features=True)
+            # gamera_xml.WriteXMLFile(symbol_table=s).write_filename(os.path.join(outdir, "symbol_table.xml"))
+            # cknn.to_xml_filename(os.path.join(outdir, "classifier_glyphs.xml"), with_features=True)
             save_image(aomr_obj.img_no_st, os.path.join(outdir, "source_image.tiff"))
             
             # clean up
@@ -173,7 +175,7 @@ def process_axz_directory(directory, class_glyphs, class_weights, outputdir):
             
             
 if __name__ == "__main__":
-    usage = "usage: %prog [options] input_directory axz_directory output_directory"
+    usage = "usage: %prog [options] input_directory axz_directory output_directory cleaned_images_output_directory"
     parser = OptionParser(usage)
     (options, args) = parser.parse_args()
     
@@ -236,7 +238,7 @@ if __name__ == "__main__":
     ##### finished creating a classifier.
     
     ##### Load up the AXZ Files
-    axz = process_axz_directory(args[1], os.path.join(args[2], "optimized_classifier_Feb16.xml"), os.path.join(args[2], "classifier_weights_Feb16.xml"), args[2])
+    axz = process_axz_directory(args[1], os.path.join(args[2], "classifier_glyphs_gp_cleaned.xml"), os.path.join(args[2], "classifier_weights_Feb16.xml"), args[2], args[3])
     
     
     

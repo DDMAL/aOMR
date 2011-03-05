@@ -34,9 +34,9 @@ class AomrObject(object):
         self.srmv_algorithm = kwargs['staff_removal']
         self.binarization = kwargs["binarization"]
         
-        if "glyphs" in kwargs.values():
+        if "glyphs" in kwargs.keys():
             self.classifier_glyphs = kwargs["glyphs"]
-        if "weights" in kwargs.values():
+        if "weights" in kwargs.keys():
             self.classifier_weights = kwargs["weights"]
             
         self.discard_size = kwargs["discard_size"]
@@ -288,8 +288,17 @@ class AomrObject(object):
         cknn.load_settings(self.classifier_weights) # Option for loading the features and weights of the training stage.
         
         ccs = self.img_no_st.cc_analysis()
-        grouping_function = classify.ShapedGroupingFunction(16) # variable ?
-        self.classified_image = cknn.group_and_update_list_automatic(ccs, grouping_function, max_parts_per_group = 4) # variable ?
+        func = classify.BoundingBoxGroupingFunction(4) # 4 is default, do they change this to 8?
+        # self.classified_image = cknn.group_and_update_list_automatic(ccs, grouping_function, max_parts_per_group = 8, max_graph_size=16) # variable ?
+        added,removed = cknn.group_list_automatic(
+            ccs,
+            grouping_function=func,
+            max_parts_per_group=4,
+            max_graph_size=16
+        )
+        lg.debug("Added: {0}".format(added))
+        lg.debug("Removed: {0}".format(removed))
+        
         
     def pitch_finding(self):
         """ Pitch finding.
@@ -302,7 +311,7 @@ class AomrObject(object):
         cls_img = [c for c in self.classified_image if __check_size(c)]
         self.classified_image = cls_img
         
-        # self.rgb = Image(self.image, RGB)
+        self.rgb = Image(self.image, RGB)
         # DEBUGGING: Color the staves
         # for k,s in self.page_result['staves'].iteritems():
         #     staffcolor = RGBPixel(190 + (11*k) % 66, \
@@ -312,20 +321,20 @@ class AomrObject(object):
         
         
         # DEBUGGING: Color the glyphs
-        # for i,c in enumerate(self.classified_image):
-        #     name = c.get_main_id().split(".")
-        #     if len(name) > 1:
-        #         name = name[1]
-        #     else:
-        #         name = name[0]
-        #     neumecolor = RGBPixel(190 + (11*i) % 66, \
-        #                           190 + (31*(i + 1)) % 66, \
-        #                           190 + (51*(i + 2)) % 66)
-        #     self.rgb.draw_filled_rect((c.ul_x - 5, c.ul_y - 5), (c.lr_x + 5, c.lr_y + 5), neumecolor)
-        #     # self.rgb.draw_text((c.ul_x - 20, c.ul_y - random.randint(10,40)), "{0}".format(name), RGBPixel(0,0,0), 10, 0, False, False, 0)
-        #     self.rgb.draw_text((c.ul_x, c.ul_y), "{0},{1}".format(c.ul_x, c.ul_y), RGBPixel(0,0,0), 9, 0, False, False, 0)
-        #     self.rgb.draw_text((c.lr_x, c.lr_y), "{0},{1}".format(c.lr_x, c.lr_y), RGBPixel(0,0,0), 9, 0, False, False, 0)
-        # 
+        for i,c in enumerate(self.classified_image):
+            name = c.get_main_id().split(".")
+            if len(name) > 1:
+                name = name[1]
+            else:
+                name = name[0]
+            neumecolor = RGBPixel(190 + (11*i) % 66, \
+                                  190 + (31*(i + 1)) % 66, \
+                                  190 + (51*(i + 2)) % 66)
+            self.rgb.draw_filled_rect((c.ul_x - 5, c.ul_y - 5), (c.lr_x + 5, c.lr_y + 5), neumecolor)
+            # self.rgb.draw_text((c.ul_x - 20, c.ul_y - random.randint(10,40)), "{0}".format(name), RGBPixel(0,0,0), 10, 0, False, False, 0)
+            # self.rgb.draw_text((c.ul_x, c.ul_y), "{0},{1}".format(c.ul_x, c.ul_y), RGBPixel(0,0,0), 9, 0, False, False, 0)
+            # self.rgb.draw_text((c.lr_x, c.lr_y), "{0},{1}".format(c.lr_x, c.lr_y), RGBPixel(0,0,0), 9, 0, False, False, 0)
+        
         
         glyph_list = {}
         for i,c in enumerate(self.classified_image):
@@ -350,7 +359,7 @@ class AomrObject(object):
         for staff, glyphs in glyph_list.iteritems():
              glyphs.sort()
              for g, glyph in enumerate(glyphs):
-                 self.rgb.draw_text((glyph[2].ll_x, glyph[2].ll_y), "X-{0}".format(g), RGBPixel(255, 0, 0), 12, 0, False, False, 0)
+                 self.rgb.draw_text((glyph[2].ll_x, glyph[2].ll_y), "{0}".format(g), RGBPixel(255, 0, 0), 12, 0, False, False, 0)
             
         # lg.debug("C is a {0} at {1},{2}, has a width and height of {3}x{4} and is on staff {5}, idx {6}".format(glyph_name, c.center_x, c.center_y, c.width, c.height, snum, i))
         
@@ -359,11 +368,11 @@ class AomrObject(object):
         
         # DEBUGGING: Create temp files so that we can see this in the 
         # Gamera shell.
-        # tfile = tempfile.mkstemp()
-        # self.rgb.highlight(self.image, RGBPixel(0, 0, 0))
-        # 
-        # save_image(self.rgb, tfile[1])
-        # self.rgb_filename = tfile[1]
+        tfile = tempfile.mkstemp()
+        self.rgb.highlight(self.image, RGBPixel(0, 0, 0))
+        
+        save_image(self.rgb, tfile[1])
+        self.rgb_filename = tfile[1]
         
         # for c in class_im:
         # 
