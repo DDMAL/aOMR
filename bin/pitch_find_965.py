@@ -35,12 +35,18 @@ aomr_opts = {
     'binarization': 0,
     'discard_size': 6
 }
+
+
 original_file = "/Users/gabriel/Documents/8_CODE/aOMR/imgs/965/PC_0965/original_image.tiff"
-glyph_file = "/Users/gabriel/Documents/8_CODE/aOMR/imgs/965/PP_965/page_glyphs.xml"
-
-# aomr_obj = AomrObject(original_file, **aomr_opts)
-# s = aomr_obj.find_staves()
+glyphs = gamera_xml.glyphs_from_xml(r"/Users/gabriel/Documents/8_CODE/aOMR/imgs/965/PC_0965/page_glyphs.xml")
 
 
-tree = etree.parse(glyph_file)
-print etree.tostring(tree)
+aomr_obj = AomrObject(original_file, **aomr_opts)
+s = aomr_obj.find_staves()
+print s
+# tree = etree.parse(glyph_file)
+# print etree.tostring(tree)
+
+for g in glyphs:
+    if g.get_main_id().split('.')[0] != '_group':
+        print g.get_main_id().split('.'), g.offset_x, g.offset_y, g.ncols, g.nrows
