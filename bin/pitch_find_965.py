@@ -36,9 +36,14 @@ aomr_opts = {
     'discard_size': 12
 }
 
+# DDMAL
+# original_file = "/Users/gabriel/Documents/1_CODE/2_aOMR/imgs/735/original_image.tiff"
+# glyphs = gamera_xml.glyphs_from_xml(r"/Users/gabriel/Documents/1_CODE/2_aOMR/imgs/735/page_glyphs.xml")
 
-original_file = "/Users/gabriel/Documents/1_CODE/2_aOMR/imgs/735/original_image.tiff"
-glyphs = gamera_xml.glyphs_from_xml(r"/Users/gabriel/Documents/1_CODE/2_aOMR/imgs/735/page_glyphs.xml")
+#CASA
+original_file = "/Users/gabriel/Documents/8_CODE/aOMR/imgs/735/original_image.tiff"
+glyphs = gamera_xml.glyphs_from_xml(r"/Users/gabriel/Documents/8_CODE/aOMR/imgs/735/page_glyphs.xml")
+
 
 aomr_obj = AomrObject(original_file, **aomr_opts)
 
