@@ -47,12 +47,10 @@ glyphs = gamera_xml.glyphs_from_xml(r"/Users/gabriel/Documents/8_CODE/aOMR/imgs/
 
 aomr_obj = AomrObject(original_file, **aomr_opts)
 
-st_position, av_lines = aomr_obj.find_staves() # staves position
+st_position = aomr_obj.find_staves() # staves position
 
+pitch_find = aomr_obj.pitch_find(glyphs, st_position, aomr_opts.get('discard_size'))
 
-print st_position
-# print av_lines[0][0].average_y
-# print st_position['staff_no']
 
 
 # av_punctum = aomr_obj.average_punctum(glyphs) # page average punctum size
@@ -61,7 +59,7 @@ print st_position
 
 
 
-# pitch_find = aomr_obj.pitch_find(glyphs, st_position, aomr_opts.get('discard_size'))
+
 
 
 # for g in glyphs:
