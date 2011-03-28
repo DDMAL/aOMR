@@ -30,7 +30,7 @@ lg.addHandler(h)
 
 aomr_opts = {
     'lines_per_staff': 4,
-    'staff_finder': 0,
+    'staff_finder': 0, # 0: Miyao
     'staff_removal': 0,
     'binarization': 0,
     'discard_size': 12
@@ -47,14 +47,21 @@ glyphs = gamera_xml.glyphs_from_xml(r"/Users/gabriel/Documents/8_CODE/aOMR/imgs/
 
 aomr_obj = AomrObject(original_file, **aomr_opts)
 
-st_position = aomr_obj.find_staves() # staves position
+st_position, av_lines = aomr_obj.find_staves() # staves position
+
+
+print st_position
+# print av_lines[0][0].average_y
+# print st_position['staff_no']
+
+
 # av_punctum = aomr_obj.average_punctum(glyphs) # page average punctum size
 
 # glyphs_center_of_mass = aomr_obj.x_projection_vector(glyphs, av_punctum, aomr_opts.get('discard_size'))
 
 
 
-pitch_find = aomr_obj.pitch_find(glyphs, st_position, aomr_opts.get('discard_size'))
+# pitch_find = aomr_obj.pitch_find(glyphs, st_position, aomr_opts.get('discard_size'))
 
 
 # for g in glyphs:
