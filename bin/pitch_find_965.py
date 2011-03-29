@@ -28,9 +28,9 @@ h.setFormatter(f)
 lg.setLevel(logging.DEBUG)
 lg.addHandler(h)
 
-def process_axz_directory(directory, outputdir):
+def process_axz_directory(axz_directory, outputdir):
     print "Processing AXZ Folder"
-    for dirpath, dirnames, filenames in os.walk(directory):            
+    for dirpath, dirnames, filenames in os.walk(axz_directory):            
         for f in filenames:
             print f
             if f == ".DS_Store":
@@ -53,69 +53,31 @@ def process_axz_directory(directory, outputdir):
             ax = AxFile(axzfile, "")
             axtmp = ax.tmpdir
             staves = ax.get_img0().extract(0)
-            
-            # shutil.move(tfile[1], os.path.join(outdir, "original_image.tiff"))
-            
             sfile = os.path.join(outdir, "original_image.tiff")
-
             save_image(staves, sfile)
             
-            # lg.debug("Tempfile is: {0}".format(tfile[1]))
-            
-            # grab and remove the staves
-            # aomr_opts = {
-            #     'lines_per_staff': 4,
-            #     'staff_finder': 0,
-            #     'staff_removal': 0,
-            #     'binarization': 0,
-            #     'discard_size': 12 # GVM, was 6 
-            # }
-            # 
-            # aomr_obj = AomrObject(sfile, **aomr_opts)
 
-            
-            # try:
-            #     lg.debug("Finding Staves")
-            #     s = aomr_obj.find_staves()
-            # except:
-            #     lg.debug("CAAAANNNNOOOT PARRSSSEEEE: {0}".format(pagenum))
-            #     os.remove(sfile)
-            #     os.rmdir(outdir)
-            #     continue
-            # 
-            # lg.debug("S is: {0}".format(s))
-            # if not s:
-            #     lg.debug("no staves were found")
-            #     os.remove(sfile)
-            #     os.rmdir(outdir)
-            #     continue
-            # 
-            # try:
-            #     aomr_obj.remove_stafflines()
-            # except:
-            #     lg.debug("CAAAANNNNOOOT PARRSSSEEEE: {0}".format(pagenum))
-            #     os.remove(sfile)
-            #     os.rmdir(outdir)
-            #     continue
-            
-            # gamera_xml.WriteXMLFile(glyphs=classified_image, with_features=True).write_filename(os.path.join(outdir, "page_glyphs.xml"))
-            # gamera_xml.WriteXMLFile(symbol_table=s).write_filename(os.path.join(outdir, "symbol_table.xml"))
-            # cknn.to_xml_filename(os.path.join(outdir, "classifier_glyphs.xml"), with_features=True)
-            # save_image(aomr_obj.img_no_st, os.path.join(outdir, "source_image.tiff"))
-            
-            # clean up
-            # del aomr_obj.img_no_st
-            # del aomr_obj
-            # del classified_image
-            # del ax
-            # del cknn
-            
-            
-            # done!
+
+def process_glyphs_directory(glyphs_directory, output_dir):
+    print "Processing glyphs directory"
+    for dirpath, dirnames, filenames in os.walk(glyphs_directory):  
+        for f in filenames:
+            if f == 'page_glyphs.xml':
+                input_filename = os.path.join(dirpath, f)
+                
+                folder_no = dirpath.split('/')[-1]
+                output_folder = os.path.join(folder_no, f)
+                output_filename = os.path.join(output_dir, output_folder)
+                shutil.copy(input_filename, output_filename)
+                print input_filename, output_filename
+                # copy()
+                # pass
+
+
 
 if __name__ == "__main__":
     # usage = "usage: %prog [options] input_directory axz_directory output_directory"
-    usage = "usage: %prog [options] axz_directory output_director"
+    usage = "usage: %prog [options] axz_directory outputdir page_glyphs_directory"
     parser = OptionParser(usage)
     (options, args) = parser.parse_args()
 
@@ -138,6 +100,9 @@ if __name__ == "__main__":
         'discard_size': 12
     }
 
+    axz = process_axz_directory(args[0], args[1])
+    glyphs = process_glyphs_directory(args[2], args[1])
+
     # #DDMAL
     # original_file = "/Users/gabriel/Documents/1_CODE/2_aOMR/imgs/1000/1_all.tiff"
     # glyphs = gamera_xml.glyphs_from_xml(r"/Users/gabriel/Documents/1_CODE/2_aOMR/imgs/1000/page_glyphs.xml")
@@ -151,8 +116,7 @@ if __name__ == "__main__":
     # for s in sorted_glyphs:
     #     print s
 
-
-    axz = process_axz_directory(args[0], args[1])
+    
 
     print "Done!"
 
