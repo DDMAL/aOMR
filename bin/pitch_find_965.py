@@ -17,6 +17,7 @@ import tempfile
 import shutil
 import random
 from lxml import etree
+from operator import itemgetter, attrgetter
 
 import logging
 lg = logging.getLogger('pitch_find_965')
@@ -41,8 +42,12 @@ aomr_opts = {
 # glyphs = gamera_xml.glyphs_from_xml(r"/Users/gabriel/Documents/1_CODE/2_aOMR/imgs/735/page_glyphs.xml")
 
 #CASA
-original_file = "/Users/gabriel/Documents/8_CODE/aOMR/imgs/735/original_image.tiff"
-glyphs = gamera_xml.glyphs_from_xml(r"/Users/gabriel/Documents/8_CODE/aOMR/imgs/735/page_glyphs.xml")
+# original_file = "/Users/gabriel/Documents/8_CODE/aOMR/imgs/735/original_image.tiff"
+# glyphs = gamera_xml.glyphs_from_xml(r"/Users/gabriel/Documents/8_CODE/aOMR/imgs/735/page_glyphs.xml")
+
+#CASA
+original_file = "/Users/gabriel/Documents/8_CODE/aOMR/imgs/1000/1_all.tiff"
+glyphs = gamera_xml.glyphs_from_xml(r"/Users/gabriel/Documents/8_CODE/aOMR/imgs/1000/page_glyphs.xml")
 
 
 aomr_obj = AomrObject(original_file, **aomr_opts)
@@ -50,7 +55,9 @@ aomr_obj = AomrObject(original_file, **aomr_opts)
 st_position = aomr_obj.find_staves() # staves position
 
 pitch_find = aomr_obj.pitch_find(glyphs, st_position, aomr_opts.get('discard_size'))
-
+print len(pitch_find)
+srt = sorted(pitch_find, key=itemgetter(2, 3))
+print srt
 
 
 # av_punctum = aomr_obj.average_punctum(glyphs) # page average punctum size
