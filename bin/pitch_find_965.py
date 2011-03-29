@@ -56,7 +56,7 @@ st_position = aomr_obj.find_staves() # staves position
 
 pitch_find = aomr_obj.pitch_find(glyphs, st_position, aomr_opts.get('discard_size'))
 print len(pitch_find)
-srt = sorted(pitch_find, key=itemgetter(2, 3))
+srt = sorted(pitch_find, key=itemgetter(1, 2))
 print srt
 
 
