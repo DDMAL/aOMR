@@ -38,8 +38,8 @@ aomr_opts = {
 }
 
 #DDMAL
-original_file = "/Users/gabriel/Dropbox/OMR_LU/imgs/1000/1_all.tiff"
-glyphs = gamera_xml.glyphs_from_xml(r"/Users/gabriel/Dropbox/OMR_LU/imgs/1000/page_glyphs.xml")
+original_file = "/Users/gabriel/Dropbox/OMR_LU/imgs/axz/1000/original_image.tiff"
+glyphs = gamera_xml.glyphs_from_xml(r"/Users/gabriel/Dropbox/OMR_LU/imgs/axz/1000/page_glyphs.xml")
 
 aomr_obj = AomrObject(original_file, **aomr_opts)
 st_position = aomr_obj.find_staves() # staves position
