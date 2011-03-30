@@ -17,6 +17,7 @@ import tempfile
 import shutil
 import random
 from lxml import etree
+import simplejson
 from operator import itemgetter, attrgetter
 
 import logging
@@ -69,9 +70,31 @@ def process_glyphs_directory(glyphs_directory, output_dir):
                 output_folder = os.path.join(folder_no, f)
                 output_filename = os.path.join(output_dir, output_folder)
                 shutil.copy(input_filename, output_filename)
+                
                 print input_filename, output_filename
-                # copy()
-                # pass
+
+
+
+                original_image = os.path.join(output_dir, (os.path.join(folder_no, 'original_image.tiff')))
+                print original_image
+                glyphs = gamera_xml.glyphs_from_xml(output_filename)
+
+                aomr_obj = AomrObject(original_image, **aomr_opts)
+                st_position = aomr_obj.find_staves() # staves position
+                pitch_find = aomr_obj.pitch_find(glyphs, st_position, aomr_opts.get('discard_size'))
+
+                print len(pitch_find)
+                sorted_glyphs = sorted(pitch_find, key=itemgetter(1, 2))
+                encoded = open(os.path.join(output_dir, (os.path.join(folder_no,'sorted_glyphs.txt'))), 'w')
+                simplejson.dump(sorted_glyphs, encoded)
+                encoded.close()
+                # for s in sorted_glyphs:
+                    # print s
+                    
+
+                
+
+
 
 
 
@@ -102,6 +125,9 @@ if __name__ == "__main__":
 
     axz = process_axz_directory(args[0], args[1])
     glyphs = process_glyphs_directory(args[2], args[1])
+
+
+    
 
     # #DDMAL
     # original_file = "/Users/gabriel/Documents/1_CODE/2_aOMR/imgs/1000/1_all.tiff"
