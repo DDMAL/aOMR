@@ -38,15 +38,18 @@ aomr_opts = {
 }
 
 #DDMAL
-original_file = "/Users/gabriel/Dropbox/OMR_LU/imgs/axz/1000/original_image.tiff"
-glyphs = gamera_xml.glyphs_from_xml(r"/Users/gabriel/Dropbox/OMR_LU/imgs/axz/1000/page_glyphs.xml")
+original_file = "/Users/gabriel/Dropbox/OMR_LU/imgs/axz/1002/original_image.tiff"
+glyphs = gamera_xml.glyphs_from_xml(r"/Users/gabriel/Dropbox/OMR_LU/imgs/axz/1002/page_glyphs.xml")
 
 aomr_obj = AomrObject(original_file, **aomr_opts)
 st_position = aomr_obj.find_staves() # staves position
-pitch_find = aomr_obj.pitch_find(glyphs, st_position, aomr_opts.get('discard_size'))
+for l in st_position[0]['line_positions']:
+    print l
 
-print len(pitch_find)
-sorted_glyphs = sorted(pitch_find, key=itemgetter(1, 2))
-for s in sorted_glyphs:
-    print s
+# FOR PITCH FINDING
+# pitch_find = aomr_obj.pitch_find(glyphs, st_position, aomr_opts.get('discard_size'))
+# print len(pitch_find)
+# sorted_glyphs = sorted(pitch_find, key=itemgetter(1, 2))
+# for s in sorted_glyphs:
+#     print s
 
