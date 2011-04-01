@@ -212,15 +212,15 @@ class AomrMeiOutput(object):
             # ivals = [2,2]
             # torculus = ['u','d']
             
-            lg.debug(ivals)
+            # lg.debug(ivals)
             for n in xrange(len(ivals)):
                 # get the direction
                 dir = self.NEUME_NOTES[self.glyph['form'][0]][n]
-                lg.debug("direction is {0}".format(dir))
+                # lg.debug("direction is {0}".format(dir))
                 iv = ivals[n]
                 n_idx = idx
                 
-                lg.debug("index: {0}".format(idx))
+                # lg.debug("index: {0}".format(idx))
                 
                 
                 if dir == 'u':
@@ -235,7 +235,7 @@ class AomrMeiOutput(object):
                         n_idx = idx - (iv - 1)
                 idx = n_idx
                 
-                lg.debug("Picking pitch {0}".format(self.SCALE[n_idx]))
+                # lg.debug("Picking pitch {0}".format(self.SCALE[n_idx]))
                 self._neume_pitches.append(self.SCALE[n_idx])
         
         for n in xrange(num_notes):
@@ -243,7 +243,7 @@ class AomrMeiOutput(object):
             nc.append(self._create_note_element(p))
         neume.add_children(nc)
         
-        lg.debug(neume.children)
+        # lg.debug(neume.children)
         
         return neume
         
