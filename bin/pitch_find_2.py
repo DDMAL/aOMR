@@ -52,6 +52,10 @@ aomr_obj = AomrObject(original_file, **aomr_opts)
 st_position = aomr_obj.find_staves() # staves position
 staff_coords = aomr_obj.staff_coords()
 
+# staff_non_parallel = aomr_obj.staff_no_non_parallel(glyphs)
+# print staff_non_parallel
+
+
 
 # PITCH FINDING
 pitch_find = aomr_obj.pitch_find(glyphs, st_position, aomr_opts.get('discard_size'))
