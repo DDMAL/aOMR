@@ -55,7 +55,7 @@ staff_coords = aomr_obj.staff_coords()
 
 # PITCH FINDING
 pitch_find = aomr_obj.pitch_find(glyphs, st_position, aomr_opts.get('discard_size'))
-print len(pitch_find)
+# print len(pitch_find)
 sorted_glyphs = sorted(pitch_find, key=itemgetter(1, 2))
 
 
@@ -78,14 +78,23 @@ for s, stave in enumerate(staff_coords):
 # print data
 print
 
+# CREATING THE MEI FILE
 mei_file = AomrMeiOutput.AomrMeiOutput(data)
 print mei_file
-meitoxml.meitoxml(mei_file)
+print
 
-# for sg in sorted_glyphs:
-#     print sg[0].get_main_id(), sg[1], sg[2], sg[3], sg[4]
-    
-#     n.attributes = {'pname': s[0], 'pitch': s[3]}
-#     # print s
-# print n
-# print n.as_xml_string()
+
+meitoxml.meitoxml(mei_file.md, 'testfile.mei')
+
+
+
+
+
+
+
+
+
+
+
+
+
