@@ -43,8 +43,8 @@ aomr_opts = {
 }
 
 #DDMAL
-original_file = "/Users/gabriel/Dropbox/OMR_LU/imgs/axz/1002/original_image.tiff"
-glyphs = gamera_xml.glyphs_from_xml(r"/Users/gabriel/Dropbox/OMR_LU/imgs/axz/1002/page_glyphs.xml")
+original_file = "/Users/gabriel/Dropbox/OMR_LU/imgs/axz/1000/original_image.tiff"
+glyphs = gamera_xml.glyphs_from_xml(r"/Users/gabriel/Dropbox/OMR_LU/imgs/axz/1000/page_glyphs.xml")
 
 aomr_obj = AomrObject(original_file, **aomr_opts)
 st_position = aomr_obj.find_staves() # staves position
@@ -109,8 +109,8 @@ for s, stave in enumerate(staff_coords):
                         'form': sg[0].get_main_id().split('.')[1:],
                         'coord': [sg[0].offset_x, sg[0].offset_y, \
                                 sg[0].offset_x+sg[0].ncols, sg[0].offset_y+sg[0].nrows],
-                        'strt_pitch': sg[2],
-                        'strt_pos': sg[3]}
+                        'strt_pitch': sg[3],
+                        'strt_pos': sg[4]}
             contents.append(glyph)
         
     data[s] = {'coord':stave, 'content':[contents]}    
@@ -121,8 +121,8 @@ print data
 # print mei_file
 # meitoxml.meitoxml(mei_file, 'testfile.mei')
 
-# for s in sorted_glyphs:
-#     print s
+for sg in sorted_glyphs:
+    print sg[0].get_main_id(), sg[1], sg[2], sg[3], sg[4]
     
 #     n.attributes = {'pname': s[0], 'pitch': s[3]}
 #     # print s
