@@ -10,6 +10,7 @@ import re
 from gamera.knn_editing import edit_mnn_cnn
 from gamera.toolkits.aruspix.ax_file import AxFile
 from gamera.toolkits.aomr_tk import AomrObject
+from gamera.toolkits.aomr_tk import AomrMeiOutput
 from gamera import knn, plugin
 from gamera import classify
 from gamera.symbol_table import SymbolTable
@@ -18,6 +19,10 @@ import shutil
 import random
 from lxml import etree
 from operator import itemgetter, attrgetter
+import pymei
+from pymei.Components import Modules
+from pymei.Helpers import template
+from pymei.Export import meitoxml
 
 import logging
 lg = logging.getLogger('pitch_find_965')
@@ -43,13 +48,22 @@ glyphs = gamera_xml.glyphs_from_xml(r"/Users/gabriel/Dropbox/OMR_LU/imgs/axz/100
 
 aomr_obj = AomrObject(original_file, **aomr_opts)
 st_position = aomr_obj.find_staves() # staves position
-for l in st_position[0]['line_positions']:
-    print l
+staff_coords = aomr_obj.staff_coords()
+print staff_coords
+# FOR LINE POSITIONS
+# for l in st_position[0]['line_positions']:
+#     print l
 
 # FOR PITCH FINDING
-# pitch_find = aomr_obj.pitch_find(glyphs, st_position, aomr_opts.get('discard_size'))
-# print len(pitch_find)
-# sorted_glyphs = sorted(pitch_find, key=itemgetter(1, 2))
+mei_file = AomrMeiOutput
+print mei_file
+pitch_find = aomr_obj.pitch_find(glyphs, st_position, aomr_opts.get('discard_size'))
+print len(pitch_find)
+sorted_glyphs = sorted(pitch_find, key=itemgetter(1, 2))
 # for s in sorted_glyphs:
-#     print s
 
+    
+#     n.attributes = {'pname': s[0], 'pitch': s[3]}
+#     # print s
+# print n
+# print n.as_xml_string()
