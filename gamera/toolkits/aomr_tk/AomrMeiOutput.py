@@ -52,7 +52,7 @@ class AomrMeiOutput(object):
         'resupinus': ['u'], # torculus.resupinus
     }
     
-    SCALE = ['A','B','C','D','E','F','G']
+    SCALE = ['a','b','c','d','e','f','g']
     
     def __init__(self, incoming_data, original_image):
         self._recognition_results = incoming_data
