@@ -42,89 +42,63 @@ aomr_opts = {
     'discard_size': 12
 }
 
-#DDMAL
-original_file = "/Users/gabriel/Dropbox/OMR_LU/imgs/axz/1002/original_image.tiff"
-glyphs = gamera_xml.glyphs_from_xml(r"/Users/gabriel/Dropbox/OMR_LU/imgs/axz/1002/page_glyphs.xml")
+#FILES TO PROCESS
+original_file = "/Users/gabriel/Dropbox/OMR_LU/imgs/axz/1000/original_image.tiff"
+glyphs = gamera_xml.glyphs_from_xml(r"/Users/gabriel/Dropbox/OMR_LU/imgs/axz/1000/page_glyphs.xml")
 
+
+# CREATING AOMR OBJECT, FINDING STAVES, AND RETRIEVING STAFF COORDINATES
 aomr_obj = AomrObject(original_file, **aomr_opts)
 st_position = aomr_obj.find_staves() # staves position
 staff_coords = aomr_obj.staff_coords()
 
-# FOR LINE POSITIONS
-# for l in st_position[0]['line_positions']:
-#     print l
-
-# test_data = {
-#     1: {
-#         'coord': [1,2,3,4],
-#         'content': [{
-#             'type': 'neume',
-#             'form': ['clivis', '4'],
-#             'coord': [213, 179, 26, 35],
-#             'strt_pitch': 'E',
-#             'strt_pos': 5
-#         }, {
-#             'type': 'neume',
-#             'form': ['torculus', '2', '4'],
-#             'coord': [213, 179, 26, 35],
-#             'strt_pitch': 'B',
-#             'strt_pos': 5
-#         }]
-#     }, 2: {
-#         'coord': [4,5,6,7],
-#         'content': [{
-#             'type': '',
-#             'form': [],
-#             'coord': [],
-#             'strt_pitch': 'A',
-#             'strt_pos': ''
-#         }]
-#     }
-# }
+# staff_non_parallel = aomr_obj.staff_no_non_parallel(glyphs)
+# print staff_non_parallel
 
 
 
-
-
-
-
-
-# meitoxml.meitoxml(mei_file, 'testfile.mei')
-
-# FOR PITCH FINDING
+# PITCH FINDING
 pitch_find = aomr_obj.pitch_find(glyphs, st_position, aomr_opts.get('discard_size'))
-print len(pitch_find)
+# print len(pitch_find)
 sorted_glyphs = sorted(pitch_find, key=itemgetter(1, 2))
 
 
+# STRUCTURING THE DATA IN JSON
 data = {}
-
 for s, stave in enumerate(staff_coords):
     contents = []
     for sg in sorted_glyphs:
-        # print sg
         # print ("sg[1]:{0} s:{1} sg{2}".format(sg[1], s+1, sg))
+        # structure: g, stave, g.offset_x, note, strt_pos
         if sg[1] == s+1: 
             glyph = {   'type': sg[0].get_main_id().split('.')[0],
                         'form': sg[0].get_main_id().split('.')[1:],
                         'coord': [sg[0].offset_x, sg[0].offset_y, \
                                 sg[0].offset_x+sg[0].ncols, sg[0].offset_y+sg[0].nrows],
-                        'strt_pitch': sg[2],
-                        'strt_pos': sg[3]}
-            contents.append(glyph)
-        
-    data[s] = {'coord':stave, 'content':[contents]}    
-print data
+                        'strt_pitch': sg[3],
+                        'strt_pos': sg[4]}
+            contents.append(glyph)  
+    data[s] = {'coord':stave, 'content':contents}    
+# print data
+print
+
+# CREATING THE MEI FILE
+mei_file = AomrMeiOutput.AomrMeiOutput(data)
+print mei_file
+print
 
 
-# mei_file = AomrMeiOutput.AomrMeiOutput(data)
-# print mei_file
-# meitoxml.meitoxml(mei_file, 'testfile.mei')
+meitoxml.meitoxml(mei_file.md, 'testfile.mei')
 
-# for s in sorted_glyphs:
-#     print s
-    
-#     n.attributes = {'pname': s[0], 'pitch': s[3]}
-#     # print s
-# print n
-# print n.as_xml_string()
+
+
+
+
+
+
+
+
+
+
+
+
