@@ -10,6 +10,7 @@ import re
 from gamera.knn_editing import edit_mnn_cnn
 from gamera.toolkits.aruspix.ax_file import AxFile
 from gamera.toolkits.aomr_tk import AomrObject
+from gamera.toolkits.aomr_tk import AomrMeiOutput
 from gamera import knn, plugin
 from gamera import classify
 from gamera.symbol_table import SymbolTable
@@ -19,6 +20,8 @@ import random
 from lxml import etree
 import simplejson
 from operator import itemgetter, attrgetter
+from pymei.Export import meitoxml
+
 
 import logging
 lg = logging.getLogger('pitch_find_965')
@@ -71,31 +74,51 @@ def process_glyphs_directory(glyphs_directory, output_dir):
                 output_filename = os.path.join(output_dir, output_folder)
                 shutil.copy(input_filename, output_filename)
                 
-                print input_filename, output_filename
-
-
-
+                print ("input filename: {0} output filename : {1}".format(input_filename, output_filename))
                 original_image = os.path.join(output_dir, (os.path.join(folder_no, 'original_image.tiff')))
-                print original_image
+                mei_file_write = os.path.join(output_dir, (os.path.join(folder_no, 'page_glyphs.mei')))
+                print ("original_image : {0}".format(original_image))
                 glyphs = gamera_xml.glyphs_from_xml(output_filename)
-
                 aomr_obj = AomrObject(original_image, **aomr_opts)
                 st_position = aomr_obj.find_staves() # staves position
+                staff_coords = aomr_obj.staff_coords() # staves coordinates
                 pitch_find = aomr_obj.pitch_find(glyphs, st_position, aomr_opts.get('discard_size'))
-
                 print len(pitch_find)
                 sorted_glyphs = sorted(pitch_find, key=itemgetter(1, 2))
-                encoded = open(os.path.join(output_dir, (os.path.join(folder_no,'sorted_glyphs.txt'))), 'w')
-                simplejson.dump(sorted_glyphs, encoded)
-                encoded.close()
+                
+                data = {}
+                for s, stave in enumerate(staff_coords):
+                    contents = []
+                    for sg in sorted_glyphs:
+                        # print ("sg[1]:{0} s:{1} sg{2}".format(sg[1], s+1, sg))
+                        # structure: g, stave, g.offset_x, note, strt_pos
+                        if sg[1] == s+1: 
+                            glyph = {   'type': sg[0].get_main_id().split('.')[0],
+                                        'form': sg[0].get_main_id().split('.')[1:],
+                                        'coord': [sg[0].offset_x, sg[0].offset_y, \
+                                                sg[0].offset_x+sg[0].ncols, sg[0].offset_y+sg[0].nrows],
+                                        'strt_pitch': sg[3],
+                                        'strt_pos': sg[4]}
+                            contents.append(glyph)  
+                    data[s] = {'coord':stave, 'content':contents}    
+                # print data
+                print
+                mei_file = AomrMeiOutput.AomrMeiOutput(data)
+                meitoxml.meitoxml(mei_file.md, mei_file_write)
+                
+                
+                
+                
+                
+                
+                # encoded = open(os.path.join(output_dir, (os.path.join(folder_no,'sorted_glyphs.txt'))), 'w')
+                # simplejson.dump(sorted_glyphs, encoded)
+                # encoded.close()
                 # for s in sorted_glyphs:
                     # print s
                     
 
                 
-
-
-
 
 
 if __name__ == "__main__":

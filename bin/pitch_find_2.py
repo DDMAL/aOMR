@@ -84,11 +84,11 @@ print
 
 # CREATING THE MEI FILE
 mei_file = AomrMeiOutput.AomrMeiOutput(data)
-print mei_file
-print
+# print mei_file
+# print
 
 
-meitoxml.meitoxml(mei_file.md, 'testfile.mei')
+meitoxml.meitoxml(mei_file.md, '/Users/gabriel/Desktop/LU_1000.mei')
 
 
 
