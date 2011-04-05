@@ -52,9 +52,9 @@ class AomrMeiOutput(object):
         'resupinus': ['u'], # torculus.resupinus
     }
     
-    SCALE = ['A','B','C','D','E','F','G']
+    SCALE = ['a','b','c','d','e','f','g']
     
-    def __init__(self, incoming_data):
+    def __init__(self, incoming_data, original_image):
         self._recognition_results = incoming_data
         self.mei = mod.mei_()
         self.staff = None
@@ -74,13 +74,18 @@ class AomrMeiOutput(object):
         self.meihead.add_child(self.encodingdesc)
         self.mei.add_child(self.meihead)
         
-        self.graphic = self._create_graphic_element('foo.jpg')
-        self.meihead.add_child(self.graphic)
-        
         
         
         # music
         self.music = mod.music_()
+        self.facsimile = self._create_facsimile_element()
+        self.surface = self._create_surface_element()
+        self.graphic = self._create_graphic_element(original_image)
+        
+        self.surface.add_child(self.graphic)
+        self.facsimile.add_child(self.surface)
+        self.music.add_child(self.facsimile)
+        
         self.body = mod.body_()
         self.music.add_child(self.body)
         
@@ -101,7 +106,6 @@ class AomrMeiOutput(object):
             self.staffdef.attributes = { 'n': snum }
             self.scoredef.add_child(self.staffdef)
             
-            
             self.staff = stf
             self.staffel = self._parse_staff(snum, stf)
             z = mod.zone_()
@@ -109,7 +113,7 @@ class AomrMeiOutput(object):
             z.attributes = {'ulx': self.staff['coord'][0], 'uly': self.staff['coord'][1], \
                                 'lrx': self.staff['coord'][2], 'lry': self.staff['coord'][3]}
             
-            self.graphic.add_child(z)
+            self.surface.add_child(z)
             self.staffel.facs = z.id
             
             self.section.add_child(self.staffel)
@@ -146,18 +150,22 @@ class AomrMeiOutput(object):
         graphic.attributes = {'xlink:href': imgfile}
         return graphic
     
+    def _create_surface_element(self):
+        surface = mod.surface_()
+        surface.id = self._idgen()
+        
+    
     def _create_zone_element(self):
         zone = mod.zone_()
         zone.id = self._idgen()
         zone.attributes = {'ulx': self.glyph['coord'][0], 'uly': self.glyph['coord'][1], \
                             'lrx': self.glyph['coord'][2], 'lry': self.glyph['coord'][3]}
-        self.graphic.add_child(zone)
+        self.surface.add_child(zone)
         return zone
     
     def _create_staffdef_element(self):
         stfdef = mod.staffdef_()
         return stfdef
-        
     
     def _create_staff_element(self):
         staff = mod.staff_()
