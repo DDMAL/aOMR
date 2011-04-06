@@ -74,8 +74,6 @@ class AomrMeiOutput(object):
         self.meihead.add_child(self.encodingdesc)
         self.mei.add_child(self.meihead)
         
-        
-        
         # music
         self.music = mod.music_()
         self.facsimile = self._create_facsimile_element()
@@ -153,7 +151,12 @@ class AomrMeiOutput(object):
     def _create_surface_element(self):
         surface = mod.surface_()
         surface.id = self._idgen()
-        
+        return surface
+    
+    def _create_facsimile_element(self):
+        facsimile = mod.facsimile_()
+        facsimile.id = self._idgen()
+        return facsimile
     
     def _create_zone_element(self):
         zone = mod.zone_()
