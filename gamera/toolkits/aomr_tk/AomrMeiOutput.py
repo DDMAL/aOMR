@@ -140,7 +140,6 @@ class AomrMeiOutput(object):
             elif c['type'] == 'custos':
                 staffel.add_child(self._create_custos_element())
             elif c['type'] == "alteration":
-                
                 staffel.add_child(self._create_alteration_element())
         return staffel
         
@@ -185,17 +184,16 @@ class AomrMeiOutput(object):
         staff = mod.staff_()
         staff.id = self._idgen()
         return staff
+        
+    def _create_episema_element(self):
+        epi = mod.episema_()
+        epi.id = self._idgen()
+        return epi
     
     def _create_neume_element(self):
         lg.debug("glyph: {0}".format(self.glyph['form']))
-
-        if 'he' in self.glyph['form'][0]:
-            self.glyph['form'].remove('he')
-            print("he discarded!")
-        
-        
-        
-        
+        full_width_episema = False
+            
         if 'climacus' in self.glyph['form']:
             neume = mod.ineume_()
         else:
@@ -205,6 +203,10 @@ class AomrMeiOutput(object):
         zone = self._create_zone_element()
         neume.facs = zone.id
         
+        if self.glyph['form'][0] == "he":
+            full_width_episema = True
+            del self.glyph['form'][0]
+            
         neume.attributes = {'name': self.glyph['form'][0]}
         
         # get the form so we can find the number of notes we need to construct.
@@ -270,12 +272,22 @@ class AomrMeiOutput(object):
                 # lg.debug("Picking pitch {0}".format(self.SCALE[n_idx]))
                 self._neume_pitches.append(self.SCALE[n_idx])
         
+        if full_width_episema is True:
+            epi = self._create_episema_element()
+            epi.id = self._idgen()
+            epi.attributes = {"form": "horizontal"}
+            self.staffel.add_child(epi)
+            
         for n in xrange(num_notes):
             p = self._neume_pitches[n]
-            nc.append(self._create_note_element(p))
+            nt = self._create_note_element(p)
+            if n == 0:
+                epi.attributes = {"startid": nt.id}
+            elif n == len(num_notes) - 1:
+                epi.attributes = {"endid": nt.id}
+                
+            nc.append(nt)
         neume.add_children(nc)
-        
-        # lg.debug(neume.children)
         
         return neume
         
