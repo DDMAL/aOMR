@@ -129,7 +129,7 @@ class AomrMeiOutput(object):
         for c in self.staff['content']:
             # parse the glyphs per staff.
             self.glyph = c
-            # lg.debug(self.glyph)
+            lg.debug(self.glyph)
             
             if c['type'] == 'neume':
                 staffel.add_child(self._create_neume_element())
@@ -140,7 +140,8 @@ class AomrMeiOutput(object):
             elif c['type'] == 'custos':
                 staffel.add_child(self._create_custos_element())
             elif c['type'] == "alteration":
-                staffel.add_child(self._create_alteration_element())
+                # staffel.add_child(self._create_alteration_element()) #GVM
+                pass
         return staffel
         
     def _create_graphic_element(self, imgfile):
@@ -177,15 +178,12 @@ class AomrMeiOutput(object):
         return staff
     
     def _create_neume_element(self):
-        lg.debug("glyph: {0}".format(self.glyph['form']))
+        # lg.debug("glyph: {0}".format(self.glyph['form']))
 
-        if 'he' in self.glyph['form'][0]:
+        if 'he' in self.glyph['form'][0]: # GVM
             self.glyph['form'].remove('he')
             print("he discarded!")
-        
-        
-        
-        
+
         if 'climacus' in self.glyph['form']:
             neume = mod.ineume_()
         else:
@@ -295,6 +293,13 @@ class AomrMeiOutput(object):
         zone = self._create_zone_element()
         division.facs = zone.id
         return division
+    
+    # def _create_alteration_element(self):
+    #     alteration = mod.alteration_()
+    #     alteration.id = self._idgen()
+    #     zone = self._create_zone_element()
+    #     alteration.facs = zone.id
+    #     return alteration    
     
     def _idgen(self):
         """ Returns a UUID. """

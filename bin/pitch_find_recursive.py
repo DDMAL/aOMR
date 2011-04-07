@@ -72,19 +72,18 @@ def process_glyphs_directory(glyphs_directory, output_dir):
                 folder_no = dirpath.split('/')[-1]
                 output_folder = os.path.join(folder_no, f)
                 output_filename = os.path.join(output_dir, output_folder)
-                lg.debug("output_filename:{0}".format(output_filename))
+                # lg.debug("output_filename:{0}".format(output_filename))
                 shutil.copy(input_filename, output_filename)
                 
-                print ("input filename: {0}\n output filename : {1}".format(input_filename, output_filename))
+                lg.debug ("input filename: {0}".format(input_filename))
+                
                 original_image = os.path.join(output_dir, (os.path.join(folder_no, 'original_image.tiff')))
                 mei_file_write = os.path.join(output_dir, (os.path.join(folder_no, 'page_glyphs.mei')))
-                print ("original_image : {0}".format(original_image))
                 glyphs = gamera_xml.glyphs_from_xml(output_filename)
                 aomr_obj = AomrObject(original_image, **aomr_opts)
                 st_position = aomr_obj.find_staves() # staves position
                 staff_coords = aomr_obj.staff_coords() # staves coordinates
                 pitch_find = aomr_obj.pitch_find(glyphs, st_position, aomr_opts.get('discard_size'))
-                print len(pitch_find)
                 sorted_glyphs = sorted(pitch_find, key=itemgetter(1, 2))
                 
                 data = {}
@@ -107,11 +106,7 @@ def process_glyphs_directory(glyphs_directory, output_dir):
                 mei_file = AomrMeiOutput.AomrMeiOutput(data, original_image.split('/')[-2])
                 meitoxml.meitoxml(mei_file.md, mei_file_write)
                 
-                
-                
-                
-                
-                
+
                 # encoded = open(os.path.join(output_dir, (os.path.join(folder_no,'sorted_glyphs.txt'))), 'w')
                 # simplejson.dump(sorted_glyphs, encoded)
                 # encoded.close()
@@ -136,7 +131,7 @@ if __name__ == "__main__":
     # 
     # if not os.path.isdir(args[1]):
     #     parser.error("The supplied axz directory is not a directory.")
-
+    
     init_gamera()
 
     aomr_opts = {

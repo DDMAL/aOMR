@@ -46,7 +46,7 @@ aomr_opts = {
 original_file = "/Users/gabriel/Dropbox/OMR_LU/imgs/axz/1000/original_image.tiff"
 glyphs = gamera_xml.glyphs_from_xml(r"/Users/gabriel/Dropbox/OMR_LU/imgs/axz/1000/page_glyphs.xml")
 file_name = (original_file.split('/')[-2] + '_' + original_file.split('/')[-1])
-print file_name
+
 
 # CREATING AOMR OBJECT, FINDING STAVES, AND RETRIEVING STAFF COORDINATES
 aomr_obj = AomrObject(original_file, **aomr_opts)
