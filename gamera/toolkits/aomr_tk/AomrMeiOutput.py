@@ -52,9 +52,9 @@ class AomrMeiOutput(object):
         'resupinus': ['u'], # torculus.resupinus
     }
     
-    SCALE = ['A','B','C','D','E','F','G']
+    SCALE = ['a','b','c','d','e','f','g']
     
-    def __init__(self, incoming_data):
+    def __init__(self, incoming_data, original_image):
         self._recognition_results = incoming_data
         self.mei = mod.mei_()
         self.staff = None
@@ -74,13 +74,16 @@ class AomrMeiOutput(object):
         self.meihead.add_child(self.encodingdesc)
         self.mei.add_child(self.meihead)
         
-        self.graphic = self._create_graphic_element('foo.jpg')
-        self.meihead.add_child(self.graphic)
-        
-        
-        
         # music
         self.music = mod.music_()
+        self.facsimile = self._create_facsimile_element()
+        self.surface = self._create_surface_element()
+        self.graphic = self._create_graphic_element(original_image)
+        
+        self.surface.add_child(self.graphic)
+        self.facsimile.add_child(self.surface)
+        self.music.add_child(self.facsimile)
+        
         self.body = mod.body_()
         self.music.add_child(self.body)
         
@@ -101,7 +104,6 @@ class AomrMeiOutput(object):
             self.staffdef.attributes = { 'n': snum }
             self.scoredef.add_child(self.staffdef)
             
-            
             self.staff = stf
             self.staffel = self._parse_staff(snum, stf)
             z = mod.zone_()
@@ -109,7 +111,7 @@ class AomrMeiOutput(object):
             z.attributes = {'ulx': self.staff['coord'][0], 'uly': self.staff['coord'][1], \
                                 'lrx': self.staff['coord'][2], 'lry': self.staff['coord'][3]}
             
-            self.graphic.add_child(z)
+            self.surface.add_child(z)
             self.staffel.facs = z.id
             
             self.section.add_child(self.staffel)
@@ -127,6 +129,7 @@ class AomrMeiOutput(object):
         for c in self.staff['content']:
             # parse the glyphs per staff.
             self.glyph = c
+            lg.debug(self.glyph)
             
             if c['type'] == 'neume':
                 staffel.add_child(self._create_neume_element())
@@ -137,7 +140,8 @@ class AomrMeiOutput(object):
             elif c['type'] == 'custos':
                 staffel.add_child(self._create_custos_element())
             elif c['type'] == "alteration":
-                staffel.add_child(self._create_alteration_element())
+                # staffel.add_child(self._create_alteration_element()) #GVM
+                pass
         return staffel
         
     def _create_graphic_element(self, imgfile):
@@ -146,25 +150,60 @@ class AomrMeiOutput(object):
         graphic.attributes = {'xlink:href': imgfile}
         return graphic
     
+    def _create_alteration_element(self):
+        accid = mod.accid_()
+        accid.id = self._idgen()
+        if self.glyph['form'] is "sharp":
+            accid.attributes = {"accid": "s"}
+        elif self.glyph['form'] is "flat":
+            accid.attributes = {"accid": "f"}
+        return accid
+    
+    def _create_surface_element(self):
+        surface = mod.surface_()
+        surface.id = self._idgen()
+        return surface
+    
+    def _create_facsimile_element(self):
+        facsimile = mod.facsimile_()
+        facsimile.id = self._idgen()
+        return facsimile
+    
     def _create_zone_element(self):
         zone = mod.zone_()
         zone.id = self._idgen()
         zone.attributes = {'ulx': self.glyph['coord'][0], 'uly': self.glyph['coord'][1], \
                             'lrx': self.glyph['coord'][2], 'lry': self.glyph['coord'][3]}
-        self.graphic.add_child(zone)
+        self.surface.add_child(zone)
         return zone
     
     def _create_staffdef_element(self):
         stfdef = mod.staffdef_()
         return stfdef
-        
     
     def _create_staff_element(self):
         staff = mod.staff_()
         staff.id = self._idgen()
         return staff
+        
+    def _create_episema_element(self):
+        epi = mod.episema_()
+        epi.id = self._idgen()
+        return epi
     
     def _create_neume_element(self):
+<<<<<<< HEAD
+        # lg.debug("glyph: {0}".format(self.glyph['form']))
+
+        if 'he' in self.glyph['form'][0]: # GVM
+            self.glyph['form'].remove('he')
+            print("he discarded!")
+
+=======
+        lg.debug("glyph: {0}".format(self.glyph['form']))
+        full_width_episema = False
+            
+>>>>>>> 2_pitch_find
         if 'climacus' in self.glyph['form']:
             neume = mod.ineume_()
         else:
@@ -174,6 +213,10 @@ class AomrMeiOutput(object):
         zone = self._create_zone_element()
         neume.facs = zone.id
         
+        if self.glyph['form'][0] == "he":
+            full_width_episema = True
+            del self.glyph['form'][0]
+            
         neume.attributes = {'name': self.glyph['form'][0]}
         
         # get the form so we can find the number of notes we need to construct.
@@ -195,32 +238,33 @@ class AomrMeiOutput(object):
         # note elements are everything after the first form. This determines the shape a note takes.
         self._note_elements = self.glyph['form'][1:]
         self._neume_pitches.append(self.glyph['strt_pitch'])
-        
+        # lg.debug("neume pitches: {0}, no notes: {1}".format(self._neume_pitches, num_notes))
         nc = []
         if num_notes > 1:
             # we need to figure out the rest of the pitches in the neume.
             ivals = [int(d) for d in self._note_elements if d.isdigit()]
+            # lg.debug("ivals: {0}, idx: {1}".format(ivals, self.SCALE.index(self.glyph['strt_pitch'])))
             try:
-                idx = self.SCALE.index(self.glyph['strt_pitch'].upper())
+                idx = self.SCALE.index(self.glyph['strt_pitch'])
             except ValueError:
-                raise GameraMeiPitchNotFoundError("The pitch {0} was not found in the scale".format(self.glyph['strt_pitch']))
+                raise AomrMeiPitchNotFoundError("The pitch {0} was not found in the scale".format(self.glyph['strt_pitch']))
                 
             if len(ivals) != (num_notes - 1):
-                raise GameraMeiNoteIntervalMismatchError("There is a mismatch between the number of notes and number of intervals.")
+                raise AomrMeiNoteIntervalMismatchError("There is a mismatch between the number of notes and number of intervals.")
             
             # note elements = torculus.2.2.he.ve
             # ivals = [2,2]
             # torculus = ['u','d']
             
-            lg.debug(ivals)
+            # lg.debug(ivals)
             for n in xrange(len(ivals)):
                 # get the direction
                 dir = self.NEUME_NOTES[self.glyph['form'][0]][n]
-                lg.debug("direction is {0}".format(dir))
+                # lg.debug("direction is {0}".format(dir))
                 iv = ivals[n]
                 n_idx = idx
                 
-                lg.debug("index: {0}".format(idx))
+                # lg.debug("index: {0}".format(idx))
                 
                 
                 if dir == 'u':
@@ -235,15 +279,25 @@ class AomrMeiOutput(object):
                         n_idx = idx - (iv - 1)
                 idx = n_idx
                 
-                lg.debug("Picking pitch {0}".format(self.SCALE[n_idx]))
+                # lg.debug("Picking pitch {0}".format(self.SCALE[n_idx]))
                 self._neume_pitches.append(self.SCALE[n_idx])
         
+        if full_width_episema is True:
+            epi = self._create_episema_element()
+            epi.id = self._idgen()
+            epi.attributes = {"form": "horizontal"}
+            self.staffel.add_child(epi)
+            
         for n in xrange(num_notes):
             p = self._neume_pitches[n]
-            nc.append(self._create_note_element(p))
+            nt = self._create_note_element(p)
+            if n == 0:
+                epi.attributes = {"startid": nt.id}
+            elif n == len(num_notes) - 1:
+                epi.attributes = {"endid": nt.id}
+                
+            nc.append(nt)
         neume.add_children(nc)
-        
-        lg.debug(neume.children)
         
         return neume
         
@@ -273,6 +327,13 @@ class AomrMeiOutput(object):
         zone = self._create_zone_element()
         division.facs = zone.id
         return division
+    
+    # def _create_alteration_element(self):
+    #     alteration = mod.alteration_()
+    #     alteration.id = self._idgen()
+    #     zone = self._create_zone_element()
+    #     alteration.facs = zone.id
+    #     return alteration    
     
     def _idgen(self):
         """ Returns a UUID. """
@@ -327,3 +388,4 @@ if __name__ == "__main__":
 # [1] http://wwvv.newadvent.org/cathen/10765b.htm; Some of the liquescent 
 #   neums have special names. Thus the liquescent podatus is called epiphonus, 
 #   the liquescent clivis, cephalicus, the liquescent climacus, ancus.
+
