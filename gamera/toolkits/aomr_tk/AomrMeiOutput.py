@@ -150,6 +150,15 @@ class AomrMeiOutput(object):
         graphic.attributes = {'xlink:href': imgfile}
         return graphic
     
+    def _create_alteration_element(self):
+        accid = mod.accid_()
+        accid.id = self._idgen()
+        if self.glyph['form'] is "sharp":
+            accid.attributes = {"accid": "s"}
+        elif self.glyph['form'] is "flat":
+            accid.attributes = {"accid": "f"}
+        return accid
+    
     def _create_surface_element(self):
         surface = mod.surface_()
         surface.id = self._idgen()
@@ -176,14 +185,25 @@ class AomrMeiOutput(object):
         staff = mod.staff_()
         staff.id = self._idgen()
         return staff
+        
+    def _create_episema_element(self):
+        epi = mod.episema_()
+        epi.id = self._idgen()
+        return epi
     
     def _create_neume_element(self):
+<<<<<<< HEAD
         # lg.debug("glyph: {0}".format(self.glyph['form']))
 
         if 'he' in self.glyph['form'][0]: # GVM
             self.glyph['form'].remove('he')
             print("he discarded!")
 
+=======
+        lg.debug("glyph: {0}".format(self.glyph['form']))
+        full_width_episema = False
+            
+>>>>>>> 2_pitch_find
         if 'climacus' in self.glyph['form']:
             neume = mod.ineume_()
         else:
@@ -193,6 +213,10 @@ class AomrMeiOutput(object):
         zone = self._create_zone_element()
         neume.facs = zone.id
         
+        if self.glyph['form'][0] == "he":
+            full_width_episema = True
+            del self.glyph['form'][0]
+            
         neume.attributes = {'name': self.glyph['form'][0]}
         
         # get the form so we can find the number of notes we need to construct.
@@ -258,12 +282,22 @@ class AomrMeiOutput(object):
                 # lg.debug("Picking pitch {0}".format(self.SCALE[n_idx]))
                 self._neume_pitches.append(self.SCALE[n_idx])
         
+        if full_width_episema is True:
+            epi = self._create_episema_element()
+            epi.id = self._idgen()
+            epi.attributes = {"form": "horizontal"}
+            self.staffel.add_child(epi)
+            
         for n in xrange(num_notes):
             p = self._neume_pitches[n]
-            nc.append(self._create_note_element(p))
+            nt = self._create_note_element(p)
+            if n == 0:
+                epi.attributes = {"startid": nt.id}
+            elif n == len(num_notes) - 1:
+                epi.attributes = {"endid": nt.id}
+                
+            nc.append(nt)
         neume.add_children(nc)
-        
-        # lg.debug(neume.children)
         
         return neume
         
@@ -354,3 +388,4 @@ if __name__ == "__main__":
 # [1] http://wwvv.newadvent.org/cathen/10765b.htm; Some of the liquescent 
 #   neums have special names. Thus the liquescent podatus is called epiphonus, 
 #   the liquescent clivis, cephalicus, the liquescent climacus, ancus.
+
