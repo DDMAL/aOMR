@@ -207,13 +207,14 @@ class AomrMeiOutput(object):
         # note elements are everything after the first form. This determines the shape a note takes.
         self._note_elements = self.glyph['form'][1:]
         self._neume_pitches.append(self.glyph['strt_pitch'])
-        
+        lg.debug("neume pitches: {0}, no notes: {1}".format(self._neume_pitches, num_notes))
         nc = []
         if num_notes > 1:
             # we need to figure out the rest of the pitches in the neume.
             ivals = [int(d) for d in self._note_elements if d.isdigit()]
+            lg.debug("ivals: {0}, idx: {1}".format(ivals, self.SCALE.index(self.glyph['strt_pitch'])))
             try:
-                idx = self.SCALE.index(self.glyph['strt_pitch'].upper())
+                idx = self.SCALE.index(self.glyph['strt_pitch'])
             except ValueError:
                 raise AomrMeiPitchNotFoundError("The pitch {0} was not found in the scale".format(self.glyph['strt_pitch']))
                 
