@@ -140,6 +140,7 @@ class AomrMeiOutput(object):
             elif c['type'] == 'custos':
                 staffel.add_child(self._create_custos_element())
             elif c['type'] == "alteration":
+                
                 staffel.add_child(self._create_alteration_element())
         return staffel
         
@@ -148,6 +149,15 @@ class AomrMeiOutput(object):
         graphic.id = self._idgen()
         graphic.attributes = {'xlink:href': imgfile}
         return graphic
+    
+    def _create_alteration_element(self):
+        accid = mod.accid_()
+        accid.id = self._idgen()
+        if self.glyph['form'] is "sharp":
+            accid.attributes = {"accid": "s"}
+        elif self.glyph['form'] is "flat":
+            accid.attributes = {"accid": "f"}
+        return accid
     
     def _create_surface_element(self):
         surface = mod.surface_()
@@ -349,3 +359,4 @@ if __name__ == "__main__":
 # [1] http://wwvv.newadvent.org/cathen/10765b.htm; Some of the liquescent 
 #   neums have special names. Thus the liquescent podatus is called epiphonus, 
 #   the liquescent clivis, cephalicus, the liquescent climacus, ancus.
+
