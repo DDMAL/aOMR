@@ -192,18 +192,9 @@ class AomrMeiOutput(object):
         return epi
     
     def _create_neume_element(self):
-<<<<<<< HEAD
-        # lg.debug("glyph: {0}".format(self.glyph['form']))
-
-        if 'he' in self.glyph['form'][0]: # GVM
-            self.glyph['form'].remove('he')
-            print("he discarded!")
-
-=======
         lg.debug("glyph: {0}".format(self.glyph['form']))
         full_width_episema = False
-            
->>>>>>> 2_pitch_find
+        
         if 'climacus' in self.glyph['form']:
             neume = mod.ineume_()
         else:
