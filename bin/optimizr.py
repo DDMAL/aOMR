@@ -79,6 +79,7 @@ def process_axz_directory(directory, class_glyphs, class_weights, outputdir):
         for f in filenames:
             if f == ".DS_Store":
                 continue
+                
             pagenum = f.split("_")[-1].strip('.axz')
             print "Loading page ", str(pagenum)
             
@@ -238,14 +239,5 @@ if __name__ == "__main__":
     ##### finished creating a classifier.
     
     ##### Load up the AXZ Files
-    axz = process_axz_directory(args[1], os.path.join(args[2], "classifier_glyphs_gp_cleaned.xml"), os.path.join(args[2], "classifier_weights_Feb16.xml"), args[2])
-    
-    
-    
-    
-    print "Done!"
-    
-    
-        
-        
-    
+    axz = process_axz_directory(args[1], os.path.join(args[2], "classifier_glyphs_gp_cleaned.xml"), os.path.join(args[2], "classifier_weights_optimized_march31.xml"), args[2])
+    print "Done!"    
