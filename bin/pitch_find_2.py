@@ -45,7 +45,7 @@ aomr_opts = {
 #FILES TO PROCESS
 original_file = "/Users/gabriel/Dropbox/OMR_LU/imgs/axz/1000/original_image.tiff"
 glyphs = gamera_xml.glyphs_from_xml(r"/Users/gabriel/Dropbox/OMR_LU/imgs/axz/1000/page_glyphs.xml")
-file_name = os.path.join(original_file.split('/')[-2], original_file.split('/')[-1])
+file_name = (original_file.split('/')[-2] + '_' + original_file.split('/')[-1])
 print file_name
 
 # CREATING AOMR OBJECT, FINDING STAVES, AND RETRIEVING STAFF COORDINATES
@@ -89,7 +89,7 @@ mei_file = AomrMeiOutput.AomrMeiOutput(data, file_name)
 # print
 
 
-meitoxml.meitoxml(mei_file.md, '/Users/gabriel/Desktop/LU_1000.mei')
+meitoxml.meitoxml(mei_file.md, '/Users/gabriel/Desktop/' + file_name.split('.')[0]+'.mei')
 
 
 

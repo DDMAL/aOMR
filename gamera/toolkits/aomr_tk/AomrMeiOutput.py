@@ -129,7 +129,7 @@ class AomrMeiOutput(object):
         for c in self.staff['content']:
             # parse the glyphs per staff.
             self.glyph = c
-            lg.debug(self.glyph)
+            # lg.debug(self.glyph)
             
             if c['type'] == 'neume':
                 staffel.add_child(self._create_neume_element())
@@ -177,6 +177,15 @@ class AomrMeiOutput(object):
         return staff
     
     def _create_neume_element(self):
+        lg.debug("glyph: {0}".format(self.glyph['form']))
+
+        if 'he' in self.glyph['form'][0]:
+            self.glyph['form'].remove('he')
+            print("he discarded!")
+        
+        
+        
+        
         if 'climacus' in self.glyph['form']:
             neume = mod.ineume_()
         else:
@@ -207,12 +216,12 @@ class AomrMeiOutput(object):
         # note elements are everything after the first form. This determines the shape a note takes.
         self._note_elements = self.glyph['form'][1:]
         self._neume_pitches.append(self.glyph['strt_pitch'])
-        lg.debug("neume pitches: {0}, no notes: {1}".format(self._neume_pitches, num_notes))
+        # lg.debug("neume pitches: {0}, no notes: {1}".format(self._neume_pitches, num_notes))
         nc = []
         if num_notes > 1:
             # we need to figure out the rest of the pitches in the neume.
             ivals = [int(d) for d in self._note_elements if d.isdigit()]
-            lg.debug("ivals: {0}, idx: {1}".format(ivals, self.SCALE.index(self.glyph['strt_pitch'])))
+            # lg.debug("ivals: {0}, idx: {1}".format(ivals, self.SCALE.index(self.glyph['strt_pitch'])))
             try:
                 idx = self.SCALE.index(self.glyph['strt_pitch'])
             except ValueError:

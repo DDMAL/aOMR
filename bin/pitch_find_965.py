@@ -72,9 +72,10 @@ def process_glyphs_directory(glyphs_directory, output_dir):
                 folder_no = dirpath.split('/')[-1]
                 output_folder = os.path.join(folder_no, f)
                 output_filename = os.path.join(output_dir, output_folder)
+                lg.debug("output_filename:{0}".format(output_filename))
                 shutil.copy(input_filename, output_filename)
                 
-                print ("input filename: {0} output filename : {1}".format(input_filename, output_filename))
+                print ("input filename: {0}\n output filename : {1}".format(input_filename, output_filename))
                 original_image = os.path.join(output_dir, (os.path.join(folder_no, 'original_image.tiff')))
                 mei_file_write = os.path.join(output_dir, (os.path.join(folder_no, 'page_glyphs.mei')))
                 print ("original_image : {0}".format(original_image))
@@ -103,7 +104,7 @@ def process_glyphs_directory(glyphs_directory, output_dir):
                     data[s] = {'coord':stave, 'content':contents}    
                 # print data
                 print
-                mei_file = AomrMeiOutput.AomrMeiOutput(data)
+                mei_file = AomrMeiOutput.AomrMeiOutput(data, original_image.split('/')[-2])
                 meitoxml.meitoxml(mei_file.md, mei_file_write)
                 
                 
