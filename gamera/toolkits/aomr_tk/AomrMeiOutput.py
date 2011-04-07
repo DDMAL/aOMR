@@ -291,9 +291,9 @@ class AomrMeiOutput(object):
         for n in xrange(num_notes):
             p = self._neume_pitches[n]
             nt = self._create_note_element(p)
-            if n == 0:
+            if n == 0 and full_width_episema is True:
                 epi.attributes = {"startid": nt.id}
-            elif n == len(num_notes) - 1:
+            elif n == len(num_notes) - 1 and full_width_episema is True:
                 epi.attributes = {"endid": nt.id}
                 
             nc.append(nt)
