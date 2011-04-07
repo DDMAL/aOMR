@@ -45,7 +45,8 @@ aomr_opts = {
 #FILES TO PROCESS
 original_file = "/Users/gabriel/Dropbox/OMR_LU/imgs/axz/1000/original_image.tiff"
 glyphs = gamera_xml.glyphs_from_xml(r"/Users/gabriel/Dropbox/OMR_LU/imgs/axz/1000/page_glyphs.xml")
-
+file_name = os.path.join(original_file.split('/')[-2], original_file.split('/')[-1])
+print file_name
 
 # CREATING AOMR OBJECT, FINDING STAVES, AND RETRIEVING STAFF COORDINATES
 aomr_obj = AomrObject(original_file, **aomr_opts)
@@ -83,7 +84,7 @@ for s, stave in enumerate(staff_coords):
 print
 
 # CREATING THE MEI FILE
-mei_file = AomrMeiOutput.AomrMeiOutput(data)
+mei_file = AomrMeiOutput.AomrMeiOutput(data, file_name)
 # print mei_file
 # print
 

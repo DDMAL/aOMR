@@ -129,6 +129,7 @@ class AomrMeiOutput(object):
         for c in self.staff['content']:
             # parse the glyphs per staff.
             self.glyph = c
+            lg.debug(self.glyph)
             
             if c['type'] == 'neume':
                 staffel.add_child(self._create_neume_element())
@@ -214,10 +215,10 @@ class AomrMeiOutput(object):
             try:
                 idx = self.SCALE.index(self.glyph['strt_pitch'].upper())
             except ValueError:
-                raise GameraMeiPitchNotFoundError("The pitch {0} was not found in the scale".format(self.glyph['strt_pitch']))
+                raise AomrMeiPitchNotFoundError("The pitch {0} was not found in the scale".format(self.glyph['strt_pitch']))
                 
             if len(ivals) != (num_notes - 1):
-                raise GameraMeiNoteIntervalMismatchError("There is a mismatch between the number of notes and number of intervals.")
+                raise AomrMeiNoteIntervalMismatchError("There is a mismatch between the number of notes and number of intervals.")
             
             # note elements = torculus.2.2.he.ve
             # ivals = [2,2]
