@@ -157,6 +157,10 @@ class AomrMeiOutput(object):
             accid.attributes = {"accid": "s"}
         elif self.glyph['form'] is "flat":
             accid.attributes = {"accid": "f"}
+        
+        zone = self._create_zone_element()
+        note.facs = zone.id
+        
         return accid
     
     def _create_surface_element(self):
