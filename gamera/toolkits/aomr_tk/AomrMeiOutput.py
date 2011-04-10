@@ -213,11 +213,11 @@ class AomrMeiOutput(object):
             del self.glyph['form'][0]
             
         neume.attributes = {'name': self.glyph['form'][0]}
-        
+        this_neume_form = self.NEUME_NOTES[self.glyph['form'][0]]
         # get the form so we can find the number of notes we need to construct.
         try:
              # since we define the form of the intervals, we're always off-by-one in the number of notes.
-            num_notes = len(self.NEUME_NOTES[self.glyph['form'][0]]) + 1
+            num_notes = len(this_neume_form) + 1
         except KeyError:
             raise AomrMeiFormNotFoundError("The form {0} was not found.".format(self.glyph['form'][0]))
         
@@ -286,10 +286,9 @@ class AomrMeiOutput(object):
         for n in xrange(num_notes):
             p = self._neume_pitches[n]
             nt = self._create_note_element(p)
-            print num_notes
             if n == 0 and full_width_episema is True:
                 epi.attributes = {"startid": nt.id}
-            elif n == (num_notes) - 1 and full_width_episema is True:
+            elif n == num_notes - 1 and full_width_episema is True:
                 epi.attributes = {"endid": nt.id}
                 
             nc.append(nt)
@@ -339,35 +338,168 @@ class AomrMeiOutput(object):
 
 
 if __name__ == "__main__":
-    test_data = {
-        1: {
-            'coord': [1,2,3,4],
-            'content': [{
-                'type': 'neume',
-                'form': ['clivis', '4'],
-                'coord': [213, 179, 26, 35],
-                'strt_pitch': 'E',
-                'strt_pos': 5
-            }, {
-                'type': 'neume',
-                'form': ['torculus', '2', '4'],
-                'coord': [213, 179, 26, 35],
-                'strt_pitch': 'B',
-                'strt_pos': 5
-            }]
-        }, 2: {
-            'coord': [4,5,6,7],
-            'content': [{
-                'type': '',
-                'form': [],
-                'coord': [],
-                'strt_pitch': 'A',
-                'strt_pos': ''
-            }]
-        }
-    }
+    test_data = {0: {'content': [{'strt_pos': 6, 'strt_pitch': 'a', 'type': 'clef',
+    'coord': [15, 143, 51, 198], 'form': ['f']}, {'strt_pos': 7,
+    'strt_pitch': 'g', 'type': 'neume', 'coord': [81, 160, 132, 215],
+    'form': ['torculus', '3', '2']}, {'strt_pos': 6, 'strt_pitch': 'a',
+    'type': 'neume', 'coord': [173, 160, 191, 181], 'form': ['punctum']},
+    {'strt_pos': 6, 'strt_pitch': 'a', 'type': 'neume', 'coord': [198,
+    160, 216, 181], 'form': ['punctum']}, {'strt_pos': 6, 'strt_pitch':
+    'a', 'type': 'neume', 'coord': [222, 162, 256, 217], 'form':
+    ['clivis', '3']}, {'strt_pos': 7, 'strt_pitch': 'g', 'type': 'neume',
+    'coord': [265, 162, 315, 201], 'form': ['torculus', '2', '2']},
+    {'strt_pos': 8, 'strt_pitch': 'f', 'type': 'neume', 'coord': [346,
+    187, 381, 256], 'form': ['clivis', 'he', '2']}, {'strt_pos': 3,
+    'strt_pitch': None, 'type': 'division', 'coord': [421, 128, 428, 159],
+    'form': ['small']}, {'strt_pos': 8, 'strt_pitch': 'f', 'type':
+    'neume', 'coord': [463, 199, 482, 221], 'form': ['punctum']},
+    {'strt_pos': 6, 'strt_pitch': 'a', 'type': 'neume', 'coord': [489,
+    166, 507, 187], 'form': ['punctum']}, {'strt_pos': 6, 'strt_pitch':
+    'a', 'type': 'neume', 'coord': [515, 166, 532, 187], 'form':
+    ['punctum']}, {'strt_pos': 6, 'strt_pitch': 'a', 'type': 'neume',
+    'coord': [540, 166, 558, 187], 'form': ['punctum']}, {'strt_pos': 7,
+    'strt_pitch': 'g', 'type': 'neume', 'coord': [589, 167, 607, 223],
+    'form': ['podatus', '3']}, {'strt_pos': 7, 'strt_pitch': 'g', 'type':
+    'neume', 'coord': [615, 177, 632, 208], 'form': ['punctum',
+    'inclinatum']}, {'strt_pos': 8, 'strt_pitch': 'f', 'type': 'neume',
+    'coord': [633, 201, 646, 248], 'form': ['punctum', 'inclinatum',
+    've']}, {'strt_pos': 8, 'strt_pitch': 'f', 'type': 'neume', 'coord':
+    [714, 204, 731, 224], 'form': ['punctum']}, {'strt_pos': 7,
+    'strt_pitch': 'g', 'type': 'neume', 'coord': [764, 170, 782, 226],
+    'form': ['podatus', '3']}, {'strt_pos': 7, 'strt_pitch': 'g', 'type':
+    'neume', 'coord': [791, 179, 806, 217], 'form': ['punctum',
+    'inclinatum']}, {'strt_pos': 8, 'strt_pitch': 'f', 'type': 'neume',
+    'coord': [807, 204, 838, 238], 'form': ['punctum', 'inclinatum',
+    'dot']}, {'strt_pos': 5, 'strt_pitch': None, 'type': 'division',
+    'coord': [885, 165, 894, 235], 'form': ['minor']}, {'strt_pos': 8,
+    'strt_pitch': 'f', 'type': 'neume', 'coord': [947, 188, 965, 229],
+    'form': ['podatus', '2']}, {'strt_pos': 9, 'strt_pitch': 'e', 'type':
+    'neume', 'coord': [1005, 225, 1021, 245], 'form': ['punctum']},
+    {'strt_pos': 6, 'strt_pitch': 'a', 'type': 'neume', 'coord': [1029,
+    175, 1047, 197], 'form': ['punctum']}, {'strt_pos': 6, 'strt_pitch':
+    'a', 'type': 'neume', 'coord': [1055, 175, 1076, 196], 'form':
+    ['punctum']}, {'strt_pos': 6, 'strt_pitch': 'a', 'type': 'neume',
+    'coord': [1080, 175, 1098, 197], 'form': ['punctum']}, {'strt_pos': 6,
+    'strt_pitch': 'a', 'type': 'neume', 'coord': [1106, 158, 1123, 197],
+    'form': ['podatus', '2']}, {'strt_pos': 7, 'strt_pitch': 'g', 'type':
+    'neume', 'coord': [1132, 175, 1146, 199], 'form': ['punctum',
+    'inclinatum']}, {'strt_pos': 10, 'strt_pitch': 'd', 'type': 'neume',
+    'coord': [1164, 220, 1180, 271], 'form': ['punctum', 'inclinatum',
+    've']}, {'strt_pos': 9, 'strt_pitch': 'e', 'type': 'neume', 'coord':
+    [1196, 210, 1213, 231], 'form': ['punctum']}, {'strt_pos': 7,
+    'strt_pitch': 'g', 'type': 'neume', 'coord': [1222, 178, 1240, 198],
+    'form': ['punctum']}, {'strt_pos': 7, 'strt_pitch': 'g', 'type':
+    'neume', 'coord': [1247, 178, 1265, 199], 'form': ['punctum']},
+    {'strt_pos': 7, 'strt_pitch': 'g', 'type': 'neume', 'coord': [1270,
+    168, 1304, 232], 'form': ['clivis', 'he', '3']}, {'strt_pos': 7,
+    'strt_pitch': 'g', 'type': 'neume', 'coord': [1313, 163, 1381, 204],
+    'form': ['torculus', 'resupinus', '2', '2', '2']}, {'strt_pos': 8,
+    'strt_pitch': None, 'type': 'custos', 'coord': [1416, 181, 1431, 239],
+    'form': []}], 'coord': [16, 136, 1429, 256]}, 1: {'content':
+    [{'strt_pos': 6, 'strt_pitch': 'a', 'type': 'clef', 'coord': [12, 359,
+    47, 414], 'form': ['f']}, {'strt_pos': 7, 'strt_pitch': 'g', 'type':
+    'neume', 'coord': [95, 366, 146, 431], 'form': ['he', 'torculus', '2',
+    '2']}, {'strt_pos': 8, 'strt_pitch': 'f', 'type': 'neume', 'coord':
+    [178, 400, 209, 431], 'form': ['punctum', 'dot']}, {'strt_pos': 7,
+    'strt_pitch': None, 'type': 'division', 'coord': [260, 353, 281, 460],
+    'form': ['final']}], 'coord': [11, 352, 1425, 471]}, 2: {'content':
+    [{'strt_pos': 6, 'strt_pitch': 'a', 'type': 'clef', 'coord': [173,
+    1069, 207, 1124], 'form': ['f']}, {'strt_pos': 7, 'strt_pitch': 'g',
+    'type': 'neume', 'coord': [240, 1102, 258, 1123], 'form':
+    ['punctum']}, {'strt_pos': 6, 'strt_pitch': 'a', 'type': 'neume',
+    'coord': [266, 1083, 284, 1131], 'form': ['podatus', '2']},
+    {'strt_pos': 8, 'strt_pitch': 'f', 'type': 'neume', 'coord': [315,
+    1084, 349, 1141], 'form': ['scandicus', '2', 'q', '2']}, {'strt_pos':
+    7, 'strt_pitch': 'g', 'type': 'neume', 'coord': [396, 1085, 418,
+    1155], 'form': ['cephalicus', '4']}, {'strt_pos': 7, 'strt_pitch':
+    'g', 'type': 'neume', 'coord': [556, 1105, 574, 1125], 'form':
+    ['punctum']}, {'strt_pos': 7, 'strt_pitch': 'g', 'type': 'neume',
+    'coord': [581, 1084, 601, 1126], 'form': ['podatus', '2']},
+    {'strt_pos': 7, 'strt_pitch': 'g', 'type': 'neume', 'coord': [631,
+    1087, 649, 1145], 'form': ['cephalicus', '3']}, {'strt_pos': 7,
+    'strt_pitch': 'g', 'type': 'neume', 'coord': [723, 1064, 790, 1125],
+    'form': ['torculus', 'resupinus', '3', '2', '2']}, {'strt_pos': 7,
+    'strt_pitch': 'g', 'type': 'neume', 'coord': [822, 1106, 840, 1126],
+    'form': ['punctum']}, {'strt_pos': 7, 'strt_pitch': 'g', 'type':
+    'neume', 'coord': [847, 1079, 879, 1128], 'form': ['podatus', '2',
+    'dot']}, {'strt_pos': 3, 'strt_pitch': None, 'type': 'division',
+    'coord': [909, 1051, 918, 1082], 'form': ['small']}, {'strt_pos': 7,
+    'strt_pitch': 'g', 'type': 'neume', 'coord': [956, 1109, 973, 1128],
+    'form': ['punctum']}, {'strt_pos': 9, 'strt_pitch': 'e', 'type':
+    'neume', 'coord': [1013, 1140, 1031, 1161], 'form': ['punctum']},
+    {'strt_pos': 7, 'strt_pitch': 'g', 'type': 'neume', 'coord': [1072,
+    1090, 1092, 1137], 'form': ['podatus', '2']}, {'strt_pos': 8,
+    'strt_pitch': 'f', 'type': 'neume', 'coord': [1098, 1111, 1114, 1152],
+    'form': ['punctum', 'inclinatum', 've']}, {'strt_pos': 8,
+    'strt_pitch': 'f', 'type': 'neume', 'coord': [1116, 1126, 1128, 1144],
+    'form': ['punctum', 'inclinatum']}, {'strt_pos': 8, 'strt_pitch': 'f',
+    'type': 'neume', 'coord': [1163, 1114, 1194, 1145], 'form':
+    ['punctum', 'dot']}, {'strt_pos': 4, 'strt_pitch': None, 'type':
+    'division', 'coord': [1226, 1069, 1235, 1171], 'form': ['major']},
+    {'strt_pos': 9, 'strt_pitch': 'e', 'type': 'neume', 'coord': [1272,
+    1143, 1289, 1164], 'form': ['punctum']}, {'strt_pos': 8, 'strt_pitch':
+    'f', 'type': 'neume', 'coord': [1354, 1111, 1372, 1151], 'form':
+    ['epiphonus', '2']}, {'strt_pos': 7, 'strt_pitch': None, 'type':
+    'custos', 'coord': [1408, 1089, 1423, 1141], 'form': []}], 'coord':
+    [172, 1062, 1422, 1170]}, 3: {'content': [{'strt_pos': 6,
+    'strt_pitch': 'a', 'type': 'clef', 'coord': [5, 1289, 42, 1344],
+    'form': ['f']}, {'strt_pos': 7, 'strt_pitch': 'g', 'type': 'neume',
+    'coord': [73, 1323, 90, 1344], 'form': ['punctum']}, {'strt_pos': 8,
+    'strt_pitch': 'f', 'type': 'neume', 'coord': [138, 1339, 157, 1360],
+    'form': ['punctum']}, {'strt_pos': 7, 'strt_pitch': 'g', 'type':
+    'neume', 'coord': [164, 1287, 216, 1361], 'form': ['torculus', '3',
+    '4']}, {'strt_pos': 8, 'strt_pitch': 'f', 'type': 'neume', 'coord':
+    [219, 1340, 256, 1392], 'form': ['clivis', '2']}, {'strt_pos': 6,
+    'strt_pitch': 'a', 'type': 'neume', 'coord': [305, 1288, 324, 1343],
+    'form': ['podatus', '3']}, {'strt_pos': 6, 'strt_pitch': 'a', 'type':
+    'neume', 'coord': [363, 1303, 382, 1326], 'form': ['punctum']},
+    {'strt_pos': 5, 'strt_pitch': 'b', 'type': 'neume', 'coord': [472,
+    1269, 492, 1310], 'form': ['podatus', '2']}, {'strt_pos': 5,
+    'strt_pitch': 'b', 'type': 'neume', 'coord': [498, 1281, 514, 1334],
+    'form': ['punctum', 'inclinatum', 've']}, {'strt_pos': 7,
+    'strt_pitch': 'g', 'type': 'neume', 'coord': [523, 1319, 539, 1344],
+    'form': ['punctum', 'inclinatum']}, {'strt_pos': 7, 'strt_pitch': 'g',
+    'type': 'neume', 'coord': [572, 1322, 604, 1343], 'form': ['punctum',
+    'dot']}, {'strt_pos': 5, 'strt_pitch': None, 'type': 'division',
+    'coord': [644, 1297, 651, 1366], 'form': ['minor']}, {'strt_pos': 9,
+    'strt_pitch': 'e', 'type': 'neume', 'coord': [697, 1356, 714, 1377],
+    'form': ['punctum']}, {'strt_pos': 8, 'strt_pitch': 'f', 'type':
+    'neume', 'coord': [788, 1322, 807, 1363], 'form': ['epiphonus', '2']},
+    {'strt_pos': 7, 'strt_pitch': 'g', 'type': 'neume', 'coord': [880,
+    1323, 899, 1343], 'form': ['punctum']}, {'strt_pos': 8, 'strt_pitch':
+    'f', 'type': 'neume', 'coord': [954, 1339, 973, 1360], 'form':
+    ['punctum']}, {'strt_pos': 9, 'strt_pitch': 'e', 'type': 'neume',
+    'coord': [1096, 1356, 1112, 1377], 'form': ['punctum']}, {'strt_pos':
+    9, 'strt_pitch': 'e', 'type': 'neume', 'coord': [1187, 1322, 1222,
+    1378], 'form': ['scandicus', '2', '2']}, {'strt_pos': 7, 'strt_pitch':
+    'g', 'type': 'neume', 'coord': [1253, 1323, 1272, 1345], 'form':
+    ['punctum']}, {'strt_pos': 7, 'strt_pitch': 'g', 'type': 'neume',
+    'coord': [1277, 1323, 1327, 1372], 'form': ['clivis', '2', 'dot']},
+    {'strt_pos': 5, 'strt_pitch': None, 'type': 'division', 'coord':
+    [1358, 1299, 1366, 1369], 'form': ['minor']}, {'strt_pos': 8,
+    'strt_pitch': None, 'type': 'custos', 'coord': [1407, 1309, 1423,
+    1368], 'form': []}], 'coord': [6, 1280, 1419, 1384]}, 4: {'content':
+    [{'strt_pos': 6, 'strt_pitch': 'a', 'type': 'clef', 'coord': [4, 1508,
+    40, 1560], 'form': ['f']}, {'strt_pos': 8, 'strt_pitch': 'f', 'type':
+    'neume', 'coord': [71, 1555, 89, 1577], 'form': ['punctum']},
+    {'strt_pos': 8, 'strt_pitch': 'f', 'type': 'neume', 'coord': [128,
+    1555, 147, 1577], 'form': ['punctum']}, {'strt_pos': 10, 'strt_pitch':
+    'd', 'type': 'neume', 'coord': [178, 1570, 230, 1614], 'form':
+    ['porrectus', '2', '2']}, {'strt_pos': 11, 'strt_pitch': 'c', 'type':
+    'neume', 'coord': [263, 1608, 293, 1628], 'form': ['punctum', 'dot']},
+    {'strt_pos': 3, 'strt_pitch': None, 'type': 'division', 'coord': [334,
+    1483, 341, 1516], 'form': ['small']}, {'strt_pos': 9, 'strt_pitch':
+    'e', 'type': 'neume', 'coord': [387, 1554, 406, 1602], 'form':
+    ['epiphonus', '2']}, {'strt_pos': 8, 'strt_pitch': 'f', 'type':
+    'neume', 'coord': [446, 1552, 463, 1575], 'form': ['punctum']},
+    {'strt_pos': 7, 'strt_pitch': 'g', 'type': 'neume', 'coord': [503,
+    1511, 556, 1576], 'form': ['he', 'torculus', '2', '2']}, {'strt_pos':
+    8, 'strt_pitch': 'f', 'type': 'neume', 'coord': [586, 1543, 618,
+    1575], 'form': ['punctum', 'dot']}, {'strt_pos': 7, 'strt_pitch':
+    None, 'type': 'division', 'coord': [653, 1497, 672, 1601], 'form':
+    ['final']}], 'coord': [6, 1497, 1419, 1601]}}
     
-    v = AomrMeiOutput(test_data)
+    v = AomrMeiOutput(test_data, 'foo.jpg')
     
     from pymei.Export import meitoxml
     meitoxml.meitoxml(v.md, 'testfile.mei')
