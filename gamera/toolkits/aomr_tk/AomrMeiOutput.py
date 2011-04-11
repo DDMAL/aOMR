@@ -129,7 +129,7 @@ class AomrMeiOutput(object):
         for c in self.staff['content']:
             # parse the glyphs per staff.
             self.glyph = c
-            lg.debug(self.glyph)
+            # lg.debug(self.glyph)
             
             if c['type'] == 'neume':
                 staffel.add_child(self._create_neume_element())
@@ -192,7 +192,7 @@ class AomrMeiOutput(object):
         return epi
     
     def _create_neume_element(self):
-        lg.debug("glyph: {0}".format(self.glyph['form']))
+        # lg.debug("glyph: {0}".format(self.glyph['form']))
         full_width_episema = False
         
         if 'climacus' in self.glyph['form']:
@@ -282,7 +282,7 @@ class AomrMeiOutput(object):
         for n in xrange(num_notes):
             p = self._neume_pitches[n]
             nt = self._create_note_element(p)
-            print num_notes
+            # print num_notes
             if n == 0 and full_width_episema is True:
                 epi.attributes = {"startid": nt.id}
             elif n == (num_notes) - 1 and full_width_episema is True:
