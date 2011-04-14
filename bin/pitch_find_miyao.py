@@ -53,7 +53,7 @@ aomr_obj = AomrObject(original_file, **aomr_opts)
 st_position = aomr_obj.find_staves() # staves position
 staff_coords = aomr_obj.staff_coords()
 
-staff_non_parallel = aomr_obj.staff_no_non_parallel(glyphs)
+staff_non_parallel = aomr_obj.staff_no_non_parallel(glyphs, aomr_opts.get('discard_size'))
 print staff_non_parallel
 
 
