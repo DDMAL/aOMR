@@ -84,6 +84,11 @@ class AomrMeiOutput(object):
         self.facsimile.add_child(self.surface)
         self.music.add_child(self.facsimile)
         
+        self.layout = self._create_layout_element()
+        self.pg = self._create_page_element()
+        self.layout.add_child(self.pg)
+        self.music.add_child(self.layout)
+        
         self.body = mod.body_()
         self.music.add_child(self.body)
         
@@ -91,30 +96,38 @@ class AomrMeiOutput(object):
         self.body.add_child(self.mdiv)
         
         self.score = mod.score_()
+        
         self.mdiv.add_child(self.score)
         
         self.scoredef = mod.scoredef_()
         self.score.add_child(self.scoredef)
         
         self.section = mod.section_()
+        self.pagebreak = self._create_pb_element()
+        self.section.add_child(self.pagebreak)
         self.score.add_child(self.section)
         
-        for snum,stf in self._recognition_results.iteritems():
-            self.staffdef = self._create_staffdef_element()
-            self.staffdef.attributes = { 'n': snum }
-            self.scoredef.add_child(self.staffdef)
-            
-            self.staff = stf
-            self.staffel = self._parse_staff(snum, stf)
+        self.staffdef = self._create_staffdef_element()
+        self.staffdef.attributes = {'n': 1}
+        self.scoredef.add_child(self.staffdef)
+        
+        self.staffel = self._create_staff_element()
+        self.section.add_child(self.staffel)
+        
+        for sysnum,syst in self._recognition_results.iteritems():            
+            self.system = syst
+            self.systembreak = self._parse_system(sysnum, syst)
             z = mod.zone_()
             z.id = self._idgen()
-            z.attributes = {'ulx': self.staff['coord'][0], 'uly': self.staff['coord'][1], \
-                                'lrx': self.staff['coord'][2], 'lry': self.staff['coord'][3]}
+            z.attributes = {'ulx': self.system['coord'][0], 'uly': self.system['coord'][1], \
+                                'lrx': self.system['coord'][2], 'lry': self.system['coord'][3]}
             
             self.surface.add_child(z)
-            self.staffel.facs = z.id
-            
-            self.section.add_child(self.staffel)
+            # self.system.facs = z.id
+            s = self._create_system_element()
+            s.facs = z.id
+            s.attributes = {"sbref": self.systembreak.id}
+            self.pg.add_child(s)
         
         self.mei.add_child(self.music)
         
@@ -122,27 +135,31 @@ class AomrMeiOutput(object):
         self.md.addelement(self.mei)
         
         
-    def _parse_staff(self, stfnum, stf):
-        staffel = self._create_staff_element()
-        staffel.attributes = {'n': stfnum}
+    def _parse_system(self, sysnum, syst):
+        sysbrk = self._create_sb_element()
+        sysbrk.attributes = {"n": sysnum + 1}
+        self.staffel.add_child(sysbrk)
+        # staffel = self._create_staff_element()
+        # staffel.attributes = {'n': stfnum}
         
-        for c in self.staff['content']:
+        for c in self.system['content']:
             # parse the glyphs per staff.
             self.glyph = c
             lg.debug(self.glyph)
             
             if c['type'] == 'neume':
-                staffel.add_child(self._create_neume_element())
+                self.staffel.add_child(self._create_neume_element())
             elif c['type'] == 'clef':
-                staffel.add_child(self._create_clef_element())
+                self.staffel.add_child(self._create_clef_element())
             elif c['type'] == 'division':
-                staffel.add_child(self._create_division_element())
+                self.staffel.add_child(self._create_division_element())
             elif c['type'] == 'custos':
-                staffel.add_child(self._create_custos_element())
+                self.staffel.add_child(self._create_custos_element())
             elif c['type'] == "alteration":
                 # staffel.add_child(self._create_alteration_element()) #GVM
                 pass
-        return staffel
+        return sysbrk
+        
         
     def _create_graphic_element(self, imgfile):
         graphic = mod.graphic_()
@@ -189,7 +206,32 @@ class AomrMeiOutput(object):
         staff = mod.staff_()
         staff.id = self._idgen()
         return staff
+    
+    def _create_sb_element(self):
+        sb = mod.sb_()
+        sb.id = self._idgen()
+        return sb
         
+    def _create_pb_element(self):
+        pb = mod.pb_()
+        pb.id = self._idgen()
+        return pb
+    
+    def _create_layout_element(self):
+        layout = mod.layout_()
+        layout.id = self._idgen()
+        return layout
+    
+    def _create_page_element(self):
+        page = mod.page_()
+        page.id = self._idgen()
+        return page
+    
+    def _create_system_element(self):
+        system = mod.system_()
+        system.id = self._idgen()
+        return system
+    
     def _create_episema_element(self):
         epi = mod.episema_()
         epi.id = self._idgen()
