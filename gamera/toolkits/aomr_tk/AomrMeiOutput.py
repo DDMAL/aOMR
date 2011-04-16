@@ -241,10 +241,7 @@ class AomrMeiOutput(object):
         lg.debug("glyph: {0}".format(self.glyph['form']))
         full_width_episema = False
         
-        if 'climacus' in self.glyph['form']:
-            neume = mod.ineume_()
-        else:
-            neume = mod.uneume_()
+        neume = mod.neume_()
             
         neume.id = self._idgen()
         zone = self._create_zone_element()
@@ -253,6 +250,9 @@ class AomrMeiOutput(object):
         if self.glyph['form'][0] == "he":
             full_width_episema = True
             del self.glyph['form'][0]
+        
+        if 'inclinatum' in self.glyph['form']:
+            neume.attributes = {'altname': 'inclinatum'}
             
         neume.attributes = {'name': self.glyph['form'][0]}
         this_neume_form = self.NEUME_NOTES[self.glyph['form'][0]]
@@ -363,6 +363,9 @@ class AomrMeiOutput(object):
         division.id = self._idgen()
         zone = self._create_zone_element()
         division.facs = zone.id
+        
+        division.attributes = {'form': self.glyph['form'][0]}
+        
         return division
     
     # def _create_alteration_element(self):
