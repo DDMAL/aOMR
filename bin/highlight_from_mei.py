@@ -37,8 +37,8 @@ if __name__ == "__main__":
         rgb.draw_filled_rect((int(facs.ulx) - 5, int(facs.uly) - 5), (int(facs.lrx) + 5, int(facs.lry) + 5), neumecolour)
         
         note_string = '-'.join([note.pitchname for note in neume.children_by_name('note')])
-        rgb.draw_text((int(facs.ulx) - 20, int(facs.uly) - 20), note_string, RGBPixel(0,255,0), size=20, bold=True, halign="left")
-        rgb.draw_text((int(facs.ulx) - 20, int(facs.uly) - 50), neume.name, RGBPixel(0,255,0), size=20, bold=True, halign="left")
+        rgb.draw_text((int(facs.ulx) - 20, int(facs.uly) - 20), note_string, RGBPixel(0,0,0), size=10, bold=True, halign="left")
+        rgb.draw_text((int(facs.ulx) - 20, int(facs.uly) - 50), neume.attribute_by_name('name').value, RGBPixel(0,0,0), size=10, bold=True, halign="left")
         
     for clef in clefs:
         facs = mdoc.get_by_facs(clef.facs)[0]
@@ -54,7 +54,7 @@ if __name__ == "__main__":
     
     rgb.highlight(img, RGBPixel(0,0,0))
     
-    rgb.save_tiff('test.tiff')
+    rgb.save_PNG('test.png')
     
     
     
