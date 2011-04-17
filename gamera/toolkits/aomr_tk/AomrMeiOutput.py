@@ -104,6 +104,7 @@ class AomrMeiOutput(object):
         
         self.section = mod.section_()
         self.pagebreak = self._create_pb_element()
+        self.pg.attributes = {'pbref': self.pagebreak.id}
         self.section.add_child(self.pagebreak)
         self.score.add_child(self.section)
         
@@ -377,7 +378,7 @@ class AomrMeiOutput(object):
     
     def _idgen(self):
         """ Returns a UUID. """
-        return str(uuid.uuid4())
+        return "{0}-{1}".format('m', str(uuid.uuid4()))
 
 
 
