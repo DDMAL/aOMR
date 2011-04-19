@@ -43,8 +43,13 @@ aomr_opts = {
 }
 
 #FILES TO PROCESS
+<<<<<<< Updated upstream
 original_file = "/Users/gabriel/Dropbox/OMR_LU/imgs/OK/1000/original_image.tiff"
 glyphs = gamera_xml.glyphs_from_xml(r"/Users/gabriel/Dropbox/OMR_LU/imgs/OK/1000/page_glyphs.xml")
+=======
+original_file = "/Users/ahankins/Documents/projects/1000/original_image.tiff"
+glyphs = gamera_xml.glyphs_from_xml(r"/Users/ahankins/Documents/projects/1000/page_glyphs.xml")
+>>>>>>> Stashed changes
 file_name = (original_file.split('/')[-2] + '_' + original_file.split('/')[-1])
 
 
@@ -87,7 +92,7 @@ mei_file = AomrMeiOutput.AomrMeiOutput(data, file_name)
 # print
 
 
-meitoxml.meitoxml(mei_file.md, '/Users/gabriel/Desktop/' + file_name.split('.')[0]+'.mei')
+meitoxml.meitoxml(mei_file.md, '/Users/ahankins/Desktop/' + file_name.split('.')[0]+'.mei')
 
 
 
