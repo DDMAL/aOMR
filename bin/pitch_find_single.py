@@ -62,7 +62,7 @@ staff_coords = aomr_obj.staff_coords()
 pitch_find = aomr_obj.pitch_find(glyphs, st_position, aomr_opts.get('discard_size'))
 # print len(pitch_find)
 sorted_glyphs = sorted(pitch_find, key=itemgetter(1, 2))
-print len(sorted_glyphs)
+
 
 # STRUCTURING THE DATA IN JSON
 data = {}

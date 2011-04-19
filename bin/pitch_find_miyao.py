@@ -43,8 +43,8 @@ aomr_opts = {
 }
 
 #FILES TO PROCESS
-original_file = "/Users/gabriel/Dropbox/OMR_LU/imgs/axz/1000/original_image.tiff"
-glyphs = gamera_xml.glyphs_from_xml(r"/Users/gabriel/Dropbox/OMR_LU/imgs/axz/1000/page_glyphs.xml")
+original_file = "/Users/gabriel/Dropbox/OMR_LU/imgs/OK/1000/original_image.tiff"
+glyphs = gamera_xml.glyphs_from_xml(r"/Users/gabriel/Dropbox/OMR_LU/imgs/OK/1000/page_glyphs.xml")
 file_name = (original_file.split('/')[-2] + '_' + original_file.split('/')[-1])
 
 
@@ -53,15 +53,13 @@ aomr_obj = AomrObject(original_file, **aomr_opts)
 st_position = aomr_obj.find_staves() # staves position
 staff_coords = aomr_obj.staff_coords()
 
-staff_non_parallel = aomr_obj.staff_no_non_parallel(glyphs, aomr_opts.get('discard_size'))
-print staff_non_parallel
-
-
+proc_glyphs = aomr_obj.staff_no_non_parallel(glyphs, aomr_opts.get('discard_size'))
 
 # PITCH FINDING
-pitch_find = aomr_obj.pitch_find(glyphs, st_position, aomr_opts.get('discard_size'))
+# pitch_find = aomr_obj.pitch_find(glyphs, st_position, aomr_opts.get('discard_size'))
 # print len(pitch_find)
-sorted_glyphs = sorted(pitch_find, key=itemgetter(1, 2))
+sorted_glyphs = sorted(proc_glyphs, key=itemgetter(1, 2))
+# print sorted_glyphs
 
 
 # STRUCTURING THE DATA IN JSON
@@ -69,7 +67,7 @@ data = {}
 for s, stave in enumerate(staff_coords):
     contents = []
     for sg in sorted_glyphs:
-        # print ("sg[1]:{0} s:{1} sg{2}".format(sg[1], s+1, sg))
+        # lg.debug("sg[1]:{0} s:{1} sg{2}".format(sg[1], s+1, sg))
         # structure: g, stave, g.offset_x, note, strt_pos
         if sg[1] == s+1: 
             glyph = {   'type': sg[0].get_main_id().split('.')[0],
