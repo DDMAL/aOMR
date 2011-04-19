@@ -53,13 +53,13 @@ aomr_obj = AomrObject(original_file, **aomr_opts)
 st_position = aomr_obj.find_staves() # staves position
 staff_coords = aomr_obj.staff_coords()
 
-proc_glyphs = aomr_obj.staff_no_non_parallel(glyphs, aomr_opts.get('discard_size'))
+sorted_glyphs = aomr_obj.staff_no_non_parallel(glyphs, aomr_opts.get('discard_size'))
 
 # PITCH FINDING
 # pitch_find = aomr_obj.pitch_find(glyphs, st_position, aomr_opts.get('discard_size'))
 # print len(pitch_find)
-sorted_glyphs = sorted(proc_glyphs, key=itemgetter(1, 2))
-# print sorted_glyphs
+# sorted_glyphs = sorted(proc_glyphs, key=itemgetter(1, 2))
+
 
 
 # STRUCTURING THE DATA IN JSON
