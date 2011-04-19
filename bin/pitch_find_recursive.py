@@ -101,7 +101,7 @@ def process_glyphs_directory(glyphs_directory, output_dir):
                                         'strt_pos': sg[4]}
                             contents.append(glyph)  
                     data[s] = {'coord':stave, 'content':contents}    
-                # print data
+                print data
                 print
                 mei_file = AomrMeiOutput.AomrMeiOutput(data, original_image.split('/')[-2])
                 meitoxml.meitoxml(mei_file.md, mei_file_write)

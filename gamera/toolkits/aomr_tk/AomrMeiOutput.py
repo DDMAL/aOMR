@@ -146,7 +146,7 @@ class AomrMeiOutput(object):
         for c in self.system['content']:
             # parse the glyphs per staff.
             self.glyph = c
-            lg.debug(self.glyph)
+            # lg.debug(self.glyph)
             
             if c['type'] == 'neume':
                 self.staffel.add_child(self._create_neume_element())
@@ -239,7 +239,7 @@ class AomrMeiOutput(object):
         return epi
     
     def _create_neume_element(self):
-        lg.debug("glyph: {0}".format(self.glyph['form']))
+        # lg.debug("glyph: {0}".format(self.glyph['form']))
         full_width_episema = False
         
         neume = mod.neume_()
