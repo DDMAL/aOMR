@@ -78,7 +78,7 @@ for s, stave in enumerate(staff_coords):
                         'strt_pos': sg[3]}
             contents.append(glyph)  
     data[s] = {'coord':stave, 'content':contents}    
-print data
+# print data
 print
 
 # CREATING THE MEI FILE
