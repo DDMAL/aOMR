@@ -53,7 +53,7 @@ aomr_obj = AomrObject(original_file, **aomr_opts)
 st_position = aomr_obj.find_staves() # staves position
 staff_coords = aomr_obj.staff_coords()
 
-sorted_glyphs = aomr_obj.staff_no_non_parallel(glyphs, aomr_opts.get('discard_size'))
+sorted_glyphs = aomr_obj.miyao_pitch_find(glyphs, aomr_opts.get('discard_size'))
 
 # PITCH FINDING
 # pitch_find = aomr_obj.pitch_find(glyphs, st_position, aomr_opts.get('discard_size'))
@@ -74,11 +74,11 @@ for s, stave in enumerate(staff_coords):
                         'form': sg[0].get_main_id().split('.')[1:],
                         'coord': [sg[0].offset_x, sg[0].offset_y, \
                                 sg[0].offset_x+sg[0].ncols, sg[0].offset_y+sg[0].nrows],
-                        'strt_pitch': sg[3],
-                        'strt_pos': sg[4]}
+                        'strt_pitch': sg[4],
+                        'strt_pos': sg[3]}
             contents.append(glyph)  
     data[s] = {'coord':stave, 'content':contents}    
-# print data
+print data
 print
 
 # CREATING THE MEI FILE
