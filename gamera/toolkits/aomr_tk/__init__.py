@@ -44,8 +44,8 @@ f = logging.Formatter("%(levelname)s %(asctime)s On Line: %(lineno)d %(message)s
 h = logging.StreamHandler()
 h.setFormatter(f)
 
-lg.setLevel(logging.DEBUG)
-lg.addHandler(h)
+# lg.setLevel(logging.DEBUG)
+# lg.addHandler(h)
 
 
 if has_gui.has_gui:
