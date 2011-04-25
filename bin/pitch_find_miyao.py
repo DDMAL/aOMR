@@ -43,8 +43,10 @@ aomr_opts = {
 }
 
 #FILES TO PROCESS
-original_file = "/Users/gabriel/Dropbox/OMR_LU/imgs/OK/1001/original_image.tiff"
-glyphs = gamera_xml.glyphs_from_xml(r"/Users/gabriel/Dropbox/OMR_LU/imgs/OK/1001/page_glyphs.xml")
+# original_file = "/Users/gabriel/Dropbox/OMR_LU/imgs/OK/1001/original_image.tiff"
+# glyphs = gamera_xml.glyphs_from_xml(r"/Users/gabriel/Dropbox/OMR_LU/imgs/OK/1001/page_glyphs.xml")
+original_file = "/Users/ahankins/Documents/projects/1000/original_image.tiff"
+glyphs = gamera_xml.glyphs_from_xml(r"/Users/ahankins/Documents/projects/1000/page_glyphs.xml")
 file_name = (original_file.split('/')[-2] + '_' + original_file.split('/')[-1])
 
 
