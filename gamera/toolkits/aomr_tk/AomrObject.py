@@ -290,9 +290,9 @@ class AomrObject(object):
         # lg.debug("average_punctum: {0}".format(av_punctum))
         # lg.debug("staff_bounding_coordinates: {0}".format(print st_bound_coords))
         for g in glyphs:
+            lg.debug("glyph id {0}, {1}".format(g.get_main_id(), g))
             com = self.x_projection_vector(g, av_punctum, discard_size)
             if g.get_main_id().split('.')[0] != '_group': # just for testing, actual glyphs come prefiltered
-                # print g
                 st, st_no = self._return_staff_no(g, st_bound_coords, st_full_coords, com)
                 miyao_line = self._return_vertical_line(g, st[0])
                 
@@ -306,18 +306,20 @@ class AomrObject(object):
                     strt_pos = self.strt_pos_find(g, los, i)
                     # lg.debug("clef: {0}, st_no: {1}, in line {2}, start_pos {3},". format(g.get_main_id(), st_no, i, strt_pos))
                     
-                    
                 elif g.get_main_id().split('.')[0] == 'division' \
                         or g.get_main_id().split('.')[0] =='custos' \
                         or g.get_main_id().split('.')[0] =='alteration':
                     strt_pos = None
+                    # st_no = None
                     
                 else:
                     strt_pos = None
                     st_no = None
             else:
                 strt_pos = None
+                st_no = None
             proc_glyphs.append([g, st_no, g.offset_x, strt_pos])
+        lg.debug("End of Glyphs!")
         sorted_glyphs = self.sort_glyphs(proc_glyphs)            
         return sorted_glyphs
         
@@ -392,17 +394,20 @@ class AomrObject(object):
         """
             Returns the miyao line number just after the glyph, starting from 0
         """
-        for j, x in enumerate(st):
-            # print j, x[0], x
-            if x[0] > g.offset_x:
+        print st
+        for j in range(len(st)-1):
+            lg.debug("j: {0}, st[j]: {1}, st: {2}".format(j, st[j], st))
+            if st[j] > g.offset_x:
                 return j
                 
     def _return_line_or_space_no(self, g, com, st, miyao_line):
         """
             Returns the line or space number where the glyph is located for a specific stave an miyao line.
         """
-        horz_diff = float(st[0][miyao_line][0]-st[0][miyao_line-1][0])    
+        horz_diff = float(st[0][miyao_line][0]-st[0][miyao_line-1][0])   
+        print miyao_line 
         for i in range(len(st)-1): # each one of the lines
+            lg.debug("i : {0} st[i][miyao_line+1][1] : {1} st[i][miyao_line][1] : {2}".format(i, st[i], 0))
             vert_diff_up = float(st[i][miyao_line][1]-st[i][miyao_line-1][1]) # y_pos difference with the upper miyao line
             vert_diff_lo = float(st[i][miyao_line+1][1]-st[i][miyao_line][1]) # y_pos difference with the lower miyao line
             # print vert_diff_1, vert_diff_2
