@@ -68,15 +68,15 @@ def process_glyphs_directory(glyphs_directory, output_dir):
         for f in filenames:
             if f == 'page_glyphs.xml':
                 input_filename = os.path.join(dirpath, f)
-                
+    
                 folder_no = dirpath.split('/')[-1]
                 output_folder = os.path.join(folder_no, f)
                 output_filename = os.path.join(output_dir, output_folder)
                 # lg.debug("output_filename:{0}".format(output_filename))
                 shutil.copy(input_filename, output_filename)
-                
+    
                 lg.debug ("input filename: {0}".format(input_filename))
-                
+    
                 original_image = os.path.join(output_dir, (os.path.join(folder_no, 'original_image.tiff')))
                 mei_file_write = os.path.join(output_dir, (os.path.join(folder_no, 'page_glyphs.mei')))
                 glyphs = gamera_xml.glyphs_from_xml(output_filename)
@@ -85,12 +85,12 @@ def process_glyphs_directory(glyphs_directory, output_dir):
                 staff_coords = aomr_obj.staff_coords() # staves coordinates
                 pitch_find = aomr_obj.pitch_find(glyphs, st_position, aomr_opts.get('discard_size'))
                 sorted_glyphs = sorted(pitch_find, key=itemgetter(1, 2))
-                
+    
                 data = {}
                 for s, stave in enumerate(staff_coords):
                     contents = []
                     for sg in sorted_glyphs:
-                        # print ("sg[1]:{0} s:{1} sg{2}".format(sg[1], s+1, sg))
+                        # lg.debug("sg[1]:{0} s:{1} sg{2}".format(sg[1], s+1, sg))
                         # structure: g, stave, g.offset_x, note, strt_pos
                         if sg[1] == s+1: 
                             glyph = {   'type': sg[0].get_main_id().split('.')[0],
@@ -105,21 +105,11 @@ def process_glyphs_directory(glyphs_directory, output_dir):
                 print
                 mei_file = AomrMeiOutput.AomrMeiOutput(data, original_image.split('/')[-2])
                 meitoxml.meitoxml(mei_file.md, mei_file_write)
-                
-
-                # encoded = open(os.path.join(output_dir, (os.path.join(folder_no,'sorted_glyphs.txt'))), 'w')
-                # simplejson.dump(sorted_glyphs, encoded)
-                # encoded.close()
-                # for s in sorted_glyphs:
-                    # print s
-                    
-
-                
 
 
 if __name__ == "__main__":
     # usage = "usage: %prog [options] input_directory axz_directory output_directory"
-    usage = "usage: %prog [options] axz_directory outputdir page_glyphs_directory"
+    usage = "usage: %prog [options] axz_directory page_glyphs_directory outputdir "
     parser = OptionParser(usage)
     (options, args) = parser.parse_args()
 
@@ -142,8 +132,8 @@ if __name__ == "__main__":
         'discard_size': 12
     }
 
-    axz = process_axz_directory(args[0], args[1])
-    glyphs = process_glyphs_directory(args[2], args[1])
+    axz = process_axz_directory(args[0], args[2])
+    glyphs = process_glyphs_directory(args[1], args[2])
 
 
     

@@ -66,9 +66,14 @@ def main(original_file, page_file, outdir):
     for s, stave in enumerate(staff_coords):
         contents = []
         for sg in sorted_glyphs:
-            # lg.debug("sg[1]:{0} s:{1} sg{2}".format(sg[1], s+1, sg))
+            # print sg[0].get_main_id()
+            lg.debug("neume name: {0}".format(sg[0].get_main_id()))
             # structure: g, stave, g.offset_x, note, strt_pos
-            if sg[1] == s+1: 
+            if sg[0].get_main_id().split('.')[0] == 'neume' and sg[0].get_main_id().split('.')[1] == 'compound' or \
+                sg[0].get_main_id().split('.')[0] == 'neume' and sg[0].get_main_id().split('.')[1] == 'salicus' :
+                print "OOOO"
+                pass
+            elif sg[1] == s+1: 
                 glyph = {   'type': sg[0].get_main_id().split('.')[0],
                             'form': sg[0].get_main_id().split('.')[1:],
                             'coord': [sg[0].offset_x, sg[0].offset_y, \
@@ -77,7 +82,7 @@ def main(original_file, page_file, outdir):
                             'strt_pos': sg[3]}
                 contents.append(glyph)  
         data[s] = {'coord':stave, 'content':contents}    
-    print data
+    # print data
     print
 
     # CREATING THE MEI FILE
@@ -103,10 +108,8 @@ if __name__ == "__main__":
     if not args[2]:
         opts.error("You must supply an output directory.")
     
+
     main(args[0], args[1], args[2])
-    
-    
-    
 
 
 

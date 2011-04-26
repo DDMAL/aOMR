@@ -95,7 +95,6 @@ class AomrObject(object):
         s.find_staves()
         
         av_lines = s.get_average()
-        # print av_lines
         # lg.debug("Linelist is {0}".format(s.linelist))
         
         if len(self._flatten(s.linelist)) == 0:
@@ -290,7 +289,7 @@ class AomrObject(object):
         # lg.debug("average_punctum: {0}".format(av_punctum))
         # lg.debug("staff_bounding_coordinates: {0}".format(print st_bound_coords))
         for g in glyphs:
-            lg.debug("glyph id {0}, {1}".format(g.get_main_id(), g))
+            # lg.debug("glyph id {0}, {1}".format(g.get_main_id(), g))
             com = self.x_projection_vector(g, av_punctum, discard_size)
             if g.get_main_id().split('.')[0] != '_group': # just for testing, actual glyphs come prefiltered
                 st, st_no = self._return_staff_no(g, st_bound_coords, st_full_coords, com)
@@ -372,7 +371,7 @@ class AomrObject(object):
             shift = g_[3] - 4
             return shift
         if g_[0].get_main_id().split('.')[1] == 'f':
-            shift = g_[3] - 2
+            shift = g_[3] - 4
             return shift
         # OTHER CASES !!!!!
         
@@ -384,7 +383,7 @@ class AomrObject(object):
         """
         
         for i, s in enumerate(st_bound_coords):
-            # print("s[1]: {0}\tg.offset_y: {1}\ts[3]: {2}".format(0.5*(3*s[1]-s[3]), g.offset_y, 0.5*(3*s[3]-s[1])))
+            # lg.debug("s[1]: {0}\tg.offset_y: {1}\ts[3]: {2}".format(0.5*(3*s[1]-s[3]), g.offset_y, 0.5*(3*s[3]-s[1])))
             if 0.5*(3*s[1]-s[3]) <= g.offset_y + com < 0.5*(3*s[3]-s[1]): # GVM: considering the ledger lines in an unorthodox way.
                 st_no = st_full_coords[i]['line_positions']
                 return st_no, i+1
@@ -394,9 +393,8 @@ class AomrObject(object):
         """
             Returns the miyao line number just after the glyph, starting from 0
         """
-        print st
         for j in range(len(st)-1):
-            lg.debug("j: {0}, st[j]: {1}, st: {2}".format(j, st[j], st))
+            # lg.debug("j: {0}, st[j]: {1}, st: {2}".format(j, st[j], st))
             if st[j] > g.offset_x:
                 return j
                 
@@ -405,9 +403,8 @@ class AomrObject(object):
             Returns the line or space number where the glyph is located for a specific stave an miyao line.
         """
         horz_diff = float(st[0][miyao_line][0]-st[0][miyao_line-1][0])   
-        print miyao_line 
         for i in range(len(st)-1): # each one of the lines
-            lg.debug("i : {0} st[i][miyao_line+1][1] : {1} st[i][miyao_line][1] : {2}".format(i, st[i], 0))
+            # lg.debug("i : {0} st[i][miyao_line+1][1] : {1} st[i][miyao_line][1] : {2}".format(i, st[i], 0))
             vert_diff_up = float(st[i][miyao_line][1]-st[i][miyao_line-1][1]) # y_pos difference with the upper miyao line
             vert_diff_lo = float(st[i][miyao_line+1][1]-st[i][miyao_line][1]) # y_pos difference with the lower miyao line
             # print vert_diff_1, vert_diff_2
@@ -601,15 +598,15 @@ class AomrObject(object):
                 diff = 0.5 * (staff['avg_lines'][l+1] - staff['avg_lines'][l])
                 # print ("diff: {0}".format(diff))
                 if round(line-diff/2) <= y <= round(line+diff/2): # Is the glyph on a line ?
-                    # print ("staff:{0}, line:{1}, y_pos_line:{2}".format(s+1, l-1, line))
+                    # lg.debug("staff:{0}, line:{1}, y_pos_line:{2}".format(s+1, l-1, line))
                     g_.append([0, s, l])
                     return g_
                 elif round(line+diff/2) <= y <= round(line+3*diff/2): # Is the glyph on a space ?
-                    # print ("staff:{0}, space:{1}, y_pos_line:{2}".format(s+1, l-1, line))
+                    # lg.debug("staff:{0}, space:{1}, y_pos_line:{2}".format(s+1, l-1, line))
                     g_.append([1, s, l])
                     return g_
                 else:
-                    # print ("y: {0} line-diff/2: {1} line+diff/2: {2} line+3*diff/2: {3}".format(y, line-diff/2, line+diff/2, line+3*diff/2))
+                    # lg.debug("y: {0} line-diff/2: {1} line+diff/2: {2} line+3*diff/2: {3}".format(y, line-diff/2, line+diff/2, line+3*diff/2))
                     pass
         return g_
         
@@ -622,7 +619,6 @@ class AomrObject(object):
         proc_glyphs = [] # processed glyphs
         scale = ['g', 'f', 'e', 'd', 'c', 'b', 'a', 'g', 'f', 'e', 'd', 'c', 'b', 'a', 'g', 'f']
         av_punctum = self.average_punctum(glyphs)
-        # print av_punctum
         for g in glyphs:
             # lg.debug("g: {0}".format(g.get_main_id()))
             if g.get_main_id().split('.')[0] != '_group':
@@ -640,7 +636,6 @@ class AomrObject(object):
                 note = None
                 stave = None
                 strt_pos=None
-                # print "HERE!"
             # proc_glyphs.append((g.get_main_id(), stave, g.offset_x, note)) 
             proc_glyphs.append([g, stave, g.offset_x, note, strt_pos]) 
         print "END!"
