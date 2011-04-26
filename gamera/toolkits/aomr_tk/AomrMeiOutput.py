@@ -105,7 +105,7 @@ class AomrMeiOutput(object):
         
         self.section = mod.section_()
         self.pagebreak = self._create_pb_element()
-        self.pg.attributes = {'pbref': self.pagebreak.id}
+        self.pagebreak.attributes = {"pageref": self.pg.id}
         self.section.add_child(self.pagebreak)
         self.score.add_child(self.section)
         
@@ -128,8 +128,8 @@ class AomrMeiOutput(object):
             # self.system.facs = z.id
             s = self._create_system_element()
             s.facs = z.id
-            s.attributes = {"sbref": self.systembreak.id}
             self.pg.add_child(s)
+            self.systembreak.attributes = {"systemref": s.id}
         
         self.mei.add_child(self.music)
         
