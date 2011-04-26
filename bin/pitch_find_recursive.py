@@ -2,24 +2,11 @@ from optparse import OptionParser
 import os
 from gamera.core import *
 from gamera import gamera_xml
-from gamera import knn
-import threading
-import datetime
-import time
-import re
-from gamera.knn_editing import edit_mnn_cnn
 from gamera.toolkits.aruspix.ax_file import AxFile
 from gamera.toolkits.aomr_tk import AomrObject
 from gamera.toolkits.aomr_tk import AomrMeiOutput
-from gamera import knn, plugin
-from gamera import classify
-from gamera.symbol_table import SymbolTable
-import tempfile
-import shutil
-import random
-from lxml import etree
 import simplejson
-from operator import itemgetter, attrgetter
+from operator import itemgetter
 from pymei.Export import meitoxml
 
 
@@ -89,24 +76,30 @@ def process_glyphs_directory(glyphs_directory, output_dir):
                 data = {}
                 for s, stave in enumerate(staff_coords):
                     contents = []
-                    for sg in sorted_glyphs:
-                        # print ("sg[1]:{0} s:{1} sg{2}".format(sg[1], s+1, sg))
+                    for glyph, staff, offset, strt_pos, note in sorted_glyphs:
+                        glyph_id = glyph.get_main_id()
+                        glyph_type = glyph_id.split(".")[0]
+                        glyph_form = glyph_id.split(".")[1:]
+                        # lg.debug("sg[1]:{0} s:{1} sg{2}".format(sg[1], s+1, sg))
                         # structure: g, stave, g.offset_x, note, strt_pos
-                        if sg[1] == s+1: 
-                            glyph = {   'type': sg[0].get_main_id().split('.')[0],
-                                        'form': sg[0].get_main_id().split('.')[1:],
-                                        'coord': [sg[0].offset_x, sg[0].offset_y, \
-                                                sg[0].offset_x+sg[0].ncols, sg[0].offset_y+sg[0].nrows],
-                                        'strt_pitch': sg[3],
-                                        'strt_pos': sg[4]}
-                            contents.append(glyph)  
-                    data[s] = {'coord':stave, 'content':contents}    
-                print data
-                print
+
+                        if glyph_form:
+                            if glyph_form[0] == "compound" or glyph_form[0] == "salicus":
+                                continue
+
+                        if staff == s+1: 
+                            j_glyph = { 'type': glyph_type,
+                                        'form': glyph_form,
+                                        'coord': [glyph.offset_x, glyph.offset_y, glyph.offset_x + glyph.ncols, glyph.offset_y + glyph.nrows],
+                                        'strt_pitch': note,
+                                        'strt_pos': strt_pos}
+                            contents.append(j_glyph)  
+                    data[s] = {'coord':stave, 'content':contents}
+                    
                 mei_file = AomrMeiOutput.AomrMeiOutput(data, original_image.split('/')[-2])
                 meitoxml.meitoxml(mei_file.md, mei_file_write)
                 
-
+                
                 # encoded = open(os.path.join(output_dir, (os.path.join(folder_no,'sorted_glyphs.txt'))), 'w')
                 # simplejson.dump(sorted_glyphs, encoded)
                 # encoded.close()
@@ -119,7 +112,7 @@ def process_glyphs_directory(glyphs_directory, output_dir):
 
 if __name__ == "__main__":
     # usage = "usage: %prog [options] input_directory axz_directory output_directory"
-    usage = "usage: %prog [options] axz_directory outputdir page_glyphs_directory"
+    usage = "usage: %prog [options] axz_directory page_glyphs_directory outputdir"
     parser = OptionParser(usage)
     (options, args) = parser.parse_args()
 
@@ -142,8 +135,8 @@ if __name__ == "__main__":
         'discard_size': 12
     }
 
-    axz = process_axz_directory(args[0], args[1])
-    glyphs = process_glyphs_directory(args[2], args[1])
+    axz = process_axz_directory(args[0], args[2])
+    glyphs = process_glyphs_directory(args[1], args[2])
 
 
     

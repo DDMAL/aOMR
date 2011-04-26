@@ -41,6 +41,7 @@ class AomrMeiOutput(object):
         'epiphonus': ['u'],
         'podatus': ['u'],
         'porrectus': ['d','u'],
+        'salicus': ['u', 'u'],
         'scandicus': ['u','u'],
         'torculus': ['u','d'],
         'ancus': ['d','d'], # See note 1 below

@@ -286,51 +286,39 @@ class AomrObject(object):
         proc_glyphs = []
         st_bound_coords = self.staff_coords()
         st_full_coords = self.find_staves()
+        
+        # what to do if there are no punctum on a page???
         av_punctum = self.average_punctum(glyphs)
-        # lg.debug("average_punctum: {0}".format(av_punctum))
-        # lg.debug("staff_bounding_coordinates: {0}".format(print st_bound_coords))
         for g in glyphs:
-            lg.debug("glyph id {0}, {1}".format(g.get_main_id(), g))
-            com = self.x_projection_vector(g, av_punctum, discard_size)
-            if g.get_main_id().split('.')[0] != '_group': # just for testing, actual glyphs come prefiltered
-                st, st_no = self._return_staff_no(g, st_bound_coords, st_full_coords, com)
+            glyph_id = g.get_main_id()
+            glyph_type = glyph_id.split(".")[0]
+            center_of_mass = self.x_projection_vector(g, av_punctum, discard_size)
+            if glyph_type == '_group':
+                strt_pos = None
+                st_no = None
+            else:
+                st, st_no = self._return_staff_no(g, st_bound_coords, st_full_coords, center_of_mass)
                 miyao_line = self._return_vertical_line(g, st[0])
                 
-                if g.get_main_id().split('.')[0] == 'neume':
-                    los, i = self._return_line_or_space_no(g, com, st, miyao_line) # line (0) or space (1), no
-                    l_s = ['line', 'space']
-                    strt_pos = self.strt_pos_find(g, los, i) 
-                    
-                elif g.get_main_id().split('.')[0] =='clef':
-                    los, i = self._return_line_or_space_no(g, com, st, miyao_line) # line (0) or space (1), no
-                    strt_pos = self.strt_pos_find(g, los, i)
-                    # lg.debug("clef: {0}, st_no: {1}, in line {2}, start_pos {3},". format(g.get_main_id(), st_no, i, strt_pos))
-                    
-                elif g.get_main_id().split('.')[0] == 'division' \
-                        or g.get_main_id().split('.')[0] =='custos' \
-                        or g.get_main_id().split('.')[0] =='alteration':
+                if glyph_type == 'division' or glyph_type =='custos' or glyph_type =='alteration':
                     strt_pos = None
-                    # st_no = None
-                    
+                elif glyph_type == "neume" or glyph_type == "clef":
+                    line_or_space, line_num = self._return_line_or_space_no(g, center_of_mass, st, miyao_line) # line (0) or space (1), no
+                    strt_pos = self.strt_pos_find(g, line_or_space, line_num) 
                 else:
                     strt_pos = None
                     st_no = None
-            else:
-                strt_pos = None
-                st_no = None
             proc_glyphs.append([g, st_no, g.offset_x, strt_pos])
-        lg.debug("End of Glyphs!")
+            
         sorted_glyphs = self.sort_glyphs(proc_glyphs)            
         return sorted_glyphs
         
-        
-        
-    def strt_pos_find(self, glyph, los, no):
+    def strt_pos_find(self, glyph, line_or_space, line_num):
         """ Start position finding.
             Returns the start position, starting from ledger line 0, which strt_pos value is 0.
             
         """
-        strt_pos = (no + 1)*2 + los
+        strt_pos = (line_num + 1)*2 + line_or_space
         return strt_pos
         
         
@@ -350,42 +338,51 @@ class AomrObject(object):
         # print proc_glyphs
         sorted_glyphs = sorted(proc_glyphs, key = itemgetter(1,2))
         
-        for g_ in sorted_glyphs:
+        for glyph_array in sorted_glyphs:
             # lg.debug("sorted glyphs {0} {1}".format(g_[0].get_main_id(), g_))
-            if g_[0].get_main_id().split('.')[0] == 'clef':
-                shift = self.clef_shift(g_)
-                g_.append(None)
+            this_glyph = glyph_array[0]
+            this_glyph_id = this_glyph.get_main_id()
+            this_glyph_type = this_glyph_id.split(".")[0]
+            
+            if this_glyph_type == 'clef':
+                shift = self.clef_shift(glyph_array)
+                glyph_array.append(None)
                 
-            elif g_[0].get_main_id().split('.')[0] == 'neume':
-                pitch = self.pitch_find_from_strt_pos(g_[3]+shift)
-                g_.append(pitch)
+            elif this_glyph_type == 'neume':
+                pitch = self.pitch_find_from_strt_pos(glyph_array[3]+shift)
+                glyph_array.append(pitch)
                 
             else:
-                g_.append(None)
+                glyph_array.append(None)
                 
         return sorted_glyphs
         
-    def clef_shift(self, g_):
+    def clef_shift(self, glyph_array):
         """
         """
-        if g_[0].get_main_id().split('.')[1] == 'c':
-            shift = g_[3] - 4
+        this_clef = glyph_array[0]
+        this_clef_id = this_clef.get_main_id()
+        this_clef_type = this_clef_id.split(".")[1]
+        
+        if this_clef_type == 'c':
+            shift = glyph_array[3] - 4
             return shift
-        if g_[0].get_main_id().split('.')[1] == 'f':
-            shift = g_[3] - 2
+        elif this_clef_type == 'f':
+            shift = glyph_array[3] - 4
             return shift
         # OTHER CASES !!!!!
         
         
         
-    def _return_staff_no(self, g, st_bound_coords, st_full_coords, com):
+    def _return_staff_no(self, g, st_bound_coords, st_full_coords, center_of_mass):
         """
             Returns the staff and staff number where a specific glyph is located 
         """
         
         for i, s in enumerate(st_bound_coords):
             # print("s[1]: {0}\tg.offset_y: {1}\ts[3]: {2}".format(0.5*(3*s[1]-s[3]), g.offset_y, 0.5*(3*s[3]-s[1])))
-            if 0.5*(3*s[1]-s[3]) <= g.offset_y + com < 0.5*(3*s[3]-s[1]): # GVM: considering the ledger lines in an unorthodox way.
+
+            if 0.5*(3* s[1] - s[3]) <= g.offset_y + center_of_mass < 0.5*(3 * s[3] - s[1]): # GVM: considering the ledger lines in an unorthodox way.
                 st_no = st_full_coords[i]['line_positions']
                 return st_no, i+1
                 
@@ -394,44 +391,51 @@ class AomrObject(object):
         """
             Returns the miyao line number just after the glyph, starting from 0
         """
-        print st
-        for j in range(len(st)-1):
-            lg.debug("j: {0}, st[j]: {1}, st: {2}".format(j, st[j], st))
-            if st[j] > g.offset_x:
+        for j,stf in enumerate(st[1:]):
+            if stf > g.offset_x:
                 return j
                 
-    def _return_line_or_space_no(self, g, com, st, miyao_line):
+    def _return_line_or_space_no(self, glyph, center_of_mass, st, miyao_line):
         """
             Returns the line or space number where the glyph is located for a specific stave an miyao line.
+            
+            Remember kids:
+                Line = 0
+                Space = 1
+            
         """
-        horz_diff = float(st[0][miyao_line][0]-st[0][miyao_line-1][0])   
-        print miyao_line 
-        for i in range(len(st)-1): # each one of the lines
-            lg.debug("i : {0} st[i][miyao_line+1][1] : {1} st[i][miyao_line][1] : {2}".format(i, st[i], 0))
-            vert_diff_up = float(st[i][miyao_line][1]-st[i][miyao_line-1][1]) # y_pos difference with the upper miyao line
-            vert_diff_lo = float(st[i][miyao_line+1][1]-st[i][miyao_line][1]) # y_pos difference with the lower miyao line
+        horz_diff = float(st[0][miyao_line][0] - st[0][miyao_line-1][0])
+        
+        for i, stf in enumerate(st[1:]):
+        # for i in range(len(st)-1): # each one of the lines
+            # lg.debug("i : {0} st[i][miyao_line+1][1] : {1} st[i][miyao_line][1] : {2}".format(i, st[i], 0))
+            vert_diff_up = float(stf[miyao_line][1] - stf[miyao_line-1][1]) # y_pos difference with the upper miyao line
+            vert_diff_lo = float(stf[miyao_line+1][1] - stf[miyao_line][1]) # y_pos difference with the lower miyao line
             # print vert_diff_1, vert_diff_2
             factor_up = vert_diff_up/horz_diff
             factor_lo = vert_diff_lo/horz_diff
-            diff_x_glyph_bar = float(g.offset_x - st[i][miyao_line-1][0]) # difference between the glyph x_pos and the previous bar
+            diff_x_glyph_bar = float(glyph.offset_x - stf[miyao_line-1][0]) # difference between the glyph x_pos and the previous bar
             vert_pos_shift_up = factor_up * diff_x_glyph_bar # vert_pos_shift is the shifted vertical position of each line for each x position
             vert_pos_shift_lo = factor_lo * diff_x_glyph_bar # vert_pos_shift is the shifted vertical position of each line for each x position
-
-
-            diff = (st[i+1][miyao_line][1] + vert_pos_shift_lo) - (st[i][miyao_line-1][1] + vert_pos_shift_up)
+            
+            # again, since we're slicing st[1:], we can refer to two parts of the array simultaneously.
+            diff = (stf[miyao_line][1] + vert_pos_shift_lo) - (st[i][miyao_line-1][1] + vert_pos_shift_up)
+            
             # print diff
-            if st[i+1][miyao_line][1] + diff/4 > g.offset_y + com:
-                los = 0
+            if stf[miyao_line][1] + diff/4 > glyph.offset_y + center_of_mass:
+                line_or_space = 0
                 # print 'line', i
-                return los, i
-            elif st[i+1][miyao_line][1] + 3*diff/4 > g.offset_y + com:
-                los = 1
+                return line_or_space, i
+                
+            elif stf[miyao_line][1] + 3*diff/4 > glyph.offset_y + center_of_mass:
+                line_or_space = 1
                 # print 'space', i
-                return los, i
-            elif st[i+1][miyao_line][1] + 4*diff/4 > g.offset_y + com:
-                los = 0
+                return line_or_space, i
+                
+            elif stf[miyao_line][1] + 4*diff/4 > glyph.offset_y + center_of_mass:
+                line_or_space = 0
                 # print 'line+1', i+1
-                return los, i+1
+                return line_or_space, i+1
             else:
                 pass
 
@@ -553,7 +557,7 @@ class AomrObject(object):
         """ Projection Vector
             creates a subimage of the original glyph and returns its center of mass
         """
-        com = 0
+        center_of_mass = 0
         # print glyph
         if glyph.ncols > discard_size and glyph.nrows > discard_size:
             if glyph.ncols < avg_punctum:
@@ -561,10 +565,10 @@ class AomrObject(object):
             temp_glyph = glyph.subimage((glyph.offset_x, glyph.offset_y), \
                 ((glyph.offset_x + avg_punctum - 1), (glyph.offset_y + glyph.nrows - 1)))
             projection_vector = temp_glyph.projection_rows()
-            com = self.center_of_mass(projection_vector)
+            center_of_mass = self.center_of_mass(projection_vector)
         else:
-            com = 0
-        return com
+            center_of_mass = 0
+        return center_of_mass
 
     def center_of_mass(self, projection_vector):
         """ Center of Mass.
@@ -573,45 +577,42 @@ class AomrObject(object):
         s = 0.
         v = 0.
         for i, value in enumerate(projection_vector):
-            s = s + ( i + 1 ) * projection_vector[i]
+            s = s + ( i + 1 ) * value
             v = v + value
         com = s / v
         return com
 
-    def st_avg_post(self):
-        """ Stave Average Position.
-            returns the average position of the stave lines
-        """
-        st_position, av_lines = aomr_obj.find_staves() # staves position
-        return av_lines
-
-    def glyph_staff_y_pos_ave(self, g, com, st_position):
+    def glyph_staff_y_pos_ave(self, g, center_of_mass, st_position):
         """ Glyph Staff Average y-Position.
             calculates between what stave lines a certain glyph is located
         """
-        g_ = []
-        y = (g.offset_y + com) # y is the y_position of the center of mass of a glyph
+        glyph_array = []
+        y = (g.offset_y + center_of_mass) # y is the y_position of the center of mass of a glyph
         # print("{0}, ({1}, {2}), com: {3}".format(g.get_main_id(), g.offset_x, g.offset_y, y))
 
         for s, staff in enumerate(st_position):
-            for l, line in enumerate(staff['avg_lines']):
+            for l, line in enumerate(staff['avg_lines'][1:]):
                 # lg.debug("staff:{0}, line:{1}, line_y:{2}".format(s, l, line))
-                if l == 7: # awful solution for not having an error with the last line
-                    l = 6
-                diff = 0.5 * (staff['avg_lines'][l+1] - staff['avg_lines'][l])
+
+                # the difference is always line - (previous line). If we chop this list
+                # from 1 onwards, then we will always be able to index these simultaneously;
+                # one with the "line" object, the other by the current index. This avoids
+                # any magic numbers or hacks.
+                
+                diff = 0.5 * (line - staff['avg_lines'][l])
                 # print ("diff: {0}".format(diff))
                 if round(line-diff/2) <= y <= round(line+diff/2): # Is the glyph on a line ?
                     # print ("staff:{0}, line:{1}, y_pos_line:{2}".format(s+1, l-1, line))
-                    g_.append([0, s, l])
-                    return g_
+                    glyph_array.append([0, s, l])
+                    return glyph_array
                 elif round(line+diff/2) <= y <= round(line+3*diff/2): # Is the glyph on a space ?
                     # print ("staff:{0}, space:{1}, y_pos_line:{2}".format(s+1, l-1, line))
-                    g_.append([1, s, l])
-                    return g_
+                    glyph_array.append([1, s, l])
+                    return glyph_array
                 else:
                     # print ("y: {0} line-diff/2: {1} line+diff/2: {2} line+3*diff/2: {3}".format(y, line-diff/2, line+diff/2, line+3*diff/2))
                     pass
-        return g_
+        return glyph_array
         
     def pitch_find(self, glyphs, st_position, discard_size):
         """ Pitch Find.
@@ -625,16 +626,16 @@ class AomrObject(object):
         # print av_punctum
         for g in glyphs:
             # lg.debug("g: {0}".format(g.get_main_id()))
-            if g.get_main_id().split('.')[0] != '_group':
+            glyph_id = g.get_main_id()
+            glyph_type = glyph_id.split(".")[0]
+            if glyph_type != '_group':
                 com = self.x_projection_vector(g, av_punctum, discard_size)
-                g_ = self.glyph_staff_y_pos_ave(g, com, st_position)
-                strt_pos = 2*g_[0][2]+g_[0][0]
+                glyph_array = self.glyph_staff_y_pos_ave(g, com, st_position)
+                strt_pos = 2 * glyph_array[0][2] + glyph_array[0][0]
                 
                 note = scale[strt_pos]
-                stave = g_[0][1]+1
-                if g.get_main_id().split('.')[0] == 'division' \
-                    or g.get_main_id().split('.')[0] =='custos' \
-                    or g.get_main_id().split('.')[0] =='alteration':
+                stave = glyph_array[0][1]+1
+                if glyph_type == 'division' or glyph_type =='custos' or glyph_type =='alteration':
                     note = None
             else:
                 note = None

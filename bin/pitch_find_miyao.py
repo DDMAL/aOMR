@@ -1,24 +1,10 @@
 from optparse import OptionParser
-import os
+import os, sys
 from gamera.core import *
 from gamera import gamera_xml
-from gamera import knn
-import threading
-import datetime
-import time
-import re
-from gamera.knn_editing import edit_mnn_cnn
-from gamera.toolkits.aruspix.ax_file import AxFile
 from gamera.toolkits.aomr_tk import AomrObject
 from gamera.toolkits.aomr_tk import AomrMeiOutput
-from gamera import knn, plugin
-from gamera import classify
-from gamera.symbol_table import SymbolTable
-import tempfile
-import shutil
-import random
-from lxml import etree
-from operator import itemgetter, attrgetter
+
 import pymei
 from pymei.Components import Modules
 from pymei.Helpers import template
@@ -52,7 +38,7 @@ def main(original_file, page_file, outdir):
     st_position = aomr_obj.find_staves() # staves position
     staff_coords = aomr_obj.staff_coords()
 
-    sorted_glyphs = aomr_obj.miyao_pitch_find(glyphs, aomr_opts.get('discard_size'))
+    sorted_glyphs = aomr_obj.miyao_pitch_find(glyphs, aomr_opts['discard_size'])
 
     # PITCH FINDING
     # pitch_find = aomr_obj.pitch_find(glyphs, st_position, aomr_opts.get('discard_size'))
@@ -65,20 +51,25 @@ def main(original_file, page_file, outdir):
     data = {}
     for s, stave in enumerate(staff_coords):
         contents = []
-        for sg in sorted_glyphs:
+        for glyph, staff, offset, strt_pos, note in sorted_glyphs:
+            glyph_id = glyph.get_main_id()
+            glyph_type = glyph_id.split(".")[0]
+            glyph_form = glyph_id.split(".")[1:]
             # lg.debug("sg[1]:{0} s:{1} sg{2}".format(sg[1], s+1, sg))
             # structure: g, stave, g.offset_x, note, strt_pos
-            if sg[1] == s+1: 
-                glyph = {   'type': sg[0].get_main_id().split('.')[0],
-                            'form': sg[0].get_main_id().split('.')[1:],
-                            'coord': [sg[0].offset_x, sg[0].offset_y, \
-                                    sg[0].offset_x+sg[0].ncols, sg[0].offset_y+sg[0].nrows],
-                            'strt_pitch': sg[4],
-                            'strt_pos': sg[3]}
-                contents.append(glyph)  
+            
+            if glyph_form:
+                if glyph_form[0] == "compound" or glyph_form[0] == "salicus":
+                    continue
+            
+            if staff == s+1: 
+                j_glyph = { 'type': glyph_type,
+                            'form': glyph_form,
+                            'coord': [glyph.offset_x, glyph.offset_y, glyph.offset_x + glyph.ncols, glyph.offset_y + glyph.nrows],
+                            'strt_pitch': note,
+                            'strt_pos': strt_pos}
+                contents.append(j_glyph)  
         data[s] = {'coord':stave, 'content':contents}    
-    print data
-    print
 
     # CREATING THE MEI FILE
     mei_file = AomrMeiOutput.AomrMeiOutput(data, file_name)
