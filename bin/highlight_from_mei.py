@@ -20,6 +20,10 @@ if __name__ == "__main__":
     systems = mdoc.search('system')
     
     img = load_image(args[1])
+    
+    if img.pixel_type_name != "OneBit":
+        img = img.to_onebit()
+    
     rgb = Image(img, RGB)
     
     neumecolour = RGBPixel(255, 0, 0)

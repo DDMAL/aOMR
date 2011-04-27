@@ -94,7 +94,8 @@ class AomrMeiOutput(object):
         self.body = mod.body_()
         self.music.add_child(self.body)
         
-        self.mdiv = mod.mdiv_()        
+        self.mdiv = mod.mdiv_()
+        self.mdiv.attributes = {"type": "solesmes"}
         self.body.add_child(self.mdiv)
         
         self.score = mod.score_()
@@ -245,8 +246,10 @@ class AomrMeiOutput(object):
         full_width_episema = False
         has_dot = False
         has_vertical_episema = False
+        has_horizontal_episema = False
         has_quilisma = False
         this_neume_form = None
+        local_horizontal_episema = None
         
         neume = mod.neume_()
             
@@ -259,7 +262,12 @@ class AomrMeiOutput(object):
         if self.glyph['form'][0] == "he":
             full_width_episema = True
             del self.glyph['form'][0]
-            
+        
+        # we've removed any global he's, so 
+        # any leftovers should be local.
+        if 'he' in self.glyph['form']:
+            has_horizontal_episema = True
+        
         if 'dot' in self.glyph['form']:
             has_dot = True
         
@@ -360,30 +368,29 @@ class AomrMeiOutput(object):
         
         qidxs = []
         if has_quilisma:
-            # figure out what note the quilismae are on.
-            for i,n in enumerate(self.glyph['form']):
-                if n == "q":
-                    # A quilisma is appended to the note before the idx...
-                    qidxs.append(i - 1)
-        
+            self.__note_addition_figurer_outer("q", qidxs)
+            
         dotidxs = []
         if has_dot:
-            for i, n in enumerate(self.glyph['form']):
-                if n == "dot":
-                    dotidxs.append(i - 1)
-        
+            self.__note_addition_figurer_outer("dot", dotidxs)
+            
         veidxs = []
         if has_vertical_episema:
-            for i, n in enumerate(self.glyph['form']):
-                if n == "ve":
-                    veidxs.append(i - 1)
-        
+            self.__note_addition_figurer_outer("ve", veidxs)
+                            
+        heidxs = []
+        if has_horizontal_episema:
+            self.__note_addition_figurer_outer("he", heidxs)
+            
+        lg.debug("HE IDX: {0}".format(heidxs))
+            
+        lg.debug("Num Notes: {0}".format(num_notes))
         for n in xrange(num_notes):
             p = self._neume_pitches[n]
             nt = self._create_note_element(p)
             if n == 0 and full_width_episema is True:
                 epi.attributes = {"startid": nt.id}
-            elif n == num_notes - 1 and full_width_episema is True:
+            elif n == num_notes and full_width_episema is True:
                 epi.attributes = {"endid": nt.id}
             
             if has_quilisma:
@@ -401,6 +408,18 @@ class AomrMeiOutput(object):
                     ep.attributes = {"form": "vertical", "startid": nt.id}
                     self.staffel.add_child(ep)
             
+            if has_horizontal_episema:
+                lg.debug("N is: {0}".format(n))
+                if n in heidxs:
+                    local_horizontal_episema = self._create_episema_element()
+                    local_horizontal_episema.attributes = {"form": "horizontal", "startid": nt.id}
+                    self.staffel.add_child(local_horizontal_episema)
+                    
+            
+            if n == num_notes - 1 and local_horizontal_episema:
+                # we've reached the end, and we have an HE we need to close up.
+                local_horizontal_episema.attributes = {"endid": nt.id}
+                
             nc.append(nt)
         neume.add_children(nc)
         
@@ -468,6 +487,29 @@ class AomrMeiOutput(object):
             return form[1]
         else:
             return None
+    
+    def __note_addition_figurer_outer(self, ntype, idxarray):
+        for i,n in enumerate(self.glyph['form']):
+            if n == ntype:
+                j = copy.copy(i) - 1
+                if j == 0:
+                    idxarray.append(0)
+                while j:
+                    if self.__is_valid_note_indicator(self.glyph['form'][j]):
+                        idxarray.append(j)
+                        break
+                    else:
+                        j -= 1
+        
+    
+    def __is_valid_note_indicator(self, form):
+        # used to test if a form is a valid indicator of a note (and not a q, dot, or anything else)
+        if form.isdigit():
+            return True
+        elif len(form) == 2 and form.startswith("u") or form.startswith("d"):
+            return True
+        else:
+            return False
 
 
 
