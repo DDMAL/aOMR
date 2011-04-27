@@ -16,6 +16,7 @@ lg.addHandler(h)
 
 import uuid
 import pdb
+import copy
 
 # [staff_number, c.offset_x, c.offset_y, note, line_number, 
 #   glyph_kind, actual_glyph, glyph_char, uod, c.ncols, c.nrows]
@@ -242,12 +243,15 @@ class AomrMeiOutput(object):
     def _create_neume_element(self):
         # lg.debug("glyph: {0}".format(self.glyph['form']))
         full_width_episema = False
+        this_neume_form = None
         
         neume = mod.neume_()
             
         neume.id = self._idgen()
         zone = self._create_zone_element()
         neume.facs = zone.id
+        
+        lg.debug(self.glyph['form'])
         
         if self.glyph['form'][0] == "he":
             full_width_episema = True
@@ -257,25 +261,36 @@ class AomrMeiOutput(object):
             neume.attributes = {'altname': 'inclinatum'}
             
         neume.attributes = {'name': self.glyph['form'][0]}
-        this_neume_form = self.NEUME_NOTES[self.glyph['form'][0]]
+        
+        if 'compound' in self.glyph['form']:
+            lg.debug("Doing a compound neume.")
+            # do something and create a new set of pitch contours
+            this_neume_form = [y for y in (self.__parse_contour(n) for n in self.glyph['form']) if y]
+            self._note_elements = [y for y in (self.__parse_steps(n) for n in self.glyph['form']) if y]
+        else:
+            this_neume_form = copy.deepcopy(self.NEUME_NOTES[self.glyph['form'][0]])
+            self._note_elements = self.glyph['form'][1:]
         # get the form so we can find the number of notes we need to construct.
-        try:
-             # since we define the form of the intervals, we're always off-by-one in the number of notes.
-            num_notes = len(this_neume_form) + 1
-        except KeyError:
-            raise AomrMeiFormNotFoundError("The form {0} was not found.".format(self.glyph['form'][0]))
         
-        
-        # do we need to add any further notes? form is pretty loaded, so we 
-        # have to check manually, from idx 1 on (since the primary form is always first)
+        num_notes = len(this_neume_form) + 1
+        # lg.debug("Glyph form: {0}".format(this_neume_form))
+        # lg.debug("Num notes before add check: {0}".format(num_notes))
+        # lg.debug("Neume form before add check: {0}".format(this_neume_form))
         
         # we don't have an off-by-one problem here, since an added interval means an added note
         check_additional = [i for i in self.ADD_NOTES.keys() if i in self.glyph['form'][1:]]
-        num_notes = num_notes + len(check_additional)
+        lg.debug("Check additional: {0}".format(check_additional))
+        if check_additional:
+            lg.debug("Adding extra notes.")
+            for f in check_additional:
+                this_neume_form.extend(self.ADD_NOTES[f])
+            num_notes = num_notes + len(check_additional)
+            
+        # lg.debug("Num notes after add check: {0}".format(num_notes))
+        # lg.debug("Neume form after add check: {0}".format(this_neume_form))
         
         self._neume_pitches = []
         # note elements are everything after the first form. This determines the shape a note takes.
-        self._note_elements = self.glyph['form'][1:]
         self._neume_pitches.append(self.glyph['strt_pitch'])
         # lg.debug("neume pitches: {0}, no notes: {1}".format(self._neume_pitches, num_notes))
         nc = []
@@ -298,7 +313,7 @@ class AomrMeiOutput(object):
             # lg.debug(ivals)
             for n in xrange(len(ivals)):
                 # get the direction
-                dir = self.NEUME_NOTES[self.glyph['form'][0]][n]
+                dir = this_neume_form[n]
                 # lg.debug("direction is {0}".format(dir))
                 iv = ivals[n]
                 n_idx = idx
@@ -366,7 +381,8 @@ class AomrMeiOutput(object):
         zone = self._create_zone_element()
         division.facs = zone.id
         
-        division.attributes = {'form': self.glyph['form'][0]}
+        if self.glyph['form']:
+            division.attributes = {'form': self.glyph['form'][0]}
         
         return division
     
@@ -380,6 +396,21 @@ class AomrMeiOutput(object):
     def _idgen(self):
         """ Returns a UUID. """
         return "{0}-{1}".format('m', str(uuid.uuid4()))
+
+    def __parse_contour(self, form):
+        # removes the contour indicator from the neume
+        # and creates a neume form.
+        if len(form) is 2 and (form.startswith("u") or form.startswith("d")):
+            # do something
+            return form[0]
+        else:
+            return None
+    
+    def __parse_steps(self, form):
+        if len(form) is 2 and (form.startswith("u") or form.startswith("d")):
+            return form[1]
+        else:
+            return None
 
 
 

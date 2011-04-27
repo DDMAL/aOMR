@@ -53,16 +53,14 @@ def main(original_file, page_file, outdir):
         contents = []
         for glyph, staff, offset, strt_pos, note in sorted_glyphs:
             glyph_id = glyph.get_main_id()
+            lg.debug("Glyph ID: {0}".format(glyph_id))
+            
+            
             glyph_type = glyph_id.split(".")[0]
             glyph_form = glyph_id.split(".")[1:]
             # lg.debug("sg[1]:{0} s:{1} sg{2}".format(sg[1], s+1, sg))
             # structure: g, stave, g.offset_x, note, strt_pos
-            
-            if glyph_form:
-                if glyph_form[0] == "compound" or glyph_form[0] == "salicus":
-                    continue
-            
-            if staff == s+1: 
+            if staff == s+1:
                 j_glyph = { 'type': glyph_type,
                             'form': glyph_form,
                             'coord': [glyph.offset_x, glyph.offset_y, glyph.offset_x + glyph.ncols, glyph.offset_y + glyph.nrows],
