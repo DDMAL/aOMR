@@ -243,6 +243,9 @@ class AomrMeiOutput(object):
     def _create_neume_element(self):
         # lg.debug("glyph: {0}".format(self.glyph['form']))
         full_width_episema = False
+        has_dot = False
+        has_vertical_episema = False
+        has_quilisma = False
         this_neume_form = None
         
         neume = mod.neume_()
@@ -256,14 +259,23 @@ class AomrMeiOutput(object):
         if self.glyph['form'][0] == "he":
             full_width_episema = True
             del self.glyph['form'][0]
+            
+        if 'dot' in self.glyph['form']:
+            has_dot = True
+        
+        if 'q' in self.glyph['form']:
+            lg.debug("HAS QUILISMA!")
+            has_quilisma = True
+        
+        if 've' in self.glyph['form']:
+            has_vertical_episema = True
         
         if 'inclinatum' in self.glyph['form']:
-            neume.attributes = {'altname': 'inclinatum'}
+            neume.attributes = {'variant': 'inclinatum'}
             
         neume.attributes = {'name': self.glyph['form'][0]}
         
         if 'compound' in self.glyph['form']:
-            lg.debug("Doing a compound neume.")
             # do something and create a new set of pitch contours
             this_neume_form = [y for y in (self.__parse_contour(n) for n in self.glyph['form']) if y]
             self._note_elements = [y for y in (self.__parse_steps(n) for n in self.glyph['form']) if y]
@@ -284,6 +296,11 @@ class AomrMeiOutput(object):
             lg.debug("Adding extra notes.")
             for f in check_additional:
                 this_neume_form.extend(self.ADD_NOTES[f])
+                
+                ## THIS SHOULD BE CHANGED. Otherwise we may end up with two attributes with the
+                # same name.
+                neume.attributes = {"variant": self.ADD_NOTES[f]}
+            
             num_notes = num_notes + len(check_additional)
             
         # lg.debug("Num notes after add check: {0}".format(num_notes))
@@ -338,10 +355,29 @@ class AomrMeiOutput(object):
         
         if full_width_episema is True:
             epi = self._create_episema_element()
-            epi.id = self._idgen()
             epi.attributes = {"form": "horizontal"}
             self.staffel.add_child(epi)
-            
+        
+        qidxs = []
+        if has_quilisma:
+            # figure out what note the quilismae are on.
+            for i,n in enumerate(self.glyph['form']):
+                if n == "q":
+                    # A quilisma is appended to the note before the idx...
+                    qidxs.append(i - 1)
+        
+        dotidxs = []
+        if has_dot:
+            for i, n in enumerate(self.glyph['form']):
+                if n == "dot":
+                    dotidxs.append(i - 1)
+        
+        veidxs = []
+        if has_vertical_episema:
+            for i, n in enumerate(self.glyph['form']):
+                if n == "ve":
+                    veidxs.append(i - 1)
+        
         for n in xrange(num_notes):
             p = self._neume_pitches[n]
             nt = self._create_note_element(p)
@@ -349,7 +385,22 @@ class AomrMeiOutput(object):
                 epi.attributes = {"startid": nt.id}
             elif n == num_notes - 1 and full_width_episema is True:
                 epi.attributes = {"endid": nt.id}
-                
+            
+            if has_quilisma:
+                if n in qidxs:
+                    nt.attributes = {"quil": "true"}
+            
+            if has_dot:
+                if n in dotidxs:
+                    d = self._create_dot_element()
+                    nt.add_child(d)
+            
+            if has_vertical_episema:
+                if n in veidxs:
+                    ep = self._create_episema_element()
+                    ep.attributes = {"form": "vertical", "startid": nt.id}
+                    self.staffel.add_child(ep)
+            
             nc.append(nt)
         neume.add_children(nc)
         
@@ -360,6 +411,12 @@ class AomrMeiOutput(object):
         note.id = self._idgen()
         note.pitchname = pname
         return note
+    
+    def _create_dot_element(self):
+        dot = mod.dot_()
+        dot.id = self._idgen()
+        dot.attributes = {"form": "aug"}
+        return dot
     
     def _create_custos_element(self):
         custos = mod.custos_()
