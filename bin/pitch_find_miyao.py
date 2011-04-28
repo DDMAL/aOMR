@@ -53,7 +53,7 @@ def main(original_file, page_file, outdir):
         contents = []
         for glyph, staff, offset, strt_pos, note in sorted_glyphs:
             glyph_id = glyph.get_main_id()
-            lg.debug("Glyph ID: {0}".format(glyph_id))
+            # lg.debug("Glyph ID: {0}".format(glyph_id))
             
             
             glyph_type = glyph_id.split(".")[0]
@@ -68,7 +68,7 @@ def main(original_file, page_file, outdir):
                             'strt_pos': strt_pos}
                 contents.append(j_glyph)  
         data[s] = {'coord':stave, 'content':contents}    
-
+    print data
     # CREATING THE MEI FILE
     mei_file = AomrMeiOutput.AomrMeiOutput(data, file_name)
     # print mei_file

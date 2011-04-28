@@ -292,7 +292,22 @@ class AomrObject(object):
         for g in glyphs:
             glyph_id = g.get_main_id()
             glyph_type = glyph_id.split(".")[0]
-            center_of_mass = self.x_projection_vector(g, av_punctum, discard_size)
+            lg.debug("glyph_id: {0}".format(glyph_id))
+            if glyph_type == 'neume':
+                if glyph_id.split('.')[1] == 'podatus' or glyph_id.split('.')[1] == 'epiphonus':
+                    split_glyph = g.splity_bottom()
+                    split_glyph_center_of_mass = self.x_projection_vector(split_glyph[1], av_punctum, discard_size)
+                    center_of_mass = g.nrows - split_glyph_center_of_mass
+                    lg.debug("PODATUS OR EPIHONUS. COM: {2}, Parts: {0} and {1}".format(split_glyph[0], split_glyph[1], center_of_mass))
+                elif glyph_id.split('.')[1] == 'cephalicus':
+                    print "CEPHALICUS"
+                    splitted_glyph = g.splity()[0]
+                    center_of_mass = self.x_projection_vector(splitted_glyph, av_punctum, discard_size)
+                else:
+                    center_of_mass = self.x_projection_vector(g, av_punctum, discard_size)
+            else:
+                center_of_mass = self.x_projection_vector(g, av_punctum, discard_size)
+            
             if glyph_type == '_group':
                 strt_pos = None
                 st_no = None
@@ -335,7 +350,6 @@ class AomrObject(object):
         """
             Sorts the glyphs by its place in the page: up-bottom, left-right
         """
-        # print proc_glyphs
         sorted_glyphs = sorted(proc_glyphs, key = itemgetter(1,2))
         
         for glyph_array in sorted_glyphs:
@@ -358,7 +372,9 @@ class AomrObject(object):
         return sorted_glyphs
         
     def clef_shift(self, glyph_array):
-        """
+        """ Clef Shift.
+            This methods shifts the note names depending on the staff clef
+            TO DO: other cases !
         """
         this_clef = glyph_array[0]
         this_clef_id = this_clef.get_main_id()
@@ -370,10 +386,10 @@ class AomrObject(object):
         elif this_clef_type == 'f':
             shift = glyph_array[3] - 4
             return shift
-        # OTHER CASES !!!!!
-        
-        
-        
+
+
+
+
     def _return_staff_no(self, g, st_bound_coords, st_full_coords, center_of_mass):
         """
             Returns the staff and staff number where a specific glyph is located 
