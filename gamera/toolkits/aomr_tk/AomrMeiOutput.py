@@ -70,10 +70,13 @@ class AomrMeiOutput(object):
         # header
         self.meihead = mod.meihead_()
         self.filedesc = mod.filedesc_()
-        self.meihead.add_child(self.filedesc)
+        self.titlestmt = mod.titlestmt_()
+        self.title = mod.title_()
+        self.pubstmt = mod.pubstmt_()
         
-        self.encodingdesc = mod.encodingdesc_()
-        self.meihead.add_child(self.encodingdesc)
+        self.titlestmt.add_child(self.title)
+        self.filedesc.add_children([self.titlestmt, self.pubstmt])
+        self.meihead.add_child(self.filedesc)
         self.mei.add_child(self.meihead)
         
         # music
@@ -111,12 +114,16 @@ class AomrMeiOutput(object):
         self.section.add_child(self.pagebreak)
         self.score.add_child(self.section)
         
+        self.staffgrp = self._create_staffgrp_element()
         self.staffdef = self._create_staffdef_element()
         self.staffdef.attributes = {'n': 1}
-        self.scoredef.add_child(self.staffdef)
+        self.staffgrp.add_child(self.staffdef)
+        self.scoredef.add_child(self.staffgrp)
         
+        self.layer = self._create_layer_element()
         self.staffel = self._create_staff_element()
-        self.section.add_child(self.staffel)
+        self.layer.add_child(self.staffel)
+        self.section.add_child(self.layer)
         
         for sysnum,syst in self._recognition_results.iteritems():            
             self.system = syst
@@ -183,7 +190,7 @@ class AomrMeiOutput(object):
         note.facs = zone.id
         
         return accid
-    
+        
     def _create_surface_element(self):
         surface = mod.surface_()
         surface.id = self._idgen()
@@ -202,8 +209,19 @@ class AomrMeiOutput(object):
         self.surface.add_child(zone)
         return zone
     
+    def _create_layer_element(self):
+        layer = mod.layer_()
+        layer.id = self._idgen()
+        return layer
+    
+    def _create_staffgrp_element(self):
+        stfgrp = mod.staffgrp_()
+        stfgrp.id = self._idgen()
+        return stfgrp
+    
     def _create_staffdef_element(self):
         stfdef = mod.staffdef_()
+        stfdef.id = self._idgen()
         return stfdef
     
     def _create_staff_element(self):
