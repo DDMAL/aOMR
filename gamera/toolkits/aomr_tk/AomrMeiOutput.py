@@ -363,20 +363,14 @@ class AomrMeiOutput(object):
                 
                 # lg.debug("index: {0}".format(idx))
                 
-                
-                if dir == 'u':
-                    if (idx + (iv - 1)) >= len(self.SCALE):
-                        n_idx = 0 + (iv - 1)
-                    else:
-                        n_idx = idx + (iv - 1)
-                elif dir == 'd':
-                    if idx - (iv - 1) < 0:
-                        n_idx = len(self.SCALE) + (idx - (iv - 1))
-                    else:
-                        n_idx = idx - (iv - 1)
+                if dir == "u":
+                    n_idx = ((idx + iv) % len(self.SCALE)) - 1
+                elif dir == "d":
+                    n_idx = idx - (iv -1)
+                    if n_idx < 0:
+                        n_idx += len(self.SCALE)
+                        
                 idx = n_idx
-                
-                # lg.debug("Picking pitch {0}".format(self.SCALE[n_idx]))
                 self._neume_pitches.append(self.SCALE[n_idx])
         
         if full_width_episema is True:
