@@ -275,7 +275,7 @@ class AomrMeiOutput(object):
         zone = self._create_zone_element()
         neume.facs = zone.id
         
-        lg.debug(self.glyph['form'])
+        # lg.debug(self.glyph['form'])
         
         if self.glyph['form'][0] == "he":
             full_width_episema = True
@@ -290,7 +290,7 @@ class AomrMeiOutput(object):
             has_dot = True
         
         if 'q' in self.glyph['form']:
-            lg.debug("HAS QUILISMA!")
+            # lg.debug("HAS QUILISMA!")
             has_quilisma = True
         
         if 've' in self.glyph['form']:
@@ -317,7 +317,7 @@ class AomrMeiOutput(object):
         
         # we don't have an off-by-one problem here, since an added interval means an added note
         check_additional = [i for i in self.ADD_NOTES.keys() if i in self.glyph['form'][1:]]
-        lg.debug("Check additional: {0}".format(check_additional))
+        # lg.debug("Check additional: {0}".format(check_additional))
         if check_additional:
             lg.debug("Adding extra notes.")
             for f in check_additional:
@@ -394,9 +394,9 @@ class AomrMeiOutput(object):
         if has_horizontal_episema:
             self.__note_addition_figurer_outer("he", heidxs)
             
-        lg.debug("HE IDX: {0}".format(heidxs))
+        # lg.debug("HE IDX: {0}".format(heidxs))
             
-        lg.debug("Num Notes: {0}".format(num_notes))
+        # lg.debug("Num Notes: {0}".format(num_notes))
         for n in xrange(num_notes):
             p = self._neume_pitches[n]
             nt = self._create_note_element(p)
@@ -421,7 +421,7 @@ class AomrMeiOutput(object):
                     self.staffel.add_child(ep)
             
             if has_horizontal_episema:
-                lg.debug("N is: {0}".format(n))
+                # lg.debug("N is: {0}".format(n))
                 if n in heidxs:
                     local_horizontal_episema = self._create_episema_element()
                     local_horizontal_episema.attributes = {"form": "horizontal", "startid": nt.id}
