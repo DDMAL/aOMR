@@ -294,7 +294,8 @@ class AomrObject(object):
         # what to do if there are no punctum on a page???
         av_punctum = self.average_punctum(glyphs)
         for g in glyphs:
-            g_cc = []
+            g_cc = None
+            sub_glyph_center_of_mass = None
             glyph_id = g.get_main_id()
             glyph_var = glyph_id.split('.')
             glyph_type = glyph_var[0]
@@ -308,18 +309,28 @@ class AomrObject(object):
                         break
                 for var in glyph_var:                   # loop for the conflict neumes
                     if var == 'podatus' or var == 'epiphonus':
-                        center_of_mass = self.podatus_or_epiphonus(g, av_punctum, discard_size, g_cc)
+                        sub_glyph_center_of_mass, offset_y = self.podatus_or_epiphonus(g, av_punctum, discard_size, g_cc)
                         break
                     elif glyph_id.split('.')[1] == 'cephalicus':
-                        center_of_mass = self.cephalicus(g, av_punctum, discard_size, g_cc)
+                        sub_glyph_center_of_mass, offset_y = self.cephalicus(g, av_punctum, discard_size, g_cc)
                         break
-                # lg.debug("G_CC: {0}".format(g_cc))
-                if g_cc:
+                        
+                if g_cc and not sub_glyph_center_of_mass:           # if he, ve or dot only
+                    print "CASE1"
                     center_of_mass = g_cc.offset_y - g.offset_y + self.x_projection_vector(g_cc, av_punctum, discard_size)
-                    lg.debug("\tCenter of mass is: {1}".format(g_cc, center_of_mass))
+
+                elif sub_glyph_center_of_mass and not g_cc:         # if podatus, epihonus or cephalicus only
+                    print "CASE 2"
+                    center_of_mass = offset_y - g.offset_y + sub_glyph_center_of_mass
+
+                elif sub_glyph_center_of_mass and g_cc:             # if both
+                    print "CASE 3"
+                    center_of_mass = g_cc.offset_y - g.offset_y + self.x_projection_vector(g_cc, av_punctum, discard_size)
+
                 else:
                     center_of_mass = self.x_projection_vector(g, av_punctum, discard_size)
-                    
+                lg.debug("\tCenter of mass of G_CC {1}".format(g_cc, center_of_mass))
+
             else:
                 center_of_mass = self.x_projection_vector(g, av_punctum, discard_size)
 
@@ -364,12 +375,13 @@ class AomrObject(object):
         nrows = g.nrows
         if g_cc:
             g = g_cc
-        lg.debug("g: {0}, g_cc: {1}".format(g, g_cc))
-        split_glyph = self.biggest_cc(g.splity_bottom())
+        # lg.debug("g: {0}, g_cc: {1}".format(g, g_cc))
+        split_glyph = g.splity()[1]
+        print split_glyph
         split_glyph_center_of_mass = self.x_projection_vector(split_glyph, av_punctum, discard_size)
         center_of_mass = nrows - split_glyph_center_of_mass
-        lg.debug("\tPODATUS OR EPIPHONUS. COM: {1},\t Subglyph {0}".format(split_glyph, center_of_mass))
-        return center_of_mass
+        # lg.debug("\tPODATUS OR EPIPHONUS. COM: {1},\t Subglyph {0}".format(split_glyph, center_of_mass))
+        return center_of_mass, split_glyph.offset_y
     
     def cephalicus(self, g, av_punctum, discard_size, g_cc):
         """
@@ -383,8 +395,8 @@ class AomrObject(object):
         # print split_glyph
         split_glyph_center_of_mass = self.x_projection_vector(split_glyph, av_punctum, discard_size)
         center_of_mass = nrows - split_glyph_center_of_mass
-        lg.debug("\tCEPHALICUS. COM: {1},\t Subglyph {0}".format(split_glyph, center_of_mass))
-        return center_of_mass    
+        # lg.debug("\tCEPHALICUS. COM: {1},\t Subglyph {0}".format(split_glyph, center_of_mass))
+        return center_of_mass, split_glyph.offset_y
         
     def strt_pos_find(self, glyph, line_or_space, line_num):
         """ Start position finding.
