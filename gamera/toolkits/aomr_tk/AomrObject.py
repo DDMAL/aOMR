@@ -23,7 +23,6 @@ class AomrObject(object):
     """
     Manipulates an Aomr file and stores its information
     """
-    
     def __init__(self, filename, **kwargs):
         """
             Constructs and returns an AOMR object
@@ -83,6 +82,7 @@ class AomrObject(object):
         self.pitch_finding()
         
     def find_staves(self):
+
         if self.sfnd_algorithm is 0:
             s = musicstaves.StaffFinder_miyao(self.image)
         elif self.sfnd_algorithm is 1:
@@ -93,7 +93,7 @@ class AomrObject(object):
             raise AomrStaffFinderNotFoundError("The staff finding algorithm was not found.")
             
         s.find_staves()
-        
+     
         av_lines = s.get_average()
         # print av_lines
         # lg.debug("Linelist is {0}".format(s.linelist))
@@ -294,27 +294,39 @@ class AomrObject(object):
         # what to do if there are no punctum on a page???
         av_punctum = self.average_punctum(glyphs)
         for g in glyphs:
-
+            g_cc = []
             glyph_id = g.get_main_id()
             glyph_var = glyph_id.split('.')
             glyph_type = glyph_var[0]
-            lg.debug("glyph_id: {0}".format(glyph_id))
+            # lg.debug("glyph_id: {0}".format(glyph_id))
             if glyph_type == 'neume':
+                lg.debug("G_ID: {0}".format(glyph_id))
                 for var in glyph_var:                   # loop for he, ve or dot
                     if var == 'he' or var == 've' or var == 'dot':
-                        g_cc = self.he_ve_dot(glyph_var, g)
+                        g_cc = self.biggest_cc(g.cc_analysis())
+                        lg.debug("\tSub_Glyph {1}".format(g, g_cc))
+                        break
                 for var in glyph_var:                   # loop for the conflict neumes
                     if var == 'podatus' or var == 'epiphonus':
                         center_of_mass = self.podatus_or_epiphonus(g, av_punctum, discard_size, g_cc)
+                        break
                     elif glyph_id.split('.')[1] == 'cephalicus':
                         center_of_mass = self.cephalicus(g, av_punctum, discard_size, g_cc)
-
+                        break
+                # lg.debug("G_CC: {0}".format(g_cc))
+                if g_cc:
+                    center_of_mass = g_cc.offset_y - g.offset_y + self.x_projection_vector(g_cc, av_punctum, discard_size)
+                    lg.debug("\tCenter of mass is: {1}".format(g_cc, center_of_mass))
+                else:
+                    center_of_mass = self.x_projection_vector(g, av_punctum, discard_size)
+                    
             else:
                 center_of_mass = self.x_projection_vector(g, av_punctum, discard_size)
-            
+
             if glyph_type == '_group':
                 strt_pos = None
                 st_no = None
+            
             else:
                 st, st_no = self._return_staff_no(g, st_bound_coords, st_full_coords, center_of_mass)
                 miyao_line = self._return_vertical_line(g, st[0])
@@ -327,49 +339,52 @@ class AomrObject(object):
                 else:
                     strt_pos = None
                     st_no = None
+            lg.debug("\tST_NO: {1}, STRT_POS: {2}".format(g.get_main_id(), st_no, strt_pos))
             proc_glyphs.append([g, st_no, g.offset_x, strt_pos])
-            
         sorted_glyphs = self.sort_glyphs(proc_glyphs)            
         return sorted_glyphs
 
-def he_ve_dot(self, glyph_var, g):
-    """
-        Returns the biggest cc area glyph
-    """
+    def biggest_cc(self, g_cc):
+        """
+            Returns the biggest cc area glyph
+        """
+        sel = 0
+        black_area = 0
+        for i, each in enumerate(g_cc):
+            if each.black_area() > black_area:
+                black_area = each.black_area()
+                sel = i
+        # lg.debug("HE, VE OR DOT. g_cc {0}, sel: {1} g_cc[sel] {2}".format(g_cc, sel, g_cc[sel]))
+        return g_cc[sel]
     
-    g_cc = g.cc_analysis()
-    sel = 0
-    black_area = 0
-    for i, each in enumerate(g_cc):
-        if each.black_area() > black_area:
-            black_area = each.black_area()
-            sel = i
-    lg.debug("HE, VE OR DOT. gcc {0}, i {1} gcc[sel] {2}".format(gcc, i, gcc[sel]))
-    return g_cc[sel]
+    def podatus_or_epiphonus(self, g, av_punctum, discard_size, g_cc):
+        """
+            Returns the center of mass of a podatus or a epihonus
+        """
+        nrows = g.nrows
+        if g_cc:
+            g = g_cc
+        lg.debug("g: {0}, g_cc: {1}".format(g, g_cc))
+        split_glyph = self.biggest_cc(g.splity_bottom())
+        split_glyph_center_of_mass = self.x_projection_vector(split_glyph, av_punctum, discard_size)
+        center_of_mass = nrows - split_glyph_center_of_mass
+        lg.debug("\tPODATUS OR EPIPHONUS. COM: {1},\t Subglyph {0}".format(split_glyph, center_of_mass))
+        return center_of_mass
     
-def podatus_or_epiphonus(self, g, av_punctum, discard_size, g_cc):
-    """
-        Returns the center of mass of a podatus or a epihonus
-    """
-    if g_cc:
-        g = g_cc
-    split_glyph = g.splity_bottom()
-    split_glyph_center_of_mass = self.x_projection_vector(split_glyph[1], av_punctum, discard_size)
-    center_of_mass = g.nrows - split_glyph_center_of_mass
-    lg.debug("PODATUS OR EPIHONUS. COM: {2}, Parts: {0} and {1}".format(split_glyph[0], split_glyph[1], center_of_mass))
-    return center_of_mass
-    
-def cephalicus(self, g, av_punctum, discard_size, g_cc):
-    """
-        Returns the center of mass of a cephalicus
-    """
-    if g_cc:
-        g = g_cc
-    split_glyph = g.splity()[0]
-    split_glyph_center_of_mass = self.x_projection_vector(split_glyph[0], av_punctum, discard_size)
-    center_of_mass = g.nrows - split_glyph_center_of_mass
-    lg.debug("CEPHALICUS. COM: {2}, Parts: {0} and {1}".format(split_glyph[0], split_glyph[1], center_of_mass))
-    return center_of_mass    
+    def cephalicus(self, g, av_punctum, discard_size, g_cc):
+        """
+            Returns the center of mass of a cephalicus
+        """
+        nrows = g.nrows
+        if g_cc:
+            g = g_cc
+        lg.debug("\t{0},\n g_cc: {1}".format(g, g_cc))
+        split_glyph = self.biggest_cc(g.splity())
+        # print split_glyph
+        split_glyph_center_of_mass = self.x_projection_vector(split_glyph, av_punctum, discard_size)
+        center_of_mass = nrows - split_glyph_center_of_mass
+        lg.debug("\tCEPHALICUS. COM: {1},\t Subglyph {0}".format(split_glyph, center_of_mass))
+        return center_of_mass    
         
     def strt_pos_find(self, glyph, line_or_space, line_num):
         """ Start position finding.
@@ -439,7 +454,7 @@ def cephalicus(self, g, av_punctum, discard_size, g_cc):
         """
         
         for i, s in enumerate(st_bound_coords):
-            # print("s[1]: {0}\tg.offset_y: {1}\ts[3]: {2}".format(0.5*(3*s[1]-s[3]), g.offset_y, 0.5*(3*s[3]-s[1])))
+            # lg.debug("s[1]: {0}\tg.offset_y: {1}\ts[3]: {2}".format(0.5*(3*s[1]-s[3]), g.offset_y, 0.5*(3*s[3]-s[1])))
 
             if 0.5*(3* s[1] - s[3]) <= g.offset_y + center_of_mass < 0.5*(3 * s[3] - s[1]): # GVM: considering the ledger lines in an unorthodox way.
                 st_no = st_full_coords[i]['line_positions']
