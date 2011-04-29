@@ -372,31 +372,26 @@ class AomrObject(object):
         """
             Returns the center of mass of a podatus or a epihonus
         """
-        nrows = g.nrows
         if g_cc:
             g = g_cc
         # lg.debug("g: {0}, g_cc: {1}".format(g, g_cc))
         split_glyph = g.splity()[1]
         print split_glyph
         split_glyph_center_of_mass = self.x_projection_vector(split_glyph, av_punctum, discard_size)
-        center_of_mass = nrows - split_glyph_center_of_mass
         # lg.debug("\tPODATUS OR EPIPHONUS. COM: {1},\t Subglyph {0}".format(split_glyph, center_of_mass))
-        return center_of_mass, split_glyph.offset_y
+        return split_glyph_center_of_mass, split_glyph.offset_y
     
     def cephalicus(self, g, av_punctum, discard_size, g_cc):
         """
             Returns the center of mass of a cephalicus
         """
-        nrows = g.nrows
         if g_cc:
             g = g_cc
         lg.debug("\t{0},\n g_cc: {1}".format(g, g_cc))
         split_glyph = self.biggest_cc(g.splity())
-        # print split_glyph
         split_glyph_center_of_mass = self.x_projection_vector(split_glyph, av_punctum, discard_size)
-        center_of_mass = nrows - split_glyph_center_of_mass
         # lg.debug("\tCEPHALICUS. COM: {1},\t Subglyph {0}".format(split_glyph, center_of_mass))
-        return center_of_mass, split_glyph.offset_y
+        return split_glyph_center_of_mass, split_glyph.offset_y
         
     def strt_pos_find(self, glyph, line_or_space, line_num):
         """ Start position finding.
