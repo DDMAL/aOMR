@@ -37,7 +37,7 @@ class AomrMeiOutput(object):
     NEUME_NOTES = {
         'punctum': [],
         'virga': [],
-        'cephalicus': ['d'],
+        'cephalicus': ['u'],
         'clivis': ['d'],
         'epiphonus': ['u'],
         'podatus': ['u'],
