@@ -409,16 +409,18 @@ class AomrObject(object):
         """
         scale = ['g', 'f', 'e', 'd', 'c', 'b', 'a', 'g', 'f', 'e', 'd', 'c', 'b', 'a', 'g', 'f']
         pitch = scale[strt_pos]
+        lg.debug("PITCH: {0}".format(pitch))
         return pitch
         
     def sort_glyphs(self, proc_glyphs):
         """
-            Sorts the glyphs by its place in the page: up-bottom, left-right
+            Sorts the glyphs by its place in the page (up-bottom, left-right) and appends the proper 
+            according to the clef at the beginning of each stave
         """
         sorted_glyphs = sorted(proc_glyphs, key = itemgetter(1,2))
         
         for glyph_array in sorted_glyphs:
-            # lg.debug("sorted glyphs {0} {1}".format(g_[0].get_main_id(), g_))
+            lg.debug("glyph array: {0}, {1}".format(glyph_array[0].get_main_id(), glyph_array))
             this_glyph = glyph_array[0]
             this_glyph_id = this_glyph.get_main_id()
             this_glyph_type = this_glyph_id.split(".")[0]
@@ -428,7 +430,7 @@ class AomrObject(object):
                 glyph_array.append(None)
                 
             elif this_glyph_type == 'neume':
-                pitch = self.pitch_find_from_strt_pos(glyph_array[3]+shift)
+                pitch = self.pitch_find_from_strt_pos(glyph_array[3]-shift)
                 glyph_array.append(pitch)
                 
             else:
@@ -447,9 +449,11 @@ class AomrObject(object):
         
         if this_clef_type == 'c':
             shift = glyph_array[3] - 4
+            lg.debug("C clef in position {0}, shift {1}".format(glyph_array[3], shift))
             return shift
         elif this_clef_type == 'f':
-            shift = glyph_array[3] - 4
+            shift = glyph_array[3] - 1
+            lg.debug("F clef in position {0}, shift {1}".format(glyph_array[3], shift))
             return shift
 
 
