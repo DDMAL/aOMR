@@ -347,6 +347,7 @@ class AomrObject(object):
                 elif glyph_type == "neume" or glyph_type == "clef":
                     line_or_space, line_num = self._return_line_or_space_no(g, center_of_mass, st, miyao_line) # line (0) or space (1), no
                     strt_pos = self.strt_pos_find(g, line_or_space, line_num) 
+                    lg.debug("line (0) or space(1): {0}, number: {1}, Start Position: {2}".format(line_or_space, line_num, strt_pos))
                 else:
                     strt_pos = None
                     st_no = None
@@ -378,7 +379,7 @@ class AomrObject(object):
         split_glyph = g.splity()[1]
         print split_glyph
         split_glyph_center_of_mass = self.x_projection_vector(split_glyph, av_punctum, discard_size)
-        # lg.debug("\tPODATUS OR EPIPHONUS. COM: {1},\t Subglyph {0}".format(split_glyph, center_of_mass))
+        lg.debug("\tPODATUS OR EPIPHONUS, SUBGLYPH Center of Mass: {0}".format(split_glyph_center_of_mass))
         return split_glyph_center_of_mass, split_glyph.offset_y
     
     def cephalicus(self, g, av_punctum, discard_size, g_cc):
@@ -484,7 +485,7 @@ class AomrObject(object):
         """
             Returns the line or space number where the glyph is located for a specific stave an miyao line.
             
-            Remember kids:
+            Remember kids :)
                 Line = 0
                 Space = 1
             
@@ -492,7 +493,6 @@ class AomrObject(object):
         horz_diff = float(st[0][miyao_line][0] - st[0][miyao_line-1][0])
         
         for i, stf in enumerate(st[1:]):
-        # for i in range(len(st)-1): # each one of the lines
             # lg.debug("i : {0} st[i][miyao_line+1][1] : {1} st[i][miyao_line][1] : {2}".format(i, st[i], 0))
             vert_diff_up = float(stf[miyao_line][1] - stf[miyao_line-1][1]) # y_pos difference with the upper miyao line
             vert_diff_lo = float(stf[miyao_line+1][1] - stf[miyao_line][1]) # y_pos difference with the lower miyao line
@@ -507,17 +507,22 @@ class AomrObject(object):
             diff = (stf[miyao_line][1] + vert_pos_shift_lo) - (st[i][miyao_line-1][1] + vert_pos_shift_up)
             
             # print diff
-            if stf[miyao_line][1] + diff/4 > glyph.offset_y + center_of_mass:
+            if stf[miyao_line][1] + 8*diff/32 > glyph.offset_y + center_of_mass:
+                lg.debug("CASE LINE 1. Staff line {0}, Glyph {1} ".format(stf[miyao_line][1] + diff/4, glyph.offset_y + center_of_mass))
                 line_or_space = 0
                 # print 'line', i
                 return line_or_space, i
                 
-            elif stf[miyao_line][1] + 3*diff/4 > glyph.offset_y + center_of_mass:
+            elif stf[miyao_line][1] + 24*diff/32 > glyph.offset_y + center_of_mass:
+                lg.debug("CASE LINE 2. Staff line {0}, Glyph {1} ".format(stf[miyao_line][1] + 3*diff/4, glyph.offset_y + center_of_mass))
                 line_or_space = 1
                 # print 'space', i
                 return line_or_space, i
                 
             elif stf[miyao_line][1] + 4*diff/4 > glyph.offset_y + center_of_mass:
+                # lg.debug("CASE LINE 1. Staff line {0}, Glyph {1} ".format(stf[miyao_line][1] + diff/4, glyph.offset_y + center_of_mass))
+                # lg.debug("CASE LINE 2. Staff line {0}, Glyph {1} ".format(stf[miyao_line][1] + 3*diff/4, glyph.offset_y + center_of_mass))
+                lg.debug("CASE LINE 3. Staff line {0}, Glyph {1} ".format(stf[miyao_line][1] + 4*diff/4, glyph.offset_y + center_of_mass))
                 line_or_space = 0
                 # print 'line+1', i+1
                 return line_or_space, i+1
@@ -647,8 +652,8 @@ class AomrObject(object):
         if glyph.ncols > discard_size and glyph.nrows > discard_size:
             if glyph.ncols < avg_punctum:
                 avg_punctum = glyph.ncols
-            temp_glyph = glyph.subimage((glyph.offset_x, glyph.offset_y), \
-                ((glyph.offset_x + avg_punctum - 1), (glyph.offset_y + glyph.nrows - 1)))
+            temp_glyph = glyph.subimage((glyph.offset_x + 0.0 * avg_punctum, glyph.offset_y), \
+                ((glyph.offset_x + 1.0 * avg_punctum - 1), (glyph.offset_y + glyph.nrows - 1)))
             projection_vector = temp_glyph.projection_rows()
             center_of_mass = self.center_of_mass(projection_vector)
         else:

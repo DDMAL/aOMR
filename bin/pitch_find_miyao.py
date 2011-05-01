@@ -73,8 +73,9 @@ def main(original_file, page_file, outdir):
     mei_file = AomrMeiOutput.AomrMeiOutput(data, file_name)
     # print mei_file
     # print
-    
-    
+    print
+    print (os.path.join(outdir, file_name.split('.')[0]+'.mei'))
+    print
     meitoxml.meitoxml(mei_file.md, os.path.join(outdir, file_name.split('.')[0]+'.mei'))
 
 if __name__ == "__main__":
