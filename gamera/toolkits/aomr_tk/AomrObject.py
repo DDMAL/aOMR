@@ -341,6 +341,7 @@ class AomrObject(object):
             else:
                 st, st_no = self._return_staff_no(g, st_bound_coords, st_full_coords, center_of_mass)
                 miyao_line = self._return_vertical_line(g, st[0])
+                lg.debug("\nst[0]: {0}\nmiyao line: {1}".format(st[0], miyao_line))
                 
                 if glyph_type == 'division' or glyph_type =='custos' or glyph_type =='alteration':
                     strt_pos = None
@@ -477,8 +478,9 @@ class AomrObject(object):
         """
             Returns the miyao line number just after the glyph, starting from 0
         """
-        for j,stf in enumerate(st[1:]):
-            if stf > g.offset_x:
+        for j, stf in enumerate(st[1:]):
+            # lg.debug("Miyao Line {0}: {1} g.offset_x: {2}".format(j, stf, g.offset_x))
+            if stf[0] > g.offset_x:
                 return j
                 
     def _return_line_or_space_no(self, glyph, center_of_mass, st, miyao_line):
@@ -490,38 +492,41 @@ class AomrObject(object):
                 Space = 1
             
         """
+        # lg.debug("\nGLYPH: {0}\nCOM: {1}\nSTAVE: {2}\nMIYAO LINE: {3}".format(glyph, center_of_mass, st, miyao_line))
         horz_diff = float(st[0][miyao_line][0] - st[0][miyao_line-1][0])
-        
+        # lg.debug("HOR_MIYAO: {0} AND {0}".format(glyph, st[0][miyao_line-1][0], st[0][miyao_line][0]))
         for i, stf in enumerate(st[1:]):
-            # lg.debug("i : {0} st[i][miyao_line+1][1] : {1} st[i][miyao_line][1] : {2}".format(i, st[i], 0))
+            # lg.debug("i : {0} st[i][miyao_line+1][1] : {1}".format(i, st[i]))
             vert_diff_up = float(stf[miyao_line][1] - stf[miyao_line-1][1]) # y_pos difference with the upper miyao line
             vert_diff_lo = float(stf[miyao_line+1][1] - stf[miyao_line][1]) # y_pos difference with the lower miyao line
-            # print vert_diff_1, vert_diff_2
             factor_up = vert_diff_up/horz_diff
             factor_lo = vert_diff_lo/horz_diff
             diff_x_glyph_bar = float(glyph.offset_x - stf[miyao_line-1][0]) # difference between the glyph x_pos and the previous bar
             vert_pos_shift_up = factor_up * diff_x_glyph_bar # vert_pos_shift is the shifted vertical position of each line for each x position
             vert_pos_shift_lo = factor_lo * diff_x_glyph_bar # vert_pos_shift is the shifted vertical position of each line for each x position
-            
-            # again, since we're slicing st[1:], we can refer to two parts of the array simultaneously.
+
             diff = (stf[miyao_line][1] + vert_pos_shift_lo) - (st[i][miyao_line-1][1] + vert_pos_shift_up)
-            
+            # lg.debug("DIFF: {1}, VERT_DIFF_UP: {2}, VERT_DIFF_LO: {3}".format(glyph, diff, vert_diff_up, vert_diff_lo))
             # print diff
-            if stf[miyao_line][1] + 8*diff/32 > glyph.offset_y + center_of_mass:
+            if stf[miyao_line][1] + 1*diff/4 > glyph.offset_y + center_of_mass:
                 lg.debug("CASE LINE 1. Staff line {0}, Glyph {1} ".format(stf[miyao_line][1] + diff/4, glyph.offset_y + center_of_mass))
+                # lg.debug("CASE LINE 2. Staff line {0}, Glyph {1} ".format(stf[miyao_line][1] + 3*diff/4, glyph.offset_y + center_of_mass))
+                # lg.debug("CASE LINE 3. Staff line {0}, Glyph {1} ".format(stf[miyao_line][1] + 4*diff/4, glyph.offset_y + center_of_mass))
                 line_or_space = 0
                 # print 'line', i
                 return line_or_space, i
                 
-            elif stf[miyao_line][1] + 24*diff/32 > glyph.offset_y + center_of_mass:
-                lg.debug("CASE LINE 2. Staff line {0}, Glyph {1} ".format(stf[miyao_line][1] + 3*diff/4, glyph.offset_y + center_of_mass))
+            elif stf[miyao_line][1] + 3*diff/4 > glyph.offset_y + center_of_mass:
+                # lg.debug("CASE LINE 1. Staff line {0}, Glyph {1} ".format(stf[miyao_line][1] + diff/4, glyph.offset_y + center_of_mass))
+                lg.debug("CASE SPACE 2. Staff line {0}, Glyph {1} ".format(stf[miyao_line][1] + 3*diff/4, glyph.offset_y + center_of_mass))
+                # lg.debug("CASE LINE 3. Staff line {0}, Glyph {1} ".format(stf[miyao_line][1] + 4*diff/4, glyph.offset_y + center_of_mass))
                 line_or_space = 1
                 # print 'space', i
                 return line_or_space, i
                 
             elif stf[miyao_line][1] + 4*diff/4 > glyph.offset_y + center_of_mass:
                 # lg.debug("CASE LINE 1. Staff line {0}, Glyph {1} ".format(stf[miyao_line][1] + diff/4, glyph.offset_y + center_of_mass))
-                # lg.debug("CASE LINE 2. Staff line {0}, Glyph {1} ".format(stf[miyao_line][1] + 3*diff/4, glyph.offset_y + center_of_mass))
+                # lg.debug("CASE SPACE 2. Staff line {0}, Glyph {1} ".format(stf[miyao_line][1] + 3*diff/4, glyph.offset_y + center_of_mass))
                 lg.debug("CASE LINE 3. Staff line {0}, Glyph {1} ".format(stf[miyao_line][1] + 4*diff/4, glyph.offset_y + center_of_mass))
                 line_or_space = 0
                 # print 'line+1', i+1
