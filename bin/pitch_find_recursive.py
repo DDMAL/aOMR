@@ -6,12 +6,13 @@ from gamera.toolkits.aruspix.ax_file import AxFile
 from gamera.toolkits.aomr_tk import AomrObject
 from gamera.toolkits.aomr_tk import AomrMeiOutput
 import simplejson
+
 from operator import itemgetter
 from pymei.Export import meitoxml
-
+import time, shutil
 
 import logging
-lg = logging.getLogger('pitch_find_965')
+lg = logging.getLogger('pitch_find')
 f = logging.Formatter("%(levelname)s %(asctime)s On Line: %(lineno)d %(message)s")
 h = logging.StreamHandler()
 h.setFormatter(f)
@@ -83,9 +84,9 @@ def process_glyphs_directory(glyphs_directory, output_dir):
                         # lg.debug("sg[1]:{0} s:{1} sg{2}".format(sg[1], s+1, sg))
                         # structure: g, stave, g.offset_x, note, strt_pos
 
-                        if glyph_form:
-                            if glyph_form[0] == "compound" or glyph_form[0] == "salicus":
-                                continue
+                        # if glyph_form:
+                        #     if glyph_form[0] == "compound" or glyph_form[0] == "salicus":
+                        #         continue
 
                         if staff == s+1: 
                             j_glyph = { 'type': glyph_type,
@@ -112,7 +113,7 @@ def process_glyphs_directory(glyphs_directory, output_dir):
 
 if __name__ == "__main__":
     # usage = "usage: %prog [options] input_directory axz_directory output_directory"
-    usage = "usage: %prog [options] axz_directory page_glyphs_directory outputdir"
+    usage = "usage: %prog [options] aruspix_directory page_glyphs_directory outputdir"
     parser = OptionParser(usage)
     (options, args) = parser.parse_args()
 

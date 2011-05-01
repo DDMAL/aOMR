@@ -407,7 +407,7 @@ class AomrObject(object):
             pitch find algorithm for all glyphs in a page
             
         """
-        scale = ['g', 'f', 'e', 'd', 'c', 'b', 'a', 'g', 'f', 'e', 'd', 'c', 'b', 'a', 'g', 'f']
+        scale = ['g', 'f', 'e', 'd', 'c', 'b', 'a', 'g', 'f', 'e', 'd', 'c', 'b', 'a', 'g', 'f', 'e', 'd', 'c', 'b', 'a']
         pitch = scale[strt_pos]
         lg.debug("PITCH: {0}".format(pitch))
         return pitch
@@ -446,7 +446,7 @@ class AomrObject(object):
         this_clef = glyph_array[0]
         this_clef_id = this_clef.get_main_id()
         this_clef_type = this_clef_id.split(".")[1]
-        
+        shift = 0
         if this_clef_type == 'c':
             shift = glyph_array[3] - 4
             lg.debug("C clef in position {0}, shift {1}".format(glyph_array[3], shift))

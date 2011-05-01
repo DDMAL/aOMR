@@ -1,16 +1,17 @@
 from pymei.Import import xmltomei
 from gamera.core import *
-import PIL
+import PIL, os
 init_gamera()
 
 from optparse import OptionParser
 
 if __name__ == "__main__":
-    usage = "usage: %prog [options] input_mei_file input_image_file"
+    usage = "usage: %prog [options] input_mei_file input_image_file output_folder"
     opts = OptionParser(usage)
     (options, args) = opts.parse_args()
     
     input_file = args[0]
+    output_folder = args[2]
     mdoc = xmltomei.xmltomei(input_file)
     
     neumes = mdoc.search('neume')
@@ -58,7 +59,7 @@ if __name__ == "__main__":
     
     rgb.highlight(img, RGBPixel(0,0,0))
     
-    rgb.save_PNG('/Users/gabriel/Desktop/test.png')
+    rgb.save_PNG(os.path.join(output_folder, 'pitch_find.png'))
     
     
     
