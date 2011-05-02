@@ -44,8 +44,9 @@ if __name__ == "__main__":
     # then create an array of pitches using n.pitchname
     gt_notes = [n.pitchname for n in ground_truth.search('note')]
     cp_notes = [c.pitchname for c in comparison.search('note')]
+  
     
-    print "The number of notes in the ground truth is: {0}".format(len(gt_notes))
+    print "\nThe number of notes in the ground truth is: {0}".format(len(gt_notes))
     print "The number of notes in the comparison is {0}".format(len(cp_notes))
     
     # You will get a difference between the number of notes in each, meaning you cannot use
@@ -54,5 +55,11 @@ if __name__ == "__main__":
     
     # print GT
     # print COMP
+    
+    e = 0
+    for i in range(len(gt_notes)):
+        if gt_notes[i] != cp_notes[i]:
+            e = e + 1.0
+    
     print
-    print("There are {0} errors in {1} glyphs, so {2} per cent of precission". format(e, i+1, 100-(e*100)/i+1))
+    print("There are {0} errors in {1} glyphs, so {2} per cent of precision". format(e, i+1, 100-(e*100)/(i+1)))

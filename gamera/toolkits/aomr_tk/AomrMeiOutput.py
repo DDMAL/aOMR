@@ -319,7 +319,7 @@ class AomrMeiOutput(object):
         check_additional = [i for i in self.ADD_NOTES.keys() if i in self.glyph['form'][1:]]
         # lg.debug("Check additional: {0}".format(check_additional))
         if check_additional:
-            lg.debug("Adding extra notes.")
+            # lg.debug("Adding extra notes.")
             for f in check_additional:
                 this_neume_form.extend(self.ADD_NOTES[f])
                 

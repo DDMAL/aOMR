@@ -301,11 +301,11 @@ class AomrObject(object):
             glyph_type = glyph_var[0]
             # lg.debug("glyph_id: {0}".format(glyph_id))
             if glyph_type == 'neume':
-                lg.debug("G_ID: {0}".format(glyph_id))
+                # lg.debug("G_ID: {0}".format(glyph_id))
                 for var in glyph_var:                   # loop for he, ve or dot
                     if var == 'he' or var == 've' or var == 'dot':
                         g_cc = self.biggest_cc(g.cc_analysis())
-                        lg.debug("\tSub_Glyph {1}".format(g, g_cc))
+                        # lg.debug("\tSub_Glyph {1}".format(g, g_cc))
                         break
                 for var in glyph_var:                   # loop for the conflict neumes
                     if var == 'podatus' or var == 'epiphonus':
@@ -316,20 +316,20 @@ class AomrObject(object):
                         break
                         
                 if g_cc and not sub_glyph_center_of_mass:           # if he, ve or dot only
-                    print "CASE1"
+                    # lg.debug("CASE1")
                     center_of_mass = g_cc.offset_y - g.offset_y + self.x_projection_vector(g_cc, av_punctum, discard_size)
 
                 elif sub_glyph_center_of_mass and not g_cc:         # if podatus, epihonus or cephalicus only
-                    print "CASE 2"
+                    # lg.debug("CASE 2")
                     center_of_mass = offset_y - g.offset_y + sub_glyph_center_of_mass
 
                 elif sub_glyph_center_of_mass and g_cc:             # if both
-                    print "CASE 3"
+                    # lg.debug("CASE 3")
                     center_of_mass = g_cc.offset_y - g.offset_y + self.x_projection_vector(g_cc, av_punctum, discard_size)
 
                 else:
                     center_of_mass = self.x_projection_vector(g, av_punctum, discard_size)
-                lg.debug("\tCenter of mass of G_CC {1}".format(g_cc, center_of_mass))
+                # lg.debug("\tCenter of mass of G_CC {1}".format(g_cc, center_of_mass))
 
             else:
                 center_of_mass = self.x_projection_vector(g, av_punctum, discard_size)
@@ -341,18 +341,18 @@ class AomrObject(object):
             else:
                 st, st_no = self._return_staff_no(g, st_bound_coords, st_full_coords, center_of_mass)
                 miyao_line = self._return_vertical_line(g, st[0])
-                lg.debug("\nst[0]: {0}\nmiyao line: {1}".format(st[0], miyao_line))
+                # lg.debug("\nst[0]: {0}\nmiyao line: {1}".format(st[0], miyao_line))
                 
                 if glyph_type == 'division' or glyph_type =='custos' or glyph_type =='alteration':
                     strt_pos = None
                 elif glyph_type == "neume" or glyph_type == "clef":
                     line_or_space, line_num = self._return_line_or_space_no(g, center_of_mass, st, miyao_line) # line (0) or space (1), no
                     strt_pos = self.strt_pos_find(g, line_or_space, line_num) 
-                    lg.debug("line (0) or space(1): {0}, number: {1}, Start Position: {2}".format(line_or_space, line_num, strt_pos))
+                    # lg.debug("line (0) or space(1): {0}, number: {1}, Start Position: {2}".format(line_or_space, line_num, strt_pos))
                 else:
                     strt_pos = None
                     st_no = None
-            lg.debug("\tST_NO: {1}, STRT_POS: {2}".format(g.get_main_id(), st_no, strt_pos))
+            # lg.debug("\tST_NO: {1}, STRT_POS: {2}".format(g.get_main_id(), st_no, strt_pos))
             proc_glyphs.append([g, st_no, g.offset_x, strt_pos])
         sorted_glyphs = self.sort_glyphs(proc_glyphs)            
         return sorted_glyphs
@@ -378,9 +378,8 @@ class AomrObject(object):
             g = g_cc
         # lg.debug("g: {0}, g_cc: {1}".format(g, g_cc))
         split_glyph = g.splity()[1]
-        print split_glyph
         split_glyph_center_of_mass = self.x_projection_vector(split_glyph, av_punctum, discard_size)
-        lg.debug("\tPODATUS OR EPIPHONUS, SUBGLYPH Center of Mass: {0}".format(split_glyph_center_of_mass))
+        # lg.debug("\tPODATUS OR EPIPHONUS, SUBGLYPH Center of Mass: {0}".format(split_glyph_center_of_mass))
         return split_glyph_center_of_mass, split_glyph.offset_y
     
     def cephalicus(self, g, av_punctum, discard_size, g_cc):
@@ -389,7 +388,7 @@ class AomrObject(object):
         """
         if g_cc:
             g = g_cc
-        lg.debug("\t{0},\n g_cc: {1}".format(g, g_cc))
+        # lg.debug("\t{0},\n g_cc: {1}".format(g, g_cc))
         split_glyph = self.biggest_cc(g.splity())
         split_glyph_center_of_mass = self.x_projection_vector(split_glyph, av_punctum, discard_size)
         # lg.debug("\tCEPHALICUS. COM: {1},\t Subglyph {0}".format(split_glyph, center_of_mass))
@@ -411,7 +410,7 @@ class AomrObject(object):
         """
         scale = ['g', 'f', 'e', 'd', 'c', 'b', 'a', 'g', 'f', 'e', 'd', 'c', 'b', 'a', 'g', 'f', 'e', 'd', 'c', 'b', 'a']
         pitch = scale[strt_pos]
-        lg.debug("PITCH: {0}".format(pitch))
+        # lg.debug("PITCH: {0}".format(pitch))
         return pitch
         
     def sort_glyphs(self, proc_glyphs):
@@ -422,7 +421,7 @@ class AomrObject(object):
         sorted_glyphs = sorted(proc_glyphs, key = itemgetter(1,2))
         
         for glyph_array in sorted_glyphs:
-            lg.debug("glyph array: {0}, {1}".format(glyph_array[0].get_main_id(), glyph_array))
+            # lg.debug("glyph array: {0}, {1}".format(glyph_array[0].get_main_id(), glyph_array))
             this_glyph = glyph_array[0]
             this_glyph_id = this_glyph.get_main_id()
             this_glyph_type = this_glyph_id.split(".")[0]
@@ -451,11 +450,11 @@ class AomrObject(object):
         shift = 0
         if this_clef_type == 'c':
             shift = glyph_array[3] - 4
-            lg.debug("C clef in position {0}, shift {1}".format(glyph_array[3], shift))
+            # lg.debug("C clef in position {0}, shift {1}".format(glyph_array[3], shift))
             return shift
         elif this_clef_type == 'f':
             shift = glyph_array[3] - 1
-            lg.debug("F clef in position {0}, shift {1}".format(glyph_array[3], shift))
+            # lg.debug("F clef in position {0}, shift {1}".format(glyph_array[3], shift))
             return shift
 
 
@@ -508,17 +507,17 @@ class AomrObject(object):
             diff = (stf[miyao_line][1] + vert_pos_shift_lo) - (st[i][miyao_line-1][1] + vert_pos_shift_up)
             # lg.debug("DIFF: {1}, VERT_DIFF_UP: {2}, VERT_DIFF_LO: {3}".format(glyph, diff, vert_diff_up, vert_diff_lo))
             # print diff
-            if stf[miyao_line][1] + 1*diff/4 > glyph.offset_y + center_of_mass:
-                lg.debug("CASE LINE 1. Staff line {0}, Glyph {1} ".format(stf[miyao_line][1] + diff/4, glyph.offset_y + center_of_mass))
+            if stf[miyao_line][1] + 6*diff/16 > glyph.offset_y + center_of_mass:
+                # lg.debug("CASE LINE 1. Staff line {0}, Glyph {1} ".format(stf[miyao_line][1] + diff/4, glyph.offset_y + center_of_mass))
                 # lg.debug("CASE LINE 2. Staff line {0}, Glyph {1} ".format(stf[miyao_line][1] + 3*diff/4, glyph.offset_y + center_of_mass))
                 # lg.debug("CASE LINE 3. Staff line {0}, Glyph {1} ".format(stf[miyao_line][1] + 4*diff/4, glyph.offset_y + center_of_mass))
                 line_or_space = 0
                 # print 'line', i
                 return line_or_space, i
                 
-            elif stf[miyao_line][1] + 3*diff/4 > glyph.offset_y + center_of_mass:
+            elif stf[miyao_line][1] + 13*diff/16 > glyph.offset_y + center_of_mass:
                 # lg.debug("CASE LINE 1. Staff line {0}, Glyph {1} ".format(stf[miyao_line][1] + diff/4, glyph.offset_y + center_of_mass))
-                lg.debug("CASE SPACE 2. Staff line {0}, Glyph {1} ".format(stf[miyao_line][1] + 3*diff/4, glyph.offset_y + center_of_mass))
+                # lg.debug("CASE SPACE 2. Staff line {0}, Glyph {1} ".format(stf[miyao_line][1] + 3*diff/4, glyph.offset_y + center_of_mass))
                 # lg.debug("CASE LINE 3. Staff line {0}, Glyph {1} ".format(stf[miyao_line][1] + 4*diff/4, glyph.offset_y + center_of_mass))
                 line_or_space = 1
                 # print 'space', i
@@ -527,7 +526,7 @@ class AomrObject(object):
             elif stf[miyao_line][1] + 4*diff/4 > glyph.offset_y + center_of_mass:
                 # lg.debug("CASE LINE 1. Staff line {0}, Glyph {1} ".format(stf[miyao_line][1] + diff/4, glyph.offset_y + center_of_mass))
                 # lg.debug("CASE SPACE 2. Staff line {0}, Glyph {1} ".format(stf[miyao_line][1] + 3*diff/4, glyph.offset_y + center_of_mass))
-                lg.debug("CASE LINE 3. Staff line {0}, Glyph {1} ".format(stf[miyao_line][1] + 4*diff/4, glyph.offset_y + center_of_mass))
+                # lg.debug("CASE LINE 3. Staff line {0}, Glyph {1} ".format(stf[miyao_line][1] + 4*diff/4, glyph.offset_y + center_of_mass))
                 line_or_space = 0
                 # print 'line+1', i+1
                 return line_or_space, i+1
@@ -591,7 +590,8 @@ class AomrObject(object):
              for g, glyph in enumerate(glyphs):
                  self.rgb.draw_text((glyph[2].ll_x, glyph[2].ll_y), "X-{0}".format(g), RGBPixel(255, 0, 0), 12, 0, False, False, 0)
                  o = glyph.splitx(0.2) # should be in 10mm instead of percentage
-                 # print o
+                 # 
+                 #  o
                  # print o[0].ncols
                  
     # private
@@ -736,7 +736,6 @@ class AomrObject(object):
                 note = None
                 stave = None
                 strt_pos=None
-                # print "HERE!"
             # proc_glyphs.append((g.get_main_id(), stave, g.offset_x, note)) 
             proc_glyphs.append([g, stave, g.offset_x, note, strt_pos]) 
         print "END!"
