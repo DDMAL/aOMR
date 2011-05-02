@@ -81,12 +81,6 @@ def process_glyphs_directory(glyphs_directory, output_dir):
                         glyph_id = glyph.get_main_id()
                         glyph_type = glyph_id.split(".")[0]
                         glyph_form = glyph_id.split(".")[1:]
-                        # lg.debug("sg[1]:{0} s:{1} sg{2}".format(sg[1], s+1, sg))
-                        # structure: g, stave, g.offset_x, note, strt_pos
-
-                        # if glyph_form:
-                        #     if glyph_form[0] == "compound" or glyph_form[0] == "salicus":
-                        #         continue
 
                         if staff == s+1: 
                             j_glyph = { 'type': glyph_type,
@@ -99,21 +93,11 @@ def process_glyphs_directory(glyphs_directory, output_dir):
                     
                 mei_file = AomrMeiOutput.AomrMeiOutput(data, original_image.split('/')[-2])
                 meitoxml.meitoxml(mei_file.md, mei_file_write)
-                
-                
-                # encoded = open(os.path.join(output_dir, (os.path.join(folder_no,'sorted_glyphs.txt'))), 'w')
-                # simplejson.dump(sorted_glyphs, encoded)
-                # encoded.close()
-                # for s in sorted_glyphs:
-                    # print s
-                    
-
-                
 
 
 if __name__ == "__main__":
     # usage = "usage: %prog [options] input_directory axz_directory output_directory"
-    usage = "usage: %prog [options] aruspix_directory page_glyphs_directory outputdir"
+    usage = "usage: %prog [options] aruspix_directory page_glyphs_directory outputdir staff_algorithm(1: av_lines, 2:miyao)"
     parser = OptionParser(usage)
     (options, args) = parser.parse_args()
 
@@ -126,6 +110,8 @@ if __name__ == "__main__":
     # if not os.path.isdir(args[1]):
     #     parser.error("The supplied axz directory is not a directory.")
     
+    if args[4] is not '1' or args[4] is not '2':
+        parser.error("You must specify the staff_algorithm method. 1: Average Lines, 2: Miyao")
     init_gamera()
 
     aomr_opts = {
@@ -137,7 +123,8 @@ if __name__ == "__main__":
     }
 
     axz = process_axz_directory(args[0], args[2])
-    glyphs = process_glyphs_directory(args[1], args[2])
+    glyphs = process_glyphs_directory(args[1], args[2], args[4])
+
 
 
     

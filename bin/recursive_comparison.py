@@ -21,7 +21,7 @@ h.setFormatter(f)
 lg.setLevel(logging.DEBUG)
 lg.addHandler(h)
 
-def process_directory(working_directory, ground_truth_directory, output_directory):
+def process_directory(working_directory, ground_truth_directory, output_directory, staff_algorithm):
     """
         Performs all the directory processing and methods
     """
@@ -37,8 +37,10 @@ def process_directory(working_directory, ground_truth_directory, output_director
                 aomr_obj = AomrObject(original_image, **aomr_opts)
                 st_position = aomr_obj.find_staves()
                 staff_coords = aomr_obj.staff_coords()
-                sorted_glyphs = aomr_obj.miyao_pitch_find(glyphs, aomr_opts['discard_size'])
-                
+                if staff_algorithm == 'Miyao':
+                    sorted_glyphs = aomr_obj.miyao_pitch_find(glyphs, aomr_opts['discard_size'])
+                elif staff_algorithm == 'AvLines':
+                    sorted_glyphs = aomr_obj.pitch_find(glyphs, st_position, aomr_opts['discard_size'])
                 mei_document = jsontomei(sorted_glyphs, staff_coords, mei_file_write)
                 
                 precision, mei_no_notes, no_errors = ground_truth_comparison(ground_truth_directory, mei_file_write)
@@ -102,10 +104,11 @@ def jsontomei(pitches_found, staff_coords, mei_file_write):
     meitoxml.meitoxml(mei_file.md, mei_file_write)
 
 if __name__ == "__main__":
-    usage = "usage: %prog [options] working_directory ground_truth_directory output_directory"
+    usage = "usage: %prog [options] working_directory ground_truth_directory output_directory staff_algorithm"
     opts = OptionParser(usage = usage)
     options, args = opts.parse_args()
     init_gamera()
+    print args[0], args[1], args[2]#, args[3]
 
     if not args:
         opts.error("You must supply arguments to this script.")
@@ -115,7 +118,11 @@ if __name__ == "__main__":
         opts.error("You must supply a path to a ground truth directory")
     if not args[2]:
         opts.error("You must supply path to an output directory.")
-
+    # if not args[3]:
+    #     opts.error("You must specify a staff linetracking algorithm: AvLines or Miyao")
+    # if args[3] is not 'Miyao' or args[3] is not 'AvLines':
+    #     opts.error("You must specify a staff linetracking algorithm: AvLines or Miyao")
+        
     results = []
 
     aomr_opts = {
@@ -126,7 +133,7 @@ if __name__ == "__main__":
         'discard_size': 12
     }
 
-    process_directory(args[0], args[1], args[2])
+    process_directory(args[0], args[1], args[2], args[3])
 
     no_glyphs = 0
     no_errors = 0
