@@ -109,9 +109,9 @@ if __name__ == "__main__":
     # 
     # if not os.path.isdir(args[1]):
     #     parser.error("The supplied axz directory is not a directory.")
-    
-    if args[4] is not '1' or args[4] is not '2':
-        parser.error("You must specify the staff_algorithm method. 1: Average Lines, 2: Miyao")
+    # 
+    # if args[3] is not '1' or args[3] is not '2':
+    #     parser.error("You must specify the staff_algorithm method. 1: Average Lines, 2: Miyao")
     init_gamera()
 
     aomr_opts = {
@@ -123,7 +123,7 @@ if __name__ == "__main__":
     }
 
     axz = process_axz_directory(args[0], args[2])
-    glyphs = process_glyphs_directory(args[1], args[2], args[4])
+    glyphs = process_glyphs_directory(args[1], args[2], args[3])
 
 
 

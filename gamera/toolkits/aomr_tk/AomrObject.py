@@ -739,7 +739,6 @@ class AomrObject(object):
             # lg.debug("\nGlyph {0} \tStave {1} \tOffset {2} \tStart Pos {3}".format(g, stave, g.offset_x, strt_pos))
                     
         sorted_glyphs = self.sort_glyphs(proc_glyphs)  
-        print "END!"
         return sorted_glyphs
 
     def neume_exceptions(self, g, discard_size, av_punctum):

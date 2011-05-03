@@ -30,7 +30,6 @@ def process_directory(working_directory, ground_truth_directory, output_director
         for f in filenames:
             if f == 'page_glyphs.xml':
                 page_number = dirpath.split('/')[-1]
-                print ("Page {0}".format(page_number))
                 page_glyphs = os.path.join(dirpath, f)
                 original_image = os.path.join(dirpath, 'original_image.tiff')
                 mei_file_write = os.path.join(dirpath, page_number +'_original_image.mei')
@@ -46,7 +45,7 @@ def process_directory(working_directory, ground_truth_directory, output_director
                 
                 precision, mei_no_notes, no_errors = ground_truth_comparison(ground_truth_directory, mei_file_write)
                 
-                
+                print ("Page {0}".format(page_number))
                 results.append([page_number, mei_no_notes, no_errors, precision])
             else:
                 pass

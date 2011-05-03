@@ -39,7 +39,8 @@ def main(original_file, page_file, outdir):
         'staff_finder': 0, # 0: Miyao
         'staff_removal': 0,
         'binarization': 0,
-        'discard_size': 12
+        'discard_size': 12,
+        'exceptions': 'yes'
     }
 
     #FILES TO PROCESS
@@ -57,8 +58,8 @@ def main(original_file, page_file, outdir):
 
 
 
-    # PITCH FINDING
-    pitch_find = aomr_obj.pitch_find(glyphs, st_position, aomr_opts.get('discard_size'))
+    # MIYAO PITCH FINDING
+    pitch_find = aomr_obj.miyao_pitch_find(glyphs, aomr_opts['discard_size'])
     # print len(pitch_find)
     sorted_glyphs = sorted(pitch_find, key=itemgetter(1, 2))
 
@@ -96,7 +97,7 @@ def main(original_file, page_file, outdir):
 
 
 if __name__ == "__main__":
-    usage = "%prog path_to_image path_to_pagexml output_dir"
+    usage = "%prog path_to_image path_to_page_xml output_dir"
     opts = OptionParser(usage = usage)
     options, args = opts.parse_args()
     
@@ -109,7 +110,7 @@ if __name__ == "__main__":
         opts.error("You must supply a pagexml file")
     if not args[2]:
         opts.error("You must supply an output directory.")
-    
+
     main(args[0], args[1], args[2])
     
 
