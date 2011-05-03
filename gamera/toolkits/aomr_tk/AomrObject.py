@@ -36,6 +36,7 @@ class AomrObject(object):
         self.sfnd_algorithm = kwargs['staff_finder']
         self.srmv_algorithm = kwargs['staff_removal']
         self.binarization = kwargs["binarization"]
+        self.exceptions = kwargs['exceptions']
         
         if "glyphs" in kwargs.values():
             self.classifier_glyphs = kwargs["glyphs"]
@@ -398,6 +399,7 @@ class AomrObject(object):
             according to the clef at the beginning of each stave
         """
         sorted_glyphs = sorted(proc_glyphs, key = itemgetter(1,2))
+
         
         for glyph_array in sorted_glyphs:
             # lg.debug("glyph array: {0}, {1}".format(glyph_array[0].get_main_id(), glyph_array))
@@ -410,7 +412,9 @@ class AomrObject(object):
                 glyph_array.append(None)
                 
             elif this_glyph_type == 'neume':
+                # lg.debug("shift {0}".format(shift))
                 pitch = self.pitch_find_from_strt_pos(glyph_array[3]-shift)
+                
                 glyph_array.append(pitch)
                 
             else:
@@ -710,11 +714,15 @@ class AomrObject(object):
 
 
             if glyph_type != '_group':
-                center_of_mass = self.x_projection_vector(g, av_punctum, discard_size)
+                if glyph_type == 'neume':
+                    center_of_mass = self.neume_exceptions(g, discard_size, av_punctum)
+                else:
+                    center_of_mass = self.x_projection_vector(g, av_punctum, discard_size)
+                    
                 glyph_array = self.glyph_staff_y_pos_ave(g, center_of_mass, st_position)
                 # lg.debug("\nglyph name: {0}\t {1} \tglyph_array: {2}\n COM: {3}".format(glyph_id, g, glyph_array, center_of_mass, st_position))
                 strt_pos = 2 * glyph_array[0][2] + glyph_array[0][0]
-                
+            
                 # note = scale[strt_pos]
                 stave = glyph_array[0][1]+1
                 if glyph_type == 'division' or glyph_type =='custos' or glyph_type =='alteration':
@@ -744,24 +752,24 @@ class AomrObject(object):
         glyph_var = glyph_id.split('.')
         glyph_type = glyph_var[0]
             
-        ### COMMENT THE LOWER LINES FOR NO REDUX CASE
-        # lg.debug("G_ID: {0}".format(glyph_id))
-        for var in glyph_var:                   # loop for he, ve or dot
-            if var == 'he' or var == 've' or var == 'dot':
-                g_cc = self.biggest_cc(g.cc_analysis())
-                # lg.debug("\tSub_Glyph {1}".format(g, g_cc))
-                break
-        for var in glyph_var:                   # loop for the conflict neumes
-            if var == 'podatus' or var == 'epiphonus':
-                sub_glyph_center_of_mass, offset_y = self.podatus_or_epiphonus(g, av_punctum, discard_size, g_cc)
-                break
-            elif glyph_id.split('.')[1] == 'cephalicus':
-                sub_glyph_center_of_mass, offset_y = self.cephalicus(g, av_punctum, discard_size, g_cc)
-                break
-        ### COMMENT THE ABOVE LINES FOR NO REDUX CASE
+        if self.exceptions == 'yes':
+            # lg.debug("G_ID: {0}".format(glyph_id))
+            for var in glyph_var:                   # loop for he, ve or dot
+                if var == 'he' or var == 've' or var == 'dot':
+                    g_cc = self.biggest_cc(g.cc_analysis())
+                    # lg.debug("\tSub_Glyph {1}".format(g, g_cc))
+                    break
+            for var in glyph_var:                   # loop for the conflict neumes
+                if var == 'podatus' or var == 'epiphonus':
+                    sub_glyph_center_of_mass, offset_y = self.podatus_or_epiphonus(g, av_punctum, discard_size, g_cc)
+                    break
+                elif glyph_id.split('.')[1] == 'cephalicus':
+                    sub_glyph_center_of_mass, offset_y = self.cephalicus(g, av_punctum, discard_size, g_cc)
+                    break
+
         
         if g_cc and not sub_glyph_center_of_mass:           # if he, ve or dot only
-            # lg.debug("CASE1")
+            # lg.debug("CASE 1")
             center_of_mass = g_cc.offset_y - g.offset_y + self.x_projection_vector(g_cc, av_punctum, discard_size)
             
         elif sub_glyph_center_of_mass and not g_cc:         # if podatus, epihonus or cephalicus only
@@ -776,7 +784,7 @@ class AomrObject(object):
             # lg.debug("CASE 4")
             center_of_mass = self.x_projection_vector(g, av_punctum, discard_size)
 
-        print center_of_mass    
+        # print center_of_mass    
         return center_of_mass
             
             

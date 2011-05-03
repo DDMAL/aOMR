@@ -21,15 +21,16 @@ h.setFormatter(f)
 lg.setLevel(logging.DEBUG)
 lg.addHandler(h)
 
-def process_directory(working_directory, ground_truth_directory, output_directory, staff_algorithm):
+def process_directory(working_directory, ground_truth_directory, output_directory, staff_algorithm, exceptions):
     """
         Performs all the directory processing and methods
     """
-    print "\nProcessing directory\n"
+    print "\nProcessing directory {0}".format(working_directory)
     for dirpath, dirnames, filenames in os.walk(working_directory):
         for f in filenames:
             if f == 'page_glyphs.xml':
                 page_number = dirpath.split('/')[-1]
+                print ("Page {0}".format(page_number))
                 page_glyphs = os.path.join(dirpath, f)
                 original_image = os.path.join(dirpath, 'original_image.tiff')
                 mei_file_write = os.path.join(dirpath, page_number +'_original_image.mei')
@@ -45,7 +46,7 @@ def process_directory(working_directory, ground_truth_directory, output_director
                 
                 precision, mei_no_notes, no_errors = ground_truth_comparison(ground_truth_directory, mei_file_write)
                 
-                print ("Page {0}".format(page_number))
+                
                 results.append([page_number, mei_no_notes, no_errors, precision])
             else:
                 pass
@@ -104,14 +105,14 @@ def jsontomei(pitches_found, staff_coords, mei_file_write):
     meitoxml.meitoxml(mei_file.md, mei_file_write)
 
 if __name__ == "__main__":
-    usage = "usage: %prog [options] working_directory ground_truth_directory output_directory staff_algorithm"
+    usage = "usage: %prog [options] working_directory ground_truth_directory output_directory staff_algorithm exceptions"
     opts = OptionParser(usage = usage)
     options, args = opts.parse_args()
     init_gamera()
 
-    # 
-    # if not args:
-    #     opts.error("You must supply arguments to this script.")
+    
+    if not args:
+        opts.error("You must supply arguments to this script as \nworking_directory \nground_truth_directory \noutput_directory \nstaff_algorithm: *Miyao* or *AvLines* \nexceptions: *yes* or *no*")
     # if not args[0]:
     #     opts.error("You must supply a path to a working directory.")
     # if not args[1]:
@@ -122,8 +123,11 @@ if __name__ == "__main__":
     #     opts.error("You must specify a staff linetracking algorithm: AvLines or Miyao")
     # if args[3] is not 'Miyao' or args[3] is not 'AvLines':
     #     opts.error("You must specify a staff linetracking algorithm: AvLines or Miyao")
-    
-    print args[0], args[1], args[2], args[3]
+    # if not args[4]:
+    #     opts.error("You must say if you want or not to handle exceptions: *yes* or *no*")
+        
+    print
+    # print args[0], args[1], args[2], args[3], args[4]
     
     results = []
 
@@ -132,10 +136,11 @@ if __name__ == "__main__":
         'staff_finder': 0, # 0: Miyao
         'staff_removal': 0,
         'binarization': 0,
-        'discard_size': 12
+        'discard_size': 12,
+        'exceptions': args[4]
     }
 
-    process_directory(args[0], args[1], args[2], args[3])
+    process_directory(args[0], args[1], args[2], args[3], args[4])
 
     no_glyphs = 0
     no_errors = 0
