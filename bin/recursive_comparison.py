@@ -108,21 +108,23 @@ if __name__ == "__main__":
     opts = OptionParser(usage = usage)
     options, args = opts.parse_args()
     init_gamera()
-    print args[0], args[1], args[2]#, args[3]
 
-    if not args:
-        opts.error("You must supply arguments to this script.")
-    if not args[0]:
-        opts.error("You must supply a path to a working directory.")
-    if not args[1]:
-        opts.error("You must supply a path to a ground truth directory")
-    if not args[2]:
-        opts.error("You must supply path to an output directory.")
+    # 
+    # if not args:
+    #     opts.error("You must supply arguments to this script.")
+    # if not args[0]:
+    #     opts.error("You must supply a path to a working directory.")
+    # if not args[1]:
+    #     opts.error("You must supply a path to a ground truth directory")
+    # if not args[2]:
+    #     opts.error("You must supply path to an output directory.")
     # if not args[3]:
     #     opts.error("You must specify a staff linetracking algorithm: AvLines or Miyao")
     # if args[3] is not 'Miyao' or args[3] is not 'AvLines':
     #     opts.error("You must specify a staff linetracking algorithm: AvLines or Miyao")
-        
+    
+    print args[0], args[1], args[2], args[3]
+    
     results = []
 
     aomr_opts = {

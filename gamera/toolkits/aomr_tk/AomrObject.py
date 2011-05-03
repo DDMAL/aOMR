@@ -301,46 +301,21 @@ class AomrObject(object):
             glyph_var = glyph_id.split('.')
             glyph_type = glyph_var[0]
             # lg.debug("glyph_id: {0}".format(glyph_id))
+            
+
             if glyph_type == 'neume':
                 
-                ### COMMENT THE LOWER LINES FOR NO REDUX CASE
-                # lg.debug("G_ID: {0}".format(glyph_id))
-                for var in glyph_var:                   # loop for he, ve or dot
-                    if var == 'he' or var == 've' or var == 'dot':
-                        g_cc = self.biggest_cc(g.cc_analysis())
-                        # lg.debug("\tSub_Glyph {1}".format(g, g_cc))
-                        break
-                for var in glyph_var:                   # loop for the conflict neumes
-                    if var == 'podatus' or var == 'epiphonus':
-                        sub_glyph_center_of_mass, offset_y = self.podatus_or_epiphonus(g, av_punctum, discard_size, g_cc)
-                        break
-                    elif glyph_id.split('.')[1] == 'cephalicus':
-                        sub_glyph_center_of_mass, offset_y = self.cephalicus(g, av_punctum, discard_size, g_cc)
-                        break
-                ### COMMENT THE ABOVE LINES FOR NO REDUX CASE
-                
-                if g_cc and not sub_glyph_center_of_mass:           # if he, ve or dot only
-                    # lg.debug("CASE1")
-                    center_of_mass = g_cc.offset_y - g.offset_y + self.x_projection_vector(g_cc, av_punctum, discard_size)
-
-                elif sub_glyph_center_of_mass and not g_cc:         # if podatus, epihonus or cephalicus only
-                    # lg.debug("CASE 2")
-                    center_of_mass = offset_y - g.offset_y + sub_glyph_center_of_mass
-
-                elif sub_glyph_center_of_mass and g_cc:             # if both
-                    # lg.debug("CASE 3")
-                    center_of_mass = g_cc.offset_y - g.offset_y + self.x_projection_vector(g_cc, av_punctum, discard_size)
-
-                else:
-                    center_of_mass = self.x_projection_vector(g, av_punctum, discard_size)
-                # lg.debug("\tCenter of mass of G_CC {1}".format(g_cc, center_of_mass))
-
+                center_of_mass = self.neume_exceptions(g, discard_size, av_punctum)
+                # lg.debug("COM: {0}".format(center_of_mass))
+                                
             else:
                 center_of_mass = self.x_projection_vector(g, av_punctum, discard_size)
+                # lg.debug("\tCenter of mass of G_CC {1}".format(g_cc, center_of_mass))
 
             if glyph_type == '_group':
                 strt_pos = None
                 st_no = None
+                center_of_mass = 0
             
             else:
                 st, st_no = self._return_staff_no(g, st_bound_coords, st_full_coords, center_of_mass)
@@ -722,9 +697,18 @@ class AomrObject(object):
         av_punctum = self.average_punctum(glyphs)
         # print av_punctum
         for g in glyphs:
-            # lg.debug("g: {0}".format(g.get_main_id()))
             glyph_id = g.get_main_id()
             glyph_type = glyph_id.split(".")[0]
+            # lg.debug("g: {0}".format(glyph_id)
+
+
+
+            # if glyph_type == 'neume':
+            #     center_of_mass = self.neume_exceptions(g, discard_size, av_punctum)    
+            # else:
+            #     center_of_mass = self.x_projection_vector(g, av_punctum, discard_size)
+
+
             if glyph_type != '_group':
                 center_of_mass = self.x_projection_vector(g, av_punctum, discard_size)
                 glyph_array = self.glyph_staff_y_pos_ave(g, center_of_mass, st_position)
@@ -749,3 +733,56 @@ class AomrObject(object):
         sorted_glyphs = self.sort_glyphs(proc_glyphs)  
         print "END!"
         return sorted_glyphs
+
+    def neume_exceptions(self, g, discard_size, av_punctum):
+        """
+            Handles the cases of glyphs as podatus, epiphonus, cephalicus, and he, ve or dot.
+        """
+        g_cc = None
+        sub_glyph_center_of_mass = None
+        glyph_id = g.get_main_id()
+        glyph_var = glyph_id.split('.')
+        glyph_type = glyph_var[0]
+            
+        ### COMMENT THE LOWER LINES FOR NO REDUX CASE
+        # lg.debug("G_ID: {0}".format(glyph_id))
+        for var in glyph_var:                   # loop for he, ve or dot
+            if var == 'he' or var == 've' or var == 'dot':
+                g_cc = self.biggest_cc(g.cc_analysis())
+                # lg.debug("\tSub_Glyph {1}".format(g, g_cc))
+                break
+        for var in glyph_var:                   # loop for the conflict neumes
+            if var == 'podatus' or var == 'epiphonus':
+                sub_glyph_center_of_mass, offset_y = self.podatus_or_epiphonus(g, av_punctum, discard_size, g_cc)
+                break
+            elif glyph_id.split('.')[1] == 'cephalicus':
+                sub_glyph_center_of_mass, offset_y = self.cephalicus(g, av_punctum, discard_size, g_cc)
+                break
+        ### COMMENT THE ABOVE LINES FOR NO REDUX CASE
+        
+        if g_cc and not sub_glyph_center_of_mass:           # if he, ve or dot only
+            # lg.debug("CASE1")
+            center_of_mass = g_cc.offset_y - g.offset_y + self.x_projection_vector(g_cc, av_punctum, discard_size)
+            
+        elif sub_glyph_center_of_mass and not g_cc:         # if podatus, epihonus or cephalicus only
+            # lg.debug("CASE 2")
+            center_of_mass = offset_y - g.offset_y + sub_glyph_center_of_mass
+
+        elif sub_glyph_center_of_mass and g_cc:             # if both
+            # lg.debug("CASE 3")
+            center_of_mass = g_cc.offset_y - g.offset_y + self.x_projection_vector(g_cc, av_punctum, discard_size)
+
+        else:
+            # lg.debug("CASE 4")
+            center_of_mass = self.x_projection_vector(g, av_punctum, discard_size)
+
+        print center_of_mass    
+        return center_of_mass
+            
+            
+            
+            
+            
+            
+            
+            
