@@ -302,6 +302,8 @@ class AomrObject(object):
             glyph_type = glyph_var[0]
             # lg.debug("glyph_id: {0}".format(glyph_id))
             if glyph_type == 'neume':
+                
+                ### COMMENT THE LOWER LINES FOR NO REDUX CASE
                 # lg.debug("G_ID: {0}".format(glyph_id))
                 for var in glyph_var:                   # loop for he, ve or dot
                     if var == 'he' or var == 've' or var == 'dot':
@@ -315,7 +317,8 @@ class AomrObject(object):
                     elif glyph_id.split('.')[1] == 'cephalicus':
                         sub_glyph_center_of_mass, offset_y = self.cephalicus(g, av_punctum, discard_size, g_cc)
                         break
-                        
+                ### COMMENT THE ABOVE LINES FOR NO REDUX CASE
+                
                 if g_cc and not sub_glyph_center_of_mass:           # if he, ve or dot only
                     # lg.debug("CASE1")
                     center_of_mass = g_cc.offset_y - g.offset_y + self.x_projection_vector(g_cc, av_punctum, discard_size)
