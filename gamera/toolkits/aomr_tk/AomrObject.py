@@ -325,20 +325,18 @@ class AomrObject(object):
                 
                 if glyph_type == 'division' or glyph_type =='alteration':
                     strt_pos = None
-                elif glyph_type == "neume" or glyph_type == "custos":
+                elif glyph_type == "neume" or glyph_type == "custos" or glyph_type == "clef":
                     line_or_space, line_num = self._return_line_or_space_no(g, center_of_mass, st, miyao_line) # line (0) or space (1), no
                     strt_pos = self.strt_pos_find(g, line_or_space, line_num) 
                     # lg.debug("line (0) or space(1): {0}, number: {1}, Start Position: {2}".format(line_or_space, line_num, strt_pos))
-                elif glyph_type == "clef":
-                    line_or_space, line_num = self._return_line_or_space_no(g, center_of_mass, st, miyao_line) # line (0) or space (1), no
-                    strt_pos = self.strt_pos_find(g, line_or_space, line_num) 
-                    strt_pos = 6 - (strt_pos/2) # to find the actual number of the line where the clef is located, starting with the lower line as 1
                 else:
                     strt_pos = None
                     st_no = None
             # lg.debug("\nGlyph {0} \tStave {1} \tOffset {2} \tStart Pos {3}".format(g, st_no, g.offset_x, strt_pos))
             proc_glyphs.append([g, st_no, g.offset_x, strt_pos])
-        sorted_glyphs = self.sort_glyphs(proc_glyphs)            
+        sorted_glyphs = self.sort_glyphs(proc_glyphs)  
+    
+                  
         return sorted_glyphs
 
     def biggest_cc(self, g_cc):
@@ -406,13 +404,14 @@ class AomrObject(object):
 
         
         for glyph_array in sorted_glyphs:
-            lg.debug("glyph array: {0}, {1}".format(glyph_array[0].get_main_id(), glyph_array))
             this_glyph = glyph_array[0]
             this_glyph_id = this_glyph.get_main_id()
             this_glyph_type = this_glyph_id.split(".")[0]
-            
+            lg.debug("glyph array: {0}, {1}".format(this_glyph_id, glyph_array))
             if this_glyph_type == 'clef':
                 shift = self.clef_shift(glyph_array)
+                glyph_array[3] = 6 - glyph_array[3]/2
+                lg.debug("CLEF!!!!!!! ACTUAL POSITION: {0}".format(glyph_array[3]))
                 glyph_array.append(None)
                 
             elif this_glyph_type == 'neume' or this_glyph_type == 'custos':
@@ -429,7 +428,6 @@ class AomrObject(object):
     def clef_shift(self, glyph_array):
         """ Clef Shift.
             This methods shifts the note names depending on the staff clef
-            TO DO: other cases !
         """
         this_clef = glyph_array[0]
         this_clef_id = this_clef.get_main_id()
