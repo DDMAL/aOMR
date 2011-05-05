@@ -38,7 +38,7 @@ def main(original_file, page_file, outdir):
     st_position = aomr_obj.find_staves() # staves position
     staff_coords = aomr_obj.staff_coords()
 
-    sorted_glyphs = aomr_obj.miyao_pitch_find(glyphs, aomr_opts['discard_size'])
+    sorted_glyphs = aomr_obj.miyao_pitch_find(glyphs)
 
     # PITCH FINDING
     # pitch_find = aomr_obj.pitch_find(glyphs, st_position, aomr_opts.get('discard_size'))

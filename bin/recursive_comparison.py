@@ -26,6 +26,15 @@ def process_directory(working_directory, ground_truth_directory, output_director
         Performs all the directory processing and methods
     """
     print "\nProcessing directory {0}".format(working_directory)
+    
+    aomr_opts = {
+        'lines_per_staff': 4,
+        'staff_finder': 0, # 0: Miyao
+        'staff_removal': 0,
+        'binarization': 0,
+        'discard_size': 12
+    }
+    
     for dirpath, dirnames, filenames in os.walk(working_directory):
         for f in filenames:
             if f == 'page_glyphs.xml':
@@ -36,12 +45,15 @@ def process_directory(working_directory, ground_truth_directory, output_director
                 mei_file_write = os.path.join(dirpath, page_number +'_original_image.mei')
                 glyphs = gamera_xml.glyphs_from_xml(page_glyphs)
                 aomr_obj = AomrObject(original_image, **aomr_opts)
+                
+                aomr_obj.extended_processing = True # set to false if you don't want to do extended processing (aka "exceptions").
+                
                 st_position = aomr_obj.find_staves()
                 staff_coords = aomr_obj.staff_coords()
                 if staff_algorithm == 'Miyao':
-                    sorted_glyphs = aomr_obj.miyao_pitch_find(glyphs, aomr_opts['discard_size'])
+                    sorted_glyphs = aomr_obj.miyao_pitch_find(glyphs)
                 elif staff_algorithm == 'AvLines':
-                    sorted_glyphs = aomr_obj.pitch_find(glyphs, st_position, aomr_opts['discard_size'])
+                    sorted_glyphs = aomr_obj.pitch_find(glyphs, st_position)
                 mei_document = jsontomei(sorted_glyphs, staff_coords, mei_file_write)
                 
                 precision, mei_no_notes, no_errors = ground_truth_comparison(ground_truth_directory, mei_file_write)
@@ -105,7 +117,7 @@ def jsontomei(pitches_found, staff_coords, mei_file_write):
     meitoxml.meitoxml(mei_file.md, mei_file_write)
 
 if __name__ == "__main__":
-    usage = "usage: %prog [options] working_directory ground_truth_directory output_directory staff_algorithm exceptions"
+    usage = "usage: %prog [options] working_directory ground_truth_directory output_directory staff_algorithm"
     opts = OptionParser(usage = usage)
     options, args = opts.parse_args()
     init_gamera()
@@ -131,16 +143,7 @@ if __name__ == "__main__":
     
     results = []
 
-    aomr_opts = {
-        'lines_per_staff': 4,
-        'staff_finder': 0, # 0: Miyao
-        'staff_removal': 0,
-        'binarization': 0,
-        'discard_size': 12,
-        'exceptions': args[4]
-    }
-
-    process_directory(args[0], args[1], args[2], args[3], args[4])
+    process_directory(args[0], args[1], args[2], args[3])
 
     no_glyphs = 0
     no_errors = 0
