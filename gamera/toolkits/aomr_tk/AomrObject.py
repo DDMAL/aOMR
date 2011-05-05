@@ -323,12 +323,16 @@ class AomrObject(object):
                 miyao_line = self._return_vertical_line(g, st[0])
                 # lg.debug("\nst[0]: {0}\nmiyao line: {1}".format(st[0], miyao_line))
                 
-                if glyph_type == 'division' or glyph_type =='custos' or glyph_type =='alteration':
+                if glyph_type == 'division' or glyph_type =='alteration':
                     strt_pos = None
-                elif glyph_type == "neume" or glyph_type == "clef":
+                elif glyph_type == "neume" or glyph_type == "custos":
                     line_or_space, line_num = self._return_line_or_space_no(g, center_of_mass, st, miyao_line) # line (0) or space (1), no
                     strt_pos = self.strt_pos_find(g, line_or_space, line_num) 
                     # lg.debug("line (0) or space(1): {0}, number: {1}, Start Position: {2}".format(line_or_space, line_num, strt_pos))
+                elif glyph_type == "clef":
+                    line_or_space, line_num = self._return_line_or_space_no(g, center_of_mass, st, miyao_line) # line (0) or space (1), no
+                    strt_pos = self.strt_pos_find(g, line_or_space, line_num) 
+                    strt_pos = 6 - (strt_pos/2) # to find the actual number of the line where the clef is located, starting with the lower line as 1
                 else:
                     strt_pos = None
                     st_no = None
@@ -402,7 +406,7 @@ class AomrObject(object):
 
         
         for glyph_array in sorted_glyphs:
-            # lg.debug("glyph array: {0}, {1}".format(glyph_array[0].get_main_id(), glyph_array))
+            lg.debug("glyph array: {0}, {1}".format(glyph_array[0].get_main_id(), glyph_array))
             this_glyph = glyph_array[0]
             this_glyph_id = this_glyph.get_main_id()
             this_glyph_type = this_glyph_id.split(".")[0]
@@ -411,15 +415,15 @@ class AomrObject(object):
                 shift = self.clef_shift(glyph_array)
                 glyph_array.append(None)
                 
-            elif this_glyph_type == 'neume':
-                # lg.debug("shift {0}".format(shift))
+            elif this_glyph_type == 'neume' or this_glyph_type == 'custos':
+                lg.debug("shift {0}".format(shift))
                 pitch = self.pitch_find_from_strt_pos(glyph_array[3]-shift)
                 
                 glyph_array.append(pitch)
                 
             else:
                 glyph_array.append(None)
-            # lg.debug("glyph_array:{0}".format(glyph_array))    
+            lg.debug("glyph_array:{0}".format(glyph_array))    
         return sorted_glyphs
         
     def clef_shift(self, glyph_array):
@@ -714,7 +718,7 @@ class AomrObject(object):
 
 
             if glyph_type != '_group':
-                if glyph_type == 'neume':
+                if glyph_type == 'neume' or glyph_type == 'custos':
                     center_of_mass = self.neume_exceptions(g, discard_size, av_punctum)
                 else:
                     center_of_mass = self.x_projection_vector(g, av_punctum, discard_size)
@@ -725,7 +729,7 @@ class AomrObject(object):
             
                 # note = scale[strt_pos]
                 stave = glyph_array[0][1]+1
-                if glyph_type == 'division' or glyph_type =='custos' or glyph_type =='alteration':
+                if glyph_type == 'division' or glyph_type =='alteration':
                     note = None
             else:
                 note = None

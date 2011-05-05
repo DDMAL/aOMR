@@ -87,7 +87,7 @@ def main(original_file, page_file, outdir):
                             'strt_pos': strt_pos}
                 contents.append(j_glyph)  
         data[s] = {'coord':stave, 'content':contents}
-    # print data
+    print data
     print
 
     # CREATING THE MEI FILE
