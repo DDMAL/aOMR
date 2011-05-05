@@ -407,22 +407,23 @@ class AomrObject(object):
             this_glyph = glyph_array[0]
             this_glyph_id = this_glyph.get_main_id()
             this_glyph_type = this_glyph_id.split(".")[0]
-            lg.debug("glyph array: {0}, {1}".format(this_glyph_id, glyph_array))
+            # lg.debug("glyph array: {0}, {1}".format(this_glyph_id, glyph_array))
             if this_glyph_type == 'clef':
                 shift = self.clef_shift(glyph_array)
+                lg.debug("CLEF!!!!!!! OLD POSITION: {0} {1}".format(glyph_array[3], glyph_array))
                 glyph_array[3] = 6 - glyph_array[3]/2
                 lg.debug("CLEF!!!!!!! ACTUAL POSITION: {0}".format(glyph_array[3]))
                 glyph_array.append(None)
                 
             elif this_glyph_type == 'neume' or this_glyph_type == 'custos':
-                lg.debug("shift {0}".format(shift))
+                # lg.debug("shift {0}".format(shift))
                 pitch = self.pitch_find_from_strt_pos(glyph_array[3]-shift)
                 
                 glyph_array.append(pitch)
                 
             else:
                 glyph_array.append(None)
-            lg.debug("glyph_array:{0}".format(glyph_array))    
+            # lg.debug("glyph_array:{0}".format(glyph_array))    
         return sorted_glyphs
         
     def clef_shift(self, glyph_array):
@@ -671,11 +672,11 @@ class AomrObject(object):
         """
         glyph_array = []
         y = round(g.offset_y + center_of_mass) # y is the y_position of the center of mass of a glyph
-        # lg.debug("{0}, ({1}, {2}), com: {3}".format(g.get_main_id(), g.offset_x, g.offset_y, y))
+        lg.debug("{0}, ({1}, {2}), com: {3}".format(g.get_main_id(), g.offset_x, g.offset_y, y))
 
         for s, staff in enumerate(st_position):
             for l, line in enumerate(staff['avg_lines'][1:]):
-                # lg.debug("OFFSET + COM: {3}\t staff:{0}, line:{1}, line_y:{2}".format(s, l, line, y))
+                # lg.debug("\tOFFSET + COM: {3}\t staff:{0}, line:{1}, line_y:{2}".format(s, l, line, y))
                 diff = (0.5 * (line - staff['avg_lines'][l]))
                 # lg.debug("\ndiff: {0}".format(diff))
                 if math.floor(line-diff/2) <= y <= math.ceil(line+diff/2): # Is the glyph on a line ?
@@ -683,13 +684,13 @@ class AomrObject(object):
                     glyph_array.append([0, s, l])
                     return glyph_array
                 elif math.floor(line+diff/2) <= y <= math.ceil(line+3*diff/2): # Is the glyph on a space ?
-                    # lg.debug("staff:{0}, space:{1}, y_pos_line:{2}".format(s+1, l-1, line))
+                    # lg.debug("\tstaff:{0}, space:{1}, y_pos_line:{2}".format(s+1, l-1, line))
                     glyph_array.append([1, s, l])
                     return glyph_array
                 else:
-                    # lg.debug("y: {0} line-diff/2: {1} line+diff/2: {2} line+3*diff/2: {3}".format(y, (line-diff/2), (line+diff/2), round(line+3*diff/2)))
+                    # lg.debug("\ty: {0} line-diff/2: {1} line+diff/2: {2} line+3*diff/2: {3}".format(y, (line-diff/2), (line+diff/2), round(line+3*diff/2)))
                     pass
-        # lg.debug("glyph {0} glyph array {1}".format(g.get_main_id(), glyph_array))
+        lg.debug("glyph {0} glyph array {1}".format(g.get_main_id(), glyph_array))
         return glyph_array
         
     def pitch_find(self, glyphs, st_position, discard_size):
@@ -699,33 +700,23 @@ class AomrObject(object):
                 glyph, stave_number, offset_x, note_name, start_position
         """
         proc_glyphs = [] # processed glyphs
-        # scale = ['g', 'f', 'e', 'd', 'c', 'b', 'a', 'g', 'f', 'e', 'd', 'c', 'b', 'a', 'g', 'f', 'e', 'd', 'c', 'b', 'a']
         av_punctum = self.average_punctum(glyphs)
-        # print av_punctum
         for g in glyphs:
             glyph_id = g.get_main_id()
             glyph_type = glyph_id.split(".")[0]
-            # lg.debug("g: {0}".format(glyph_id)
-
-
-
-            # if glyph_type == 'neume':
-            #     center_of_mass = self.neume_exceptions(g, discard_size, av_punctum)    
-            # else:
-            #     center_of_mass = self.x_projection_vector(g, av_punctum, discard_size)
-
+            # lg.debug("g: {0}".format(glyph_id))
 
             if glyph_type != '_group':
-                if glyph_type == 'neume' or glyph_type == 'custos':
+                if glyph_type == 'neume':
                     center_of_mass = self.neume_exceptions(g, discard_size, av_punctum)
                 else:
                     center_of_mass = self.x_projection_vector(g, av_punctum, discard_size)
-                    
+
                 glyph_array = self.glyph_staff_y_pos_ave(g, center_of_mass, st_position)
-                # lg.debug("\nglyph name: {0}\t {1} \tglyph_array: {2}\n COM: {3}".format(glyph_id, g, glyph_array, center_of_mass, st_position))
-                strt_pos = 2 * glyph_array[0][2] + glyph_array[0][0]
-            
-                # note = scale[strt_pos]
+                strt_pos = 2 * (glyph_array[0][2]) + glyph_array[0][0] + 2
+                lg.debug("\tGlyph Array: {0} \t\t\t\tStart Pos: {1}".format(glyph_array, strt_pos))
+               #  lg.debug("\nglyph name: {0}\t {1} \tglyph_array: {2}\t COM: {3}\t ST POSITION: {4}".format(glyph_id, g, glyph_array, center_of_mass, strt_pos))
+
                 stave = glyph_array[0][1]+1
                 if glyph_type == 'division' or glyph_type =='alteration':
                     note = None
@@ -764,7 +755,7 @@ class AomrObject(object):
                 if var == 'podatus' or var == 'epiphonus':
                     sub_glyph_center_of_mass, offset_y = self.podatus_or_epiphonus(g, av_punctum, discard_size, g_cc)
                     break
-                elif glyph_id.split('.')[1] == 'cephalicus':
+                elif var == 'cephalicus':
                     sub_glyph_center_of_mass, offset_y = self.cephalicus(g, av_punctum, discard_size, g_cc)
                     break
 
