@@ -457,6 +457,10 @@ class AomrMeiOutput(object):
         custos.id = self._idgen()
         zone = self._create_zone_element()
         custos.facs = zone.id
+        custos.pitchname = self.glyph['strt_pitch']
+        
+        lg.debug("Creating custos {0}".format(self.glyph['strt_pitch']))
+        
         return custos
     
     def _create_clef_element(self):

@@ -324,9 +324,9 @@ class AomrObject(object):
                 miyao_line = self._return_vertical_line(g, st[0])
                 # lg.debug("\nst[0]: {0}\nmiyao line: {1}".format(st[0], miyao_line))
                 
-                if glyph_type == 'division' or glyph_type =='custos' or glyph_type =='alteration':
+                if glyph_type == 'division' or glyph_type =='alteration':
                     strt_pos = None
-                elif glyph_type == "neume" or glyph_type == "clef":
+                elif glyph_type == "neume" or glyph_type == "clef" or glyph_type =='custos':
                     line_or_space, line_num = self._return_line_or_space_no(g, center_of_mass, st, miyao_line) # line (0) or space (1), no
                     strt_pos = self.strt_pos_find(g, line_or_space, line_num) 
                     # lg.debug("line (0) or space(1): {0}, number: {1}, Start Position: {2}".format(line_or_space, line_num, strt_pos))
@@ -388,7 +388,7 @@ class AomrObject(object):
                 shift = self.clef_shift(glyph_array)
                 glyph_array.append(None)
                 
-            elif this_glyph_type == 'neume':
+            elif this_glyph_type == 'neume' or this_glyph_type == 'custos':
                 # lg.debug("shift {0}".format(shift))
                 pitch = self.pitch_find_from_strt_pos(glyph_array[3]-shift)
                 
@@ -716,7 +716,6 @@ class AomrObject(object):
         """
             Handles the cases of glyphs as podatus, epiphonus, cephalicus, and he, ve or dot.
         """
-        lg.debug("Process neume called. Extended processing is {0}".format(self.extended_processing))
         g_cc = None
         sub_glyph_center_of_mass = None
         glyph_id = g.get_main_id()
@@ -724,13 +723,9 @@ class AomrObject(object):
         glyph_type = glyph_var[0]
         check_additions = False
         
-        lg.debug("Glyph id is {0}".format(glyph_id))
-        
         if not self.extended_processing:
-            lg.debug("No extended processing.")
             return self.x_projection_vector(g)
         else:
-            lg.debug("Extended processing is true.")
             # if check_gcc has elements, we know it's got one of these in it.
             if "he" in glyph_var or "ve" in glyph_var or "dot" in glyph_var:
                 lg.debug("Check additions is true.")
@@ -746,18 +741,14 @@ class AomrObject(object):
             g_center_of_mass, offset_y = self.check_special_neumes(this_glyph)
             
             if "podatus" in glyph_var or "epiphonus" in glyph_var or "cephalicus" in glyph_var:
-                lg.debug("Processing different neume")
                 if check_additions is True:
-                    lg.debug("Neume has additions")
                     center_of_mass = this_glyph.offset_y - g.offset_y + self.x_projection_vector(this_glyph)
                     return center_of_mass
                 else:
-                    lg.debug("neume does not have additions")
                     center_of_mass = offset_y - this_glyph.offset_y + g_center_of_mass
                     return center_of_mass
             
             if check_additions:
-                lg.debug("Neume has additions.")
                 center_of_mass = this_glyph.offset_y - g.offset_y + self.x_projection_vector(this_glyph)
                 return center_of_mass
             
