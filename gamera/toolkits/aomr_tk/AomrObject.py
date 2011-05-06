@@ -684,24 +684,11 @@ class AomrObject(object):
         for g in glyphs:
             glyph_id = g.get_main_id()
             glyph_type = glyph_id.split(".")[0]
-<<<<<<< HEAD
-            # lg.debug("g: {0}".format(glyph_id)
-            
-=======
-            # lg.debug("g: {0}".format(glyph_id))
-
->>>>>>> 614c1bbf38308e447277345c4dc1cc742cd3a0d6
             if glyph_type != '_group':
                 if glyph_type == 'neume':
                     center_of_mass = self.process_neume(g)
                 else:
-<<<<<<< HEAD
                     center_of_mass = self.x_projection_vector(g)
-                    
-=======
-                    center_of_mass = self.x_projection_vector(g, av_punctum, discard_size)
-
->>>>>>> 614c1bbf38308e447277345c4dc1cc742cd3a0d6
                 glyph_array = self.glyph_staff_y_pos_ave(g, center_of_mass, st_position)
                 strt_pos = 2 * (glyph_array[0][2]) + glyph_array[0][0] + 2
                 lg.debug("\tGlyph Array: {0} \t\t\t\tStart Pos: {1}".format(glyph_array, strt_pos))
@@ -731,27 +718,8 @@ class AomrObject(object):
         glyph_id = g.get_main_id()
         glyph_var = glyph_id.split('.')
         glyph_type = glyph_var[0]
-<<<<<<< HEAD
         check_additions = False
-=======
             
-        if self.exceptions == 'yes':
-            # lg.debug("G_ID: {0}".format(glyph_id))
-            for var in glyph_var:                   # loop for he, ve or dot
-                if var == 'he' or var == 've' or var == 'dot':
-                    g_cc = self.biggest_cc(g.cc_analysis())
-                    # lg.debug("\tSub_Glyph {1}".format(g, g_cc))
-                    break
-            for var in glyph_var:                   # loop for the conflict neumes
-                if var == 'podatus' or var == 'epiphonus':
-                    sub_glyph_center_of_mass, offset_y = self.podatus_or_epiphonus(g, av_punctum, discard_size, g_cc)
-                    break
-                elif var == 'cephalicus':
-                    sub_glyph_center_of_mass, offset_y = self.cephalicus(g, av_punctum, discard_size, g_cc)
-                    break
-
->>>>>>> 614c1bbf38308e447277345c4dc1cc742cd3a0d6
-        
         if not self.extended_processing:
             return self.x_projection_vector(g)
         else:
