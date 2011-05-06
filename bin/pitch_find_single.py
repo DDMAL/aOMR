@@ -33,13 +33,14 @@ h.setFormatter(f)
 lg.setLevel(logging.DEBUG)
 lg.addHandler(h)
 
-def main(original_file, page_file, outdir):
+def main(original_file, page_file, outdir, pitch_find_algorithm, exceptions):
     aomr_opts = {
         'lines_per_staff': 4,
         'staff_finder': 0, # 0: Miyao
         'staff_removal': 0,
         'binarization': 0,
-        'discard_size': 12
+        'discard_size': 12,
+        'exceptions': exceptions
     }
 
     #FILES TO PROCESS
@@ -56,11 +57,14 @@ def main(original_file, page_file, outdir):
     # print staff_non_parallel
 
 
-
-    # PITCH FINDING
-    pitch_find = aomr_obj.pitch_find(glyphs, st_position, aomr_opts.get('discard_size'))
-    # print len(pitch_find)
-    sorted_glyphs = sorted(pitch_find, key=itemgetter(1, 2))
+    if pitch_find_algorithm == 'Miyao':
+        sorted_glyphs = aomr_obj.miyao_pitch_find(glyphs, aomr_opts['discard_size'])
+    elif pitch_find_algorithm == 'AvLines':
+        sorted_glyphs = aomr_obj.pitch_find(glyphs, st_position, aomr_opts['discard_size'])
+    # # MIYAO PITCH FINDING
+    # pitch_find = aomr_obj.miyao_pitch_find(glyphs, aomr_opts['discard_size'])
+    # # print len(pitch_find)
+    # sorted_glyphs = sorted(pitch_find, key=itemgetter(1, 2))
 
 
     # STRUCTURING THE DATA IN JSON
@@ -86,7 +90,7 @@ def main(original_file, page_file, outdir):
                             'strt_pos': strt_pos}
                 contents.append(j_glyph)  
         data[s] = {'coord':stave, 'content':contents}
-    # print data
+    print data
     print
 
     # CREATING THE MEI FILE
@@ -96,7 +100,7 @@ def main(original_file, page_file, outdir):
 
 
 if __name__ == "__main__":
-    usage = "%prog path_to_image path_to_pagexml output_dir"
+    usage = "%prog path_to_image path_to_page_xml output_dir pitch_find_algorithm exceptions"
     opts = OptionParser(usage = usage)
     options, args = opts.parse_args()
     
@@ -109,8 +113,8 @@ if __name__ == "__main__":
         opts.error("You must supply a pagexml file")
     if not args[2]:
         opts.error("You must supply an output directory.")
-    
-    main(args[0], args[1], args[2])
+
+    main(args[0], args[1], args[2], args[3], args[4])
     
 
 

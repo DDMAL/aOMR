@@ -695,7 +695,7 @@ if __name__ == "__main__":
     None, 'type': 'division', 'coord': [653, 1497, 672, 1601], 'form':
     ['final']}], 'coord': [6, 1497, 1419, 1601]}}
     
-    v = AomrMeiOutput(test_data, 'foo.jpg')
+    v = AomrMeiOutput(test_data, 'foo..jpg')
     
     from pymei.Export import meitoxml
     meitoxml.meitoxml(v.md, 'testfile.mei')
