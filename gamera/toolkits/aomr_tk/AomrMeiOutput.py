@@ -468,6 +468,9 @@ class AomrMeiOutput(object):
         clef.id = self._idgen()
         zone = self._create_zone_element()
         clef.facs = zone.id
+        
+        clef.attributes = {"line": self.glyph['strt_pos'], 'shape': self.glyph['form'][0]}
+        
         return clef
     
     def _create_division_element(self):
