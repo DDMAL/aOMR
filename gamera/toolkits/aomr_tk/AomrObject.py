@@ -725,7 +725,6 @@ class AomrObject(object):
         else:
             # if check_gcc has elements, we know it's got one of these in it.
             if "he" in glyph_var or "ve" in glyph_var or "dot" in glyph_var:
-                lg.debug("Check additions is true.")
                 check_additions = True
             
             # if we want to use the biggest cc (when there are dots or other things),
@@ -739,7 +738,7 @@ class AomrObject(object):
             
             if "podatus" in glyph_var or "epiphonus" in glyph_var or "cephalicus" in glyph_var:
                 if check_additions is True:
-                    center_of_mass = this_glyph.offset_y - g.offset_y + self.x_projection_vector(this_glyph)
+                    center_of_mass = this_glyph.offset_y - g.offset_y + g_center_of_mass
                     return center_of_mass
                 else:
                     center_of_mass = offset_y - this_glyph.offset_y + g_center_of_mass
