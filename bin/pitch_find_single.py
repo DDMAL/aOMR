@@ -61,47 +61,50 @@ def main(original_file, page_file, outdir, pitch_find_algorithm, exceptions):
         sorted_glyphs = aomr_obj.miyao_pitch_find(glyphs, aomr_opts['discard_size'])
     elif pitch_find_algorithm == 'AvLines':
         sorted_glyphs = aomr_obj.pitch_find(glyphs, st_position, aomr_opts['discard_size'])
-    # # MIYAO PITCH FINDING
-    # pitch_find = aomr_obj.miyao_pitch_find(glyphs, aomr_opts['discard_size'])
-    # # print len(pitch_find)
-    # sorted_glyphs = sorted(pitch_find, key=itemgetter(1, 2))
 
 
-    # STRUCTURING THE DATA IN JSON
-    data = {}
-    for s, stave in enumerate(staff_coords):
-        contents = []
-        for glyph, staff, offset, strt_pos, note in sorted_glyphs:
-            glyph_id = glyph.get_main_id()
-            glyph_type = glyph_id.split(".")[0]
-            glyph_form = glyph_id.split(".")[1:]
-            # lg.debug("sg[1]:{0} s:{1} sg{2}".format(sg[1], s+1, sg))
-            # structure: g, stave, g.offset_x, note, strt_pos
-
-            # if glyph_form:
-            #     if glyph_form[0] == "compound" or glyph_form[0] == "salicus":
-            #         continue
-
-            if staff == s+1: 
-                j_glyph = { 'type': glyph_type,
-                            'form': glyph_form,
-                            'coord': [glyph.offset_x, glyph.offset_y, glyph.offset_x + glyph.ncols, glyph.offset_y + glyph.nrows],
-                            'strt_pitch': note,
-                            'strt_pos': strt_pos}
-                contents.append(j_glyph)  
-        data[s] = {'coord':stave, 'content':contents}
-    print data
-    print
-
+    for g in sorted_glyphs:
+        # print g
+        glyph = g[0]
+        glyph_id = glyph[0]
+        glyph_staff = g[1]
+        glyph_position = g[3]
+        glyph_com = g[5]
+        glyph_projection = g[4]
+        
+        if glyph_staff == 1 and glyph_position == 6:        
+            lg.debug("\nGLYPH: {0} STAFF: {1} POSITION: {2} COM: {3} PROJECTION: {4}".format(glyph_id, glyph_staff, glyph_position, glyph_com, glyph_projection))
+        
+        
+            
+            
+            
+            
+    #         
+    #         
+    #         
+    # # STRUCTURING THE DATA IN JSON
+    # data = {}
+    # for s, stave in enumerate(staff_coords):
+    #     contents = []
+    #     for glyph, staff, offset, strt_pos, note, projection, center_of_mass in sorted_glyphs:
+    #         glyph_id = glyph.get_main_id()
+    #         if glyph_id[0] == 'neume':
+    #             print glyph_id, center_of_mass, projection
+    #         
+            
+            
+            
+            
     # CREATING THE MEI FILE
-    mei_file = AomrMeiOutput.AomrMeiOutput(data, file_name)
-    meitoxml.meitoxml(mei_file.md, os.path.join(outdir, file_name.split('.')[0]+'.mei'))
+   #  mei_file = AomrMeiOutput.AomrMeiOutput(data, file_name)
+    # meitoxml.meitoxml(mei_file.md, os.path.join(outdir, file_name.split('.')[0]+'.mei'))
 
 
 
 if __name__ == "__main__":
     usage = "%prog path_to_image path_to_page_xml output_dir pitch_find_algorithm exceptions"
-    opts = OptionParser(usage = usage)
+    opts = OptionParser(usage = usagek,
     options, args = opts.parse_args()
     
     if not args:

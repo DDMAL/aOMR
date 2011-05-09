@@ -306,13 +306,15 @@ class AomrObject(object):
 
             if glyph_type == 'neume':
                 
-                center_of_mass = self.neume_exceptions(g, discard_size, av_punctum)
+                center_of_mass = self.neume_exceptions(g, discard_size, av_punctum)[0]
+                projection = self.neume_exceptions(g, discard_size, av_punctum)[1]
                 # lg.debug("COM: {0}".format(center_of_mass))
                                 
             else:
-                center_of_mass = self.x_projection_vector(g, av_punctum, discard_size)
+                center_of_mass = self.neume_exceptions(g, discard_size, av_punctum)[0]
+                projection = self.neume_exceptions(g, discard_size, av_punctum)[1]
                 # lg.debug("\tCenter of mass of G_CC {1}".format(g_cc, center_of_mass))
-
+                
             if glyph_type == '_group':
                 strt_pos = None
                 st_no = None
@@ -333,7 +335,8 @@ class AomrObject(object):
                     strt_pos = None
                     st_no = None
             # lg.debug("\nGlyph {0} \tStave {1} \tOffset {2} \tStart Pos {3}".format(g, st_no, g.offset_x, strt_pos))
-            proc_glyphs.append([g, st_no, g.offset_x, strt_pos])
+            proc_glyphs.append([g, st_no, g.offset_x, strt_pos, projection, center_of_mass])
+            # lg.debug("\nGLYPH: {0}\tPROJECTION VECTOR: {1}\tCENTER OF MASS {2}".format(glyph_id, projection, center_of_mass))
         sorted_glyphs = self.sort_glyphs(proc_glyphs)  
     
                   
@@ -360,7 +363,7 @@ class AomrObject(object):
             g = g_cc
         # lg.debug("g: {0}, g_cc: {1}".format(g, g_cc))
         split_glyph = g.splity()[1]
-        split_glyph_center_of_mass = self.x_projection_vector(split_glyph, av_punctum, discard_size)
+        split_glyph_center_of_mass = self.x_projection_vector(split_glyph, av_punctum, discard_size)[0]
         # lg.debug("\tPODATUS OR EPIPHONUS, SUBGLYPH Center of Mass: {0}".format(split_glyph_center_of_mass))
         return split_glyph_center_of_mass, split_glyph.offset_y
     
@@ -372,14 +375,13 @@ class AomrObject(object):
             g = g_cc
         # lg.debug("\t{0},\n g_cc: {1}".format(g, g_cc))
         split_glyph = self.biggest_cc(g.splity())
-        split_glyph_center_of_mass = self.x_projection_vector(split_glyph, av_punctum, discard_size)
+        split_glyph_center_of_mass = self.x_projection_vector(split_glyph, av_punctum, discard_size)[0]
         # lg.debug("\tCEPHALICUS. COM: {1},\t Subglyph {0}".format(split_glyph, center_of_mass))
         return split_glyph_center_of_mass, split_glyph.offset_y
         
     def strt_pos_find(self, glyph, line_or_space, line_num):
         """ Start position finding.
             Returns the start position, starting from ledger line 0, which strt_pos value is 0.
-            
         """
         strt_pos = (line_num + 1)*2 + line_or_space
         return strt_pos
@@ -388,7 +390,6 @@ class AomrObject(object):
     def pitch_find_from_strt_pos(self, strt_pos):
         """ Pitch Find.
             pitch find algorithm for all glyphs in a page
-            
         """
         scale = ['g', 'f', 'e', 'd', 'c', 'b', 'a', 'g', 'f', 'e', 'd', 'c', 'b', 'a', 'g', 'f', 'e', 'd', 'c', 'b', 'a']
         pitch = scale[strt_pos]
@@ -410,9 +411,7 @@ class AomrObject(object):
             # lg.debug("glyph array: {0}, {1}".format(this_glyph_id, glyph_array))
             if this_glyph_type == 'clef':
                 shift = self.clef_shift(glyph_array)
-                lg.debug("CLEF!!!!!!! OLD POSITION: {0} {1}".format(glyph_array[3], glyph_array))
                 glyph_array[3] = 6 - glyph_array[3]/2
-                lg.debug("CLEF!!!!!!! ACTUAL POSITION: {0}".format(glyph_array[3]))
                 glyph_array.append(None)
                 
             elif this_glyph_type == 'neume' or this_glyph_type == 'custos':
@@ -453,7 +452,7 @@ class AomrObject(object):
         
         for i, s in enumerate(st_bound_coords):
             # lg.debug("s[1]: {0}\tg.offset_y: {1}\ts[3]: {2}".format(0.5*(3*s[1]-s[3]), g.offset_y, 0.5*(3*s[3]-s[1])))
-
+            # lg.debug("COM: {0}".format(center_of_mass))
             if 0.5*(3* s[1] - s[3]) <= g.offset_y + center_of_mass < 0.5*(3 * s[3] - s[1]): # GVM: considering the ledger lines in an unorthodox way.
                 st_no = st_full_coords[i]['line_positions']
                 return st_no, i+1
@@ -639,6 +638,7 @@ class AomrObject(object):
             creates a subimage of the original glyph and returns its center of mass
         """
         center_of_mass = 0
+        projection_vector = 0
         # print glyph
         if glyph.ncols > discard_size and glyph.nrows > discard_size:
             if glyph.ncols < avg_punctum:
@@ -649,7 +649,11 @@ class AomrObject(object):
             center_of_mass = self.center_of_mass(projection_vector)
         else:
             center_of_mass = 0
-        return center_of_mass
+        return center_of_mass, projection_vector
+
+
+        
+
 
     def center_of_mass(self, projection_vector):
         """ Center of Mass.
@@ -762,22 +766,24 @@ class AomrObject(object):
         
         if g_cc and not sub_glyph_center_of_mass:           # if he, ve or dot only
             # lg.debug("CASE 1")
-            center_of_mass = g_cc.offset_y - g.offset_y + self.x_projection_vector(g_cc, av_punctum, discard_size)
+            center_of_mass = g_cc.offset_y - g.offset_y + self.x_projection_vector(g_cc, av_punctum, discard_size)[0]
+            projection = self.x_projection_vector(g_cc, av_punctum, discard_size)[1]
             
         elif sub_glyph_center_of_mass and not g_cc:         # if podatus, epihonus or cephalicus only
             # lg.debug("CASE 2")
             center_of_mass = offset_y - g.offset_y + sub_glyph_center_of_mass
-
+            projection = self.x_projection_vector(g_cc, av_punctum, discard_size)[1]
+            
         elif sub_glyph_center_of_mass and g_cc:             # if both
             # lg.debug("CASE 3")
-            center_of_mass = g_cc.offset_y - g.offset_y + self.x_projection_vector(g_cc, av_punctum, discard_size)
-
+            center_of_mass = g_cc.offset_y - g.offset_y + self.x_projection_vector(g_cc, av_punctum, discard_size)[0]
+            projection = self.x_projection_vector(g_cc, av_punctum, discard_size)[1]
+            
         else:
             # lg.debug("CASE 4")
-            center_of_mass = self.x_projection_vector(g, av_punctum, discard_size)
+            center_of_mass, projection = self.x_projection_vector(g, av_punctum, discard_size)
 
-        # print center_of_mass    
-        return center_of_mass
+        return center_of_mass, projection
             
             
             
