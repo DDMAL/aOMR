@@ -270,10 +270,13 @@ class AomrMeiOutput(object):
         local_horizontal_episema = None
         
         neume = mod.neume_()
-            
         neume.id = self._idgen()
         zone = self._create_zone_element()
         neume.facs = zone.id
+        
+        neumecomponent = mod.nc_()
+        neumecomponent.id = self._idgen()
+        neume.add_child(neumecomponent)
         
         # lg.debug(self.glyph['form'])
         
@@ -297,7 +300,7 @@ class AomrMeiOutput(object):
             has_vertical_episema = True
         
         if 'inclinatum' in self.glyph['form']:
-            neume.attributes = {'variant': 'inclinatum'}
+            neumecomponent.attributes = {'inclinatum': 'true'}
             
         neume.attributes = {'name': self.glyph['form'][0]}
         
@@ -407,7 +410,7 @@ class AomrMeiOutput(object):
             
             if has_quilisma:
                 if n in qidxs:
-                    nt.attributes = {"quil": "true"}
+                    neumecomponent.attributes = {"quilisma": "true"}
             
             if has_dot:
                 if n in dotidxs:
@@ -433,7 +436,7 @@ class AomrMeiOutput(object):
                 local_horizontal_episema.attributes = {"endid": nt.id}
                 
             nc.append(nt)
-        neume.add_children(nc)
+        neumecomponent.add_children(nc)
         
         return neume
         
@@ -454,6 +457,10 @@ class AomrMeiOutput(object):
         custos.id = self._idgen()
         zone = self._create_zone_element()
         custos.facs = zone.id
+        custos.pitchname = self.glyph['strt_pitch']
+        
+        lg.debug("Creating custos {0}".format(self.glyph['strt_pitch']))
+        
         return custos
     
     def _create_clef_element(self):
@@ -461,6 +468,9 @@ class AomrMeiOutput(object):
         clef.id = self._idgen()
         zone = self._create_zone_element()
         clef.facs = zone.id
+        
+        clef.attributes = {"line": self.glyph['strt_pos'], 'shape': self.glyph['form'][0]}
+        
         return clef
     
     def _create_division_element(self):

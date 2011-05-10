@@ -29,20 +29,21 @@ class AomrObject(object):
             Constructs and returns an AOMR object
         """
         self.filename = filename
-        
+        self.extended_processing = True
         # print "loading ", self.filename
         
         self.lines_per_staff = kwargs['lines_per_staff']
         self.sfnd_algorithm = kwargs['staff_finder']
         self.srmv_algorithm = kwargs['staff_removal']
         self.binarization = kwargs["binarization"]
-        self.exceptions = kwargs['exceptions']
         
         if "glyphs" in kwargs.values():
             self.classifier_glyphs = kwargs["glyphs"]
         if "weights" in kwargs.values():
             self.classifier_weights = kwargs["weights"]
+        
         self.discard_size = kwargs["discard_size"]
+        self.avg_punctum = None
         
         # the result of the staff finder. Mostly for convenience
         self.staves = None
@@ -97,7 +98,7 @@ class AomrObject(object):
         s.find_staves()
      
         av_lines = s.get_average()
-        # lg.debug("AVERAGE_LINES {0}".format(av_lines))
+        # print av_lines
         # lg.debug("Linelist is {0}".format(s.linelist))
         
         if len(self._flatten(s.linelist)) == 0:
@@ -285,7 +286,7 @@ class AomrObject(object):
         self.img_no_st = musicstaves_no_staves.image
         
         
-    def miyao_pitch_find(self, glyphs, discard_size):
+    def miyao_pitch_find(self, glyphs):
         """
             Returns a set of glyphs with pitches
         """
@@ -296,7 +297,6 @@ class AomrObject(object):
         # what to do if there are no punctum on a page???
         av_punctum = self.average_punctum(glyphs)
         for g in glyphs:
-            print g.get_main_id()
             g_cc = None
             sub_glyph_center_of_mass = None
             glyph_id = g.get_main_id()
@@ -306,15 +306,14 @@ class AomrObject(object):
             
 
             if glyph_type == 'neume':
-                center_of_mass = self.neume_exceptions(g, discard_size, av_punctum)[0]
-                projection = self.neume_exceptions(g, discard_size, av_punctum)[1]
-                # lg.debug("COM: {0}".format(center_of_mass))
+                
+                center_of_mass = self.process_neume(g)
+                lg.debug("COM: {0}".format(center_of_mass))
                                 
             else:
-                center_of_mass = self.neume_exceptions(g, discard_size, av_punctum)[0]
-                projection = self.neume_exceptions(g, discard_size, av_punctum)[1]
+                center_of_mass = self.x_projection_vector(g)
                 # lg.debug("\tCenter of mass of G_CC {1}".format(g_cc, center_of_mass))
-                
+
             if glyph_type == '_group':
                 strt_pos = None
                 st_no = None
@@ -335,8 +334,7 @@ class AomrObject(object):
                     strt_pos = None
                     st_no = None
             # lg.debug("\nGlyph {0} \tStave {1} \tOffset {2} \tStart Pos {3}".format(g, st_no, g.offset_x, strt_pos))
-            proc_glyphs.append([g, st_no, g.offset_x, strt_pos, projection, center_of_mass])
-            # lg.debug("\nGLYPH: {0}\tPROJECTION VECTOR: {1}\tCENTER OF MASS {2}".format(glyph_id, projection, center_of_mass))
+            proc_glyphs.append([g, st_no, g.offset_x, strt_pos])
         sorted_glyphs = self.sort_glyphs(proc_glyphs)  
     
                   
@@ -354,34 +352,11 @@ class AomrObject(object):
                 sel = i
         # lg.debug("HE, VE OR DOT. g_cc {0}, sel: {1} g_cc[sel] {2}".format(g_cc, sel, g_cc[sel]))
         return g_cc[sel]
-    
-    def podatus_or_epiphonus(self, g, av_punctum, discard_size, g_cc):
-        """
-            Returns the center of mass of a podatus or a epihonus
-        """
-        if g_cc:
-            g = g_cc
-        # lg.debug("g: {0}, g_cc: {1}".format(g, g_cc))
-        split_glyph = g.splity()[1]
-        split_glyph_center_of_mass = self.x_projection_vector(split_glyph, av_punctum, discard_size)[0]
-        # lg.debug("\tPODATUS OR EPIPHONUS, SUBGLYPH Center of Mass: {0}".format(split_glyph_center_of_mass))
-        return split_glyph_center_of_mass, split_glyph.offset_y
-    
-    def cephalicus(self, g, av_punctum, discard_size, g_cc):
-        """
-            Returns the center of mass of a cephalicus
-        """
-        if g_cc:
-            g = g_cc
-        # lg.debug("\t{0},\n g_cc: {1}".format(g, g_cc))
-        split_glyph = self.biggest_cc(g.splity())
-        split_glyph_center_of_mass = self.x_projection_vector(split_glyph, av_punctum, discard_size)[0]
-        # lg.debug("\tCEPHALICUS. COM: {1},\t Subglyph {0}".format(split_glyph, center_of_mass))
-        return split_glyph_center_of_mass, split_glyph.offset_y
         
     def strt_pos_find(self, glyph, line_or_space, line_num):
         """ Start position finding.
             Returns the start position, starting from ledger line 0, which strt_pos value is 0.
+            
         """
         strt_pos = (line_num + 1)*2 + line_or_space
         return strt_pos
@@ -390,6 +365,7 @@ class AomrObject(object):
     def pitch_find_from_strt_pos(self, strt_pos):
         """ Pitch Find.
             pitch find algorithm for all glyphs in a page
+            
         """
         scale = ['g', 'f', 'e', 'd', 'c', 'b', 'a', 'g', 'f', 'e', 'd', 'c', 'b', 'a', 'g', 'f', 'e', 'd', 'c', 'b', 'a']
         pitch = scale[strt_pos]
@@ -411,7 +387,9 @@ class AomrObject(object):
             # lg.debug("glyph array: {0}, {1}".format(this_glyph_id, glyph_array))
             if this_glyph_type == 'clef':
                 shift = self.clef_shift(glyph_array)
+                # lg.debug("CLEF!!!!!!! OLD POSITION: {0} {1}".format(glyph_array[3], glyph_array))
                 glyph_array[3] = 6 - glyph_array[3]/2
+                # lg.debug("CLEF!!!!!!! ACTUAL POSITION: {0}".format(glyph_array[3]))
                 glyph_array.append(None)
                 
             elif this_glyph_type == 'neume' or this_glyph_type == 'custos':
@@ -452,7 +430,6 @@ class AomrObject(object):
         
         for i, s in enumerate(st_bound_coords):
             # lg.debug("s[1]: {0}\tg.offset_y: {1}\ts[3]: {2}".format(0.5*(3*s[1]-s[3]), g.offset_y, 0.5*(3*s[3]-s[1])))
-            # lg.debug("COM: {0}".format(center_of_mass))
             if 0.5*(3* s[1] - s[3]) <= g.offset_y + center_of_mass < 0.5*(3 * s[3] - s[1]): # GVM: considering the ledger lines in an unorthodox way.
                 st_no = st_full_coords[i]['line_positions']
                 return st_no, i+1
@@ -631,29 +608,28 @@ class AomrObject(object):
                 wide = wide + glyph.ncols
                 i = i + 1
         avg_punctum_col = wide / i
-        return avg_punctum_col
         
-    def x_projection_vector(self, glyph, avg_punctum, discard_size):
+        self.avg_punctum = avg_punctum_col
+        
+    def x_projection_vector(self, glyph):
         """ Projection Vector
             creates a subimage of the original glyph and returns its center of mass
         """
         center_of_mass = 0
-        projection_vector = 0
-        lg.debug("glyph {0} ID {1}".format(glyph, glyph.get_main_id()))
-        if glyph.ncols > discard_size and glyph.nrows > discard_size:
-            if glyph.ncols < avg_punctum:
-                avg_punctum = glyph.ncols
-            temp_glyph = glyph.subimage((glyph.offset_x + 0.0 * avg_punctum, glyph.offset_y), \
-                ((glyph.offset_x + 1.0 * avg_punctum - 1), (glyph.offset_y + glyph.nrows - 1)))
+        # print glyph
+        if glyph.ncols > self.discard_size and glyph.nrows > self.discard_size:
+            if glyph.ncols < self.avg_punctum:
+                this_punctum_size = glyph.ncols
+            else:
+                this_punctum_size = self.avg_punctum
+                
+            temp_glyph = glyph.subimage((glyph.offset_x + 0.0 * this_punctum_size, glyph.offset_y), \
+                ((glyph.offset_x + 1.0 * this_punctum_size - 1), (glyph.offset_y + glyph.nrows - 1)))
             projection_vector = temp_glyph.projection_rows()
             center_of_mass = self.center_of_mass(projection_vector)
         else:
             center_of_mass = 0
-        return center_of_mass, projection_vector
-
-
-        
-
+        return center_of_mass
 
     def center_of_mass(self, projection_vector):
         """ Center of Mass.
@@ -697,7 +673,7 @@ class AomrObject(object):
         lg.debug("glyph {0} glyph array {1}".format(g.get_main_id(), glyph_array))
         return glyph_array
         
-    def pitch_find(self, glyphs, st_position, discard_size):
+    def pitch_find(self, glyphs, st_position):
         """ Pitch Find.
             pitch find algorithm for all glyphs in a page
             Returns a list of processed glyphs with the following structure:
@@ -708,14 +684,11 @@ class AomrObject(object):
         for g in glyphs:
             glyph_id = g.get_main_id()
             glyph_type = glyph_id.split(".")[0]
-            # lg.debug("g: {0}".format(glyph_id))
-
             if glyph_type != '_group':
                 if glyph_type == 'neume':
-                    center_of_mass = self.neume_exceptions(g, discard_size, av_punctum)
+                    center_of_mass = self.process_neume(g)
                 else:
-                    center_of_mass = self.x_projection_vector(g, av_punctum, discard_size)
-
+                    center_of_mass = self.x_projection_vector(g)
                 glyph_array = self.glyph_staff_y_pos_ave(g, center_of_mass, st_position)
                 strt_pos = 2 * (glyph_array[0][2]) + glyph_array[0][0] + 2
                 lg.debug("\tGlyph Array: {0} \t\t\t\tStart Pos: {1}".format(glyph_array, strt_pos))
@@ -730,15 +703,13 @@ class AomrObject(object):
                 strt_pos=None
 
             # proc_glyphs.append([g, stave, g.offset_x, note, strt_pos]) 
-            
-            
             proc_glyphs.append([g, stave, g.offset_x, strt_pos])
             # lg.debug("\nGlyph {0} \tStave {1} \tOffset {2} \tStart Pos {3}".format(g, stave, g.offset_x, strt_pos))
                     
         sorted_glyphs = self.sort_glyphs(proc_glyphs)  
         return sorted_glyphs
 
-    def neume_exceptions(self, g, discard_size, av_punctum):
+    def process_neume(self, g):
         """
             Handles the cases of glyphs as podatus, epiphonus, cephalicus, and he, ve or dot.
         """
@@ -747,49 +718,48 @@ class AomrObject(object):
         glyph_id = g.get_main_id()
         glyph_var = glyph_id.split('.')
         glyph_type = glyph_var[0]
-        # print glyph_id
+        check_additions = False
             
-        if self.exceptions == 'yes':
-            # lg.debug("G_ID: {0}".format(glyph_id))
-            for var in glyph_var:                   # loop for he, ve or dot
-                if var == 'he' or var == 've' or var == 'dot':
-                    g_cc = self.biggest_cc(g.cc_analysis())
-                    # lg.debug("\tSub_Glyph {1}".format(g, g_cc))
-                    break
-            for var in glyph_var:                   # loop for the conflict neumes
-                if var == 'podatus' or var == 'epiphonus':
-                    sub_glyph_center_of_mass, offset_y = self.podatus_or_epiphonus(g, av_punctum, discard_size, g_cc)
-                    break
-                elif var == 'cephalicus':
-                    sub_glyph_center_of_mass, offset_y = self.cephalicus(g, av_punctum, discard_size, g_cc)
-                    break
-
-        
-        if g_cc and not sub_glyph_center_of_mass:           # if he, ve or dot only
-            # lg.debug("CASE 1")
-            center_of_mass = g_cc.offset_y - g.offset_y + self.x_projection_vector(g_cc, av_punctum, discard_size)[0]
-            projection = self.x_projection_vector(g_cc, av_punctum, discard_size)[1]
-            
-        elif sub_glyph_center_of_mass and not g_cc:         # if podatus, epihonus or cephalicus only
-            # lg.debug("CASE 2")
-            center_of_mass = offset_y - g.offset_y + sub_glyph_center_of_mass
-            projection = self.x_projection_vector(g_cc, av_punctum, discard_size)[1]
-            
-        elif sub_glyph_center_of_mass and g_cc:             # if both
-            # lg.debug("CASE 3")
-            center_of_mass = g_cc.offset_y - g.offset_y + self.x_projection_vector(g_cc, av_punctum, discard_size)[0]
-            projection = self.x_projection_vector(g_cc, av_punctum, discard_size)[1]
-            
+        if not self.extended_processing:
+            return self.x_projection_vector(g)
         else:
-            # lg.debug("CASE 4")
-            center_of_mass, projection = self.x_projection_vector(g, av_punctum, discard_size)
-
-        return center_of_mass, projection
+            # if check_gcc has elements, we know it's got one of these in it.
+            if "he" in glyph_var or "ve" in glyph_var or "dot" in glyph_var:
+                check_additions = True
             
+            # if we want to use the biggest cc (when there are dots or other things),
+            # set this_glyph to the biggest_cc. Otherwise, set it to the whole glyph.
+            if check_additions:
+                this_glyph = self.biggest_cc(g.cc_analysis())
+            else:
+                this_glyph = g
+                
+            g_center_of_mass, offset_y = self.check_special_neumes(this_glyph)
             
+            if "podatus" in glyph_var or "epiphonus" in glyph_var or "cephalicus" in glyph_var:
+                if check_additions is True:
+                    center_of_mass = this_glyph.offset_y - g.offset_y + g_center_of_mass
+                    return center_of_mass
+                else:
+                    center_of_mass = offset_y - this_glyph.offset_y + g_center_of_mass
+                    return center_of_mass
             
+            if check_additions:
+                center_of_mass = this_glyph.offset_y - g.offset_y + self.x_projection_vector(this_glyph)
+                return center_of_mass
             
-            
-            
-            
+            # if we've made it this far then we just return the plain old projection vector.
+            return self.x_projection_vector(g)
+                
+    def check_special_neumes(self, glyph):
+        glyph_var = glyph.get_main_id().split('.')
+        
+        if "podatus" in glyph_var or "epiphonus" in glyph_var:
+            this_glyph = glyph.splity()[1]
+        elif "cephalicus" in glyph_var:
+            this_glyph = self.biggest_cc(glyph.splity())
+        else:
+            this_glyph = glyph
+        glyph_center_of_mass = self.x_projection_vector(this_glyph)
+        return glyph_center_of_mass, glyph.offset_y
             
