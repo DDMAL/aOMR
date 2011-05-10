@@ -296,6 +296,7 @@ class AomrObject(object):
         # what to do if there are no punctum on a page???
         av_punctum = self.average_punctum(glyphs)
         for g in glyphs:
+            print g.get_main_id()
             g_cc = None
             sub_glyph_center_of_mass = None
             glyph_id = g.get_main_id()
@@ -305,7 +306,6 @@ class AomrObject(object):
             
 
             if glyph_type == 'neume':
-                
                 center_of_mass = self.neume_exceptions(g, discard_size, av_punctum)[0]
                 projection = self.neume_exceptions(g, discard_size, av_punctum)[1]
                 # lg.debug("COM: {0}".format(center_of_mass))
@@ -639,7 +639,7 @@ class AomrObject(object):
         """
         center_of_mass = 0
         projection_vector = 0
-        # print glyph
+        lg.debug("glyph {0} ID {1}".format(glyph, glyph.get_main_id()))
         if glyph.ncols > discard_size and glyph.nrows > discard_size:
             if glyph.ncols < avg_punctum:
                 avg_punctum = glyph.ncols
@@ -747,6 +747,7 @@ class AomrObject(object):
         glyph_id = g.get_main_id()
         glyph_var = glyph_id.split('.')
         glyph_type = glyph_var[0]
+        # print glyph_id
             
         if self.exceptions == 'yes':
             # lg.debug("G_ID: {0}".format(glyph_id))

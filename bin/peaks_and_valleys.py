@@ -35,7 +35,7 @@ lg.addHandler(h)
 
 
 
-def pitch_find(original_file, page_file, outdir, pitch_find_algorithm, exceptions, required_pos):
+def pitch_find(original_file, page_file, outdir, pitch_find_algorithm, exceptions):
     aomr_opts = {
         'lines_per_staff': 4,
         'staff_finder': 0, # 0: Miyao
@@ -45,9 +45,6 @@ def pitch_find(original_file, page_file, outdir, pitch_find_algorithm, exception
         'exceptions': exceptions
     }
 
-
-
-    required_pos = int(required_pos)
     #FILES TO PROCESS
     glyphs = gamera_xml.glyphs_from_xml(page_file)
     file_name = (original_file.split('/')[-2] + '_' + original_file.split('/')[-1])
@@ -166,7 +163,7 @@ if __name__ == "__main__":
     
         
 
-    sorted_glyphs, st_position, aomr_obj, las = pitch_find(args[0], args[1], args[2], args[3], args[4], args[5])
+    sorted_glyphs, st_position, aomr_obj, las = pitch_find(args[0], args[1], args[2], args[3], args[4])
 
     for required_pos in range(15):
         page_dist = [0] * 2500
