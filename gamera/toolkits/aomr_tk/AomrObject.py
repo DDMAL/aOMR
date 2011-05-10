@@ -97,7 +97,7 @@ class AomrObject(object):
         s.find_staves()
      
         av_lines = s.get_average()
-        # print av_lines
+        # lg.debug("AVERAGE_LINES {0}".format(av_lines))
         # lg.debug("Linelist is {0}".format(s.linelist))
         
         if len(self._flatten(s.linelist)) == 0:
