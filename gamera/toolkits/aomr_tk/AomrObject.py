@@ -440,8 +440,10 @@ class AomrObject(object):
             Returns the miyao line number just after the glyph, starting from 0
         """
         for j, stf in enumerate(st[1:]):
-            # lg.debug("Miyao Line {0}: {1} g.offset_x: {2}".format(j, stf, g.offset_x))
+            lg.debug("Miyao Line {0}: {1} g.offset_x: {2}".format(j, stf, g.offset_x))
             if stf[0] > g.offset_x:
+                return j
+            else:
                 return j
                 
     def _return_line_or_space_no(self, glyph, center_of_mass, st, miyao_line):
@@ -617,7 +619,8 @@ class AomrObject(object):
         """
         center_of_mass = 0
         
-        if glyph.ncols > self.discard_size:# and glyph.nrows > self.discard_size:
+        if glyph.ncols > self.discard_size and glyph.nrows > self.discard_size:
+            
             if glyph.ncols < self.avg_punctum:
                 this_punctum_size = glyph.ncols
             else:
@@ -628,8 +631,9 @@ class AomrObject(object):
             projection_vector = temp_glyph.projection_rows()
             center_of_mass = self.center_of_mass(projection_vector)
         else:
+            # lg.debug('SMALLER THAN DISCARD SIZE')
             center_of_mass = 0
-        lg.debug("GLYPH: {0}, COM: {1}, NCOLS and NROWS: ({2},{3})".format(glyph.get_main_id(), center_of_mass, glyph.ncols, glyph.nrows))
+        # lg.debug("GLYPH: {0}, COM: {1}, NCOLS and NROWS: ({2},{3})".format(glyph.get_main_id(), center_of_mass, glyph.ncols, glyph.nrows))
         return center_of_mass
 
     def center_of_mass(self, projection_vector):

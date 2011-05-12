@@ -32,13 +32,14 @@ def process_directory(working_directory, ground_truth_directory, output_director
         'staff_finder': 0, # 0: Miyao
         'staff_removal': 0,
         'binarization': 0,
-        'discard_size': 12
+        'discard_size': 10
     }
     
     for dirpath, dirnames, filenames in os.walk(working_directory):
         for f in filenames:
             if f == 'page_glyphs.xml':
                 page_number = dirpath.split('/')[-1]
+                lg.debug("page_number :  {0}".format(page_number))
                 page_glyphs = os.path.join(dirpath, f)
                 original_image = os.path.join(dirpath, 'original_image.tiff')
                 mei_file_write = os.path.join(dirpath, page_number +'_original_image.mei')
