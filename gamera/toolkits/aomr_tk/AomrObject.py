@@ -302,13 +302,13 @@ class AomrObject(object):
             glyph_id = g.get_main_id()
             glyph_var = glyph_id.split('.')
             glyph_type = glyph_var[0]
-            # lg.debug("glyph_id: {0}".format(glyph_id))
+            lg.debug("glyph_id: {0}".format(glyph_id))
             
 
             if glyph_type == 'neume':
                 
                 center_of_mass = self.process_neume(g)
-                lg.debug("COM: {0}".format(center_of_mass))
+                # lg.debug("COM: {0}".format(center_of_mass))
                                 
             else:
                 center_of_mass = self.x_projection_vector(g)
@@ -322,7 +322,7 @@ class AomrObject(object):
             else:
                 st, st_no = self._return_staff_no(g, st_bound_coords, st_full_coords, center_of_mass)
                 miyao_line = self._return_vertical_line(g, st[0])
-                # lg.debug("\nst[0]: {0}\nmiyao line: {1}".format(st[0], miyao_line))
+                lg.debug("\nst[0]: {0}\nmiyao line: {1}".format(st[0], miyao_line))
                 
                 if glyph_type == 'division' or glyph_type =='alteration':
                     strt_pos = None
@@ -616,8 +616,8 @@ class AomrObject(object):
             creates a subimage of the original glyph and returns its center of mass
         """
         center_of_mass = 0
-        # print glyph
-        if glyph.ncols > self.discard_size and glyph.nrows > self.discard_size:
+        
+        if glyph.ncols > self.discard_size:# and glyph.nrows > self.discard_size:
             if glyph.ncols < self.avg_punctum:
                 this_punctum_size = glyph.ncols
             else:
@@ -629,6 +629,7 @@ class AomrObject(object):
             center_of_mass = self.center_of_mass(projection_vector)
         else:
             center_of_mass = 0
+        lg.debug("GLYPH: {0}, COM: {1}, NCOLS and NROWS: ({2},{3})".format(glyph.get_main_id(), center_of_mass, glyph.ncols, glyph.nrows))
         return center_of_mass
 
     def center_of_mass(self, projection_vector):
@@ -652,7 +653,7 @@ class AomrObject(object):
         """
         glyph_array = []
         y = round(g.offset_y + center_of_mass) # y is the y_position of the center of mass of a glyph
-        lg.debug("{0}, ({1}, {2}), com: {3}".format(g.get_main_id(), g.offset_x, g.offset_y, y))
+        # lg.debug("{0}, ({1}, {2}), com: {3}".format(g.get_main_id(), g.offset_x, g.offset_y, y))
 
         for s, staff in enumerate(st_position):
             for l, line in enumerate(staff['avg_lines'][1:]):
@@ -691,7 +692,7 @@ class AomrObject(object):
                     center_of_mass = self.x_projection_vector(g)
                 glyph_array = self.glyph_staff_y_pos_ave(g, center_of_mass, st_position)
                 strt_pos = 2 * (glyph_array[0][2]) + glyph_array[0][0] + 2
-                lg.debug("\tGlyph Array: {0} \t\t\t\tStart Pos: {1}".format(glyph_array, strt_pos))
+                # lg.debug("\tGlyph Array: {0} \t\t\t\tStart Pos: {1}".format(glyph_array, strt_pos))
                #  lg.debug("\nglyph name: {0}\t {1} \tglyph_array: {2}\t COM: {3}\t ST POSITION: {4}".format(glyph_id, g, glyph_array, center_of_mass, strt_pos))
 
                 stave = glyph_array[0][1]+1

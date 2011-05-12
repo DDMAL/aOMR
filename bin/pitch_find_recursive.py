@@ -50,7 +50,7 @@ def process_axz_directory(axz_directory, outputdir):
             
 
 
-def process_glyphs_directory(glyphs_directory, output_dir):
+def process_glyphs_directory(glyphs_directory, output_dir, pitch_find_algorithm):
     print "Processing glyphs directory"
     for dirpath, dirnames, filenames in os.walk(glyphs_directory):  
         for f in filenames:
@@ -71,7 +71,15 @@ def process_glyphs_directory(glyphs_directory, output_dir):
                 aomr_obj = AomrObject(original_image, **aomr_opts)
                 st_position = aomr_obj.find_staves() # staves position
                 staff_coords = aomr_obj.staff_coords() # staves coordinates
-                pitch_find = aomr_obj.pitch_find(glyphs, st_position, aomr_opts.get('discard_size'))
+                
+                if pitch_find_algorithm == 'Miyao':
+                    pitch_find = aomr_obj.miyao_pitch_find(glyphs)
+                elif pitch_find_algorithm == 'AvLines':
+                    pitch_find = aomr_obj.pitch_find(glyphs, st_position)
+                
+                
+                
+                # pitch_find = aomr_obj.pitch_find(glyphs, st_position, aomr_opts.get('discard_size'))
                 sorted_glyphs = sorted(pitch_find, key=itemgetter(1, 2))
                 
                 data = {}
@@ -97,7 +105,7 @@ def process_glyphs_directory(glyphs_directory, output_dir):
 
 if __name__ == "__main__":
     # usage = "usage: %prog [options] input_directory axz_directory output_directory"
-    usage = "usage: %prog [options] aruspix_directory page_glyphs_directory outputdir staff_algorithm(1: av_lines, 2:miyao)"
+    usage = "usage: %prog [options] aruspix_directory page_glyphs_directory outputdir staff_algorithm"
     parser = OptionParser(usage)
     (options, args) = parser.parse_args()
 

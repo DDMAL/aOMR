@@ -142,7 +142,7 @@ if __name__ == "__main__":
     
     results = []
 
-    process_directory(args[0], args[1], args[2], args[3])
+    process_directory(args[0], args[1], args[2], args[3], args[4])
 
     no_glyphs = 0
     no_errors = 0
