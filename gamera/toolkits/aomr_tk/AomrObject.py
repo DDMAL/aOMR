@@ -443,8 +443,7 @@ class AomrObject(object):
             # lg.debug("Miyao Line {0}: {1} g.offset_x: {2}".format(j, stf, g.offset_x))
             if stf[0] > g.offset_x:
                 return j
-            else:
-                return j
+        return j
                 
     def _return_line_or_space_no(self, glyph, center_of_mass, st, miyao_line):
         """

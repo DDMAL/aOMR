@@ -46,7 +46,7 @@ def process_directory(working_directory, ground_truth_directory, output_director
                 glyphs = gamera_xml.glyphs_from_xml(page_glyphs)
                 aomr_obj = AomrObject(original_image, **aomr_opts)
                 
-                aomr_obj.extended_processing = True # set to false if you don't want to do extended processing (aka "exceptions").
+                aomr_obj.extended_processing = False # set to false if you don't want to do extended processing (aka "exceptions").
                 
                 st_position = aomr_obj.find_staves()
                 staff_coords = aomr_obj.staff_coords()
