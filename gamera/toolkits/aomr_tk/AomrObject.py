@@ -387,9 +387,9 @@ class AomrObject(object):
             # lg.debug("glyph array: {0}, {1}".format(this_glyph_id, glyph_array))
             if this_glyph_type == 'clef':
                 shift = self.clef_shift(glyph_array)
-                lg.debug("CLEF!!!!!!! OLD POSITION: {0} {1}".format(glyph_array[3], glyph_array))
+                # lg.debug("CLEF!!!!!!! OLD POSITION: {0} {1}".format(glyph_array[3], glyph_array))
                 glyph_array[3] = 6 - glyph_array[3]/2
-                lg.debug("CLEF!!!!!!! ACTUAL POSITION: {0}".format(glyph_array[3]))
+                # lg.debug("CLEF!!!!!!! ACTUAL POSITION: {0}".format(glyph_array[3]))
                 glyph_array.append(None)
                 
             elif this_glyph_type == 'neume' or this_glyph_type == 'custos':
@@ -413,11 +413,11 @@ class AomrObject(object):
         shift = 0
         if this_clef_type == 'c':
             shift = glyph_array[3] - 4
-            # lg.debug("C clef in position {0}, shift {1}".format(glyph_array[3], shift))
+            lg.debug("C clef in position {0}, shift {1}".format(glyph_array[3], shift))
             return shift
         elif this_clef_type == 'f':
             shift = glyph_array[3] - 1
-            # lg.debug("F clef in position {0}, shift {1}".format(glyph_array[3], shift))
+            lg.debug("F clef in position {0}, shift {1}".format(glyph_array[3], shift))
             return shift
 
 
@@ -729,6 +729,7 @@ class AomrObject(object):
         else:
             # if check_gcc has elements, we know it's got one of these in it.
             if "he" in glyph_var or "ve" in glyph_var or "dot" in glyph_var:
+                lg.debug("FOR GLYPH {0}, VARIATION: {1}".format(glyph_id, glyph_var))
                 check_additions = True
             
             # if we want to use the biggest cc (when there are dots or other things),
