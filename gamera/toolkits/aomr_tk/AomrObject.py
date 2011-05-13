@@ -387,9 +387,9 @@ class AomrObject(object):
             # lg.debug("glyph array: {0}, {1}".format(this_glyph_id, glyph_array))
             if this_glyph_type == 'clef':
                 shift = self.clef_shift(glyph_array)
-                # lg.debug("CLEF!!!!!!! OLD POSITION: {0} {1}".format(glyph_array[3], glyph_array))
+                lg.debug("CLEF!!!!!!! OLD POSITION: {0} {1}".format(glyph_array[3], glyph_array))
                 glyph_array[3] = 6 - glyph_array[3]/2
-                # lg.debug("CLEF!!!!!!! ACTUAL POSITION: {0}".format(glyph_array[3]))
+                lg.debug("CLEF!!!!!!! ACTUAL POSITION: {0}".format(glyph_array[3]))
                 glyph_array.append(None)
                 
             elif this_glyph_type == 'neume' or this_glyph_type == 'custos':
