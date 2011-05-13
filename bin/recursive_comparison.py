@@ -32,7 +32,7 @@ def process_directory(working_directory, ground_truth_directory, output_director
         'staff_finder': 0, # 0: Miyao
         'staff_removal': 0,
         'binarization': 0,
-        'discard_size': 10
+        'discard_size': 12
     }
     
     for dirpath, dirnames, filenames in os.walk(working_directory):

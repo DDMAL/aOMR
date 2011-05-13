@@ -302,7 +302,7 @@ class AomrObject(object):
             glyph_id = g.get_main_id()
             glyph_var = glyph_id.split('.')
             glyph_type = glyph_var[0]
-            lg.debug("glyph_id: {0}".format(glyph_id))
+            # lg.debug("glyph_id: {0}".format(glyph_id))
             
 
             if glyph_type == 'neume':
@@ -322,7 +322,7 @@ class AomrObject(object):
             else:
                 st, st_no = self._return_staff_no(g, st_bound_coords, st_full_coords, center_of_mass)
                 miyao_line = self._return_vertical_line(g, st[0])
-                lg.debug("\nst[0]: {0}\nmiyao line: {1}".format(st[0], miyao_line))
+                # lg.debug("\nst[0]: {0}\nmiyao line: {1}".format(st[0], miyao_line))
                 
                 if glyph_type == 'division' or glyph_type =='alteration':
                     strt_pos = None
@@ -440,7 +440,7 @@ class AomrObject(object):
             Returns the miyao line number just after the glyph, starting from 0
         """
         for j, stf in enumerate(st[1:]):
-            lg.debug("Miyao Line {0}: {1} g.offset_x: {2}".format(j, stf, g.offset_x))
+            # lg.debug("Miyao Line {0}: {1} g.offset_x: {2}".format(j, stf, g.offset_x))
             if stf[0] > g.offset_x:
                 return j
             else:

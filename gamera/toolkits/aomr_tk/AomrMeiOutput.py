@@ -459,7 +459,7 @@ class AomrMeiOutput(object):
         custos.facs = zone.id
         custos.pitchname = self.glyph['strt_pitch']
         
-        lg.debug("Creating custos {0}".format(self.glyph['strt_pitch']))
+        # lg.debug("Creating custos {0}".format(self.glyph['strt_pitch']))
         
         return custos
     
