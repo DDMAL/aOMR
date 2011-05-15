@@ -328,7 +328,7 @@ class AomrMeiOutput(object):
                 
                 ## THIS SHOULD BE CHANGED. Otherwise we may end up with two attributes with the
                 # same name.
-                neume.attributes = {"variant": self.ADD_NOTES[f]}
+                neume.attributes = {"variant": f}
             
             num_notes = num_notes + len(check_additional)
             
