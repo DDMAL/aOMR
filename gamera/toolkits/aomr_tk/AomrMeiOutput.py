@@ -56,7 +56,7 @@ class AomrMeiOutput(object):
     
     SCALE = ['a','b','c','d','e','f','g']
     
-    def __init__(self, incoming_data, original_image):
+    def __init__(self, incoming_data, original_image, page_number=None):
         self._recognition_results = incoming_data
         self.mei = mod.mei_()
         self.staff = None
@@ -91,6 +91,9 @@ class AomrMeiOutput(object):
         
         self.layout = self._create_layout_element()
         self.pg = self._create_page_element()
+        if page_number:
+            self.pg.attributes = {"n": page_number}
+            
         self.layout.add_child(self.pg)
         self.music.add_child(self.layout)
         
@@ -111,6 +114,7 @@ class AomrMeiOutput(object):
         self.section = mod.section_()
         self.pagebreak = self._create_pb_element()
         self.pagebreak.attributes = {"pageref": self.pg.id}
+        
         self.section.add_child(self.pagebreak)
         self.score.add_child(self.section)
         
@@ -260,7 +264,8 @@ class AomrMeiOutput(object):
         return epi
     
     def _create_neume_element(self):
-        # lg.debug("glyph: {0}".format(self.glyph['form']))
+        lg.debug("glyph: {0}".format(self.glyph['form']))
+        
         full_width_episema = False
         has_dot = False
         has_vertical_episema = False
@@ -268,6 +273,13 @@ class AomrMeiOutput(object):
         has_quilisma = False
         this_neume_form = None
         local_horizontal_episema = None
+        
+        start_octave = self.glyph['octv']
+        clef_pos = self.glyph['clef_pos']
+        
+        lg.debug("clef pos is {0}".format(clef_pos))
+        
+        clef_type = self.glyph['clef'].split(".")[-1] # f or c.
         
         neume = mod.neume_()
         neume.id = self._idgen()
@@ -340,6 +352,7 @@ class AomrMeiOutput(object):
         self._neume_pitches.append(self.glyph['strt_pitch'])
         # lg.debug("neume pitches: {0}, no notes: {1}".format(self._neume_pitches, num_notes))
         nc = []
+        note_octaves = [start_octave]
         if num_notes > 1:
             # we need to figure out the rest of the pitches in the neume.
             ivals = [int(d) for d in self._note_elements if d.isdigit()]
@@ -350,32 +363,57 @@ class AomrMeiOutput(object):
                 raise AomrMeiPitchNotFoundError("The pitch {0} was not found in the scale".format(self.glyph['strt_pitch']))
                 
             if len(ivals) != (num_notes - 1):
-                raise AomrMeiNoteIntervalMismatchError("There is a mismatch between the number of notes and number of intervals.")
+                if 'scandicus' in self.glyph['form']:
+                    diffr = abs(len(ivals) - (num_notes - 1))
+                    num_notes = num_notes + diffr
+                    
+                    this_neume_form.extend(diffr * 'u')
+                    
+                    lg.debug("Intervals Length: {0}, Actual: {1}".format(len(ivals), ivals))
+                    lg.debug("Num Notes: {0}".format(num_notes - 1))
+                    lg.debug("This neume form is : {0}".format(this_neume_form))
+                    
+                else:
+                    raise AomrMeiNoteIntervalMismatchError("There is a mismatch between the number of notes and number of intervals.")
             
             # note elements = torculus.2.2.he.ve
             # ivals = [2,2]
             # torculus = ['u','d']
-            
+            this_pos = copy.deepcopy(self.glyph['strt_pos'])
+            lg.debug("This pos before shit goes weird: {0}".format(this_pos))
             # lg.debug(ivals)
             for n in xrange(len(ivals)):
                 # get the direction
                 dir = this_neume_form[n]
-                # lg.debug("direction is {0}".format(dir))
                 iv = ivals[n]
                 n_idx = idx
-                
-                # lg.debug("index: {0}".format(idx))
-                
                 if dir == "u":
                     n_idx = ((idx + iv) % len(self.SCALE)) - 1
+                    this_pos -= (iv - 1)
                 elif dir == "d":
                     n_idx = idx - (iv -1)
+                    this_pos += (iv - 1)
                     if n_idx < 0:
                         n_idx += len(self.SCALE)
-                        
                 idx = n_idx
                 self._neume_pitches.append(self.SCALE[n_idx])
-        
+                
+                if clef_type == "c":
+                    
+                    if clef_pos >= this_pos > (clef_pos - 7):
+                        note_octaves.append(4)
+                    elif this_pos <= (clef_pos - 7):
+                        note_octaves.append(5)
+                    elif this_pos > clef_pos:
+                        note_octaves.append(3)
+                elif clef_type == "f":
+                    if this_pos <= (clef_pos - 3):
+                        note_octaves.append(4)
+                    elif (clef_pos - 4) < this_pos <= (clef_pos + 3):
+                        note_octaves.append(3)
+                    elif this_pos > (clef_pos + 3):
+                        note_octaves.append(2)
+            
         if full_width_episema is True:
             epi = self._create_episema_element()
             epi.attributes = {"form": "horizontal"}
@@ -397,12 +435,13 @@ class AomrMeiOutput(object):
         if has_horizontal_episema:
             self.__note_addition_figurer_outer("he", heidxs)
             
-        # lg.debug("HE IDX: {0}".format(heidxs))
-            
         # lg.debug("Num Notes: {0}".format(num_notes))
         for n in xrange(num_notes):
             p = self._neume_pitches[n]
+            o = note_octaves[n]
             nt = self._create_note_element(p)
+            nt.attributes = {"oct": o}
+            
             if n == 0 and full_width_episema is True:
                 epi.attributes = {"startid": nt.id}
             elif n == num_notes and full_width_episema is True:

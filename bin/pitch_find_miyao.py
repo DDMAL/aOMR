@@ -30,9 +30,13 @@ def main(original_file, page_file, outdir):
     
     #FILES TO PROCESS
     glyphs = gamera_xml.glyphs_from_xml(page_file)
-    file_name = (original_file.split('/')[-2] + '_' + original_file.split('/')[-1])
-
-
+    lg.debug("Original file: {0}, page file: {1}".format(original_file, page_file))
+    
+    page_number = int(original_file.split('/')[-2])
+    fname = os.path.splitext(original_file.split('/')[-1])[0] + ".mei"
+    
+    file_name = "{0}_{1}".format(page_number, fname)
+    
     # CREATING AOMR OBJECT, FINDING STAVES, AND RETRIEVING STAFF COORDINATES
     aomr_obj = AomrObject(original_file, **aomr_opts)
     st_position = aomr_obj.find_staves() # staves position
@@ -51,11 +55,9 @@ def main(original_file, page_file, outdir):
     data = {}
     for s, stave in enumerate(staff_coords):
         contents = []
-        for glyph, staff, offset, strt_pos, note in sorted_glyphs:
+        for glyph, staff, offset, strt_pos, note, octave, clef_pos, clef in sorted_glyphs:
             glyph_id = glyph.get_main_id()
             # lg.debug("Glyph ID: {0}".format(glyph_id))
-            
-            
             glyph_type = glyph_id.split(".")[0]
             glyph_form = glyph_id.split(".")[1:]
             # lg.debug("sg[1]:{0} s:{1} sg{2}".format(sg[1], s+1, sg))
@@ -65,14 +67,17 @@ def main(original_file, page_file, outdir):
                             'form': glyph_form,
                             'coord': [glyph.offset_x, glyph.offset_y, glyph.offset_x + glyph.ncols, glyph.offset_y + glyph.nrows],
                             'strt_pitch': note,
-                            'strt_pos': strt_pos}
+                            'octv': octave,
+                            'strt_pos': strt_pos,
+                            'clef_pos': clef_pos,
+                            'clef': clef}
                 contents.append(j_glyph)  
         data[s] = {'coord':stave, 'content':contents}    
     #print data
     # CREATING THE MEI FILE
-    mei_file = AomrMeiOutput.AomrMeiOutput(data, file_name)
+    mei_file = AomrMeiOutput.AomrMeiOutput(data, file_name, page_number)
 
-    meitoxml.meitoxml(mei_file.md, os.path.join(outdir, file_name.split('.')[0]+'.mei'))
+    meitoxml.meitoxml(mei_file.md, os.path.join(outdir, file_name))
 
 if __name__ == "__main__":
     usage = "%prog path_to_image path_to_pagexml output_dir"
