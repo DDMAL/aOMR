@@ -78,14 +78,41 @@ class AomrObject(object):
             'dimensions': self.image_size
         }
         
-    def run(self):
+    def run(self, page_glyphs, pitch_staff_technique=0):
         self.find_staves()
-        self.remove_stafflines()
-        self.glyph_classification()
-        self.pitch_finding()
+        self.staff_coords()
+            
+        if pitch_staff_technique is 0:
+            pitches = self.miyao_pitch_finder(page_glyphs)
+        else:
+            pitches = self.avg_lines_pitch_finder(page_glyphs)
+        
+        self.sglyphs = sorted(pitches, key=itemgetter(1,2))
+        
+        data = {}
+        for s,stave in enumerate(self.staff_coordinates):
+            contents = []
+            for glyph, staff, offset, strt_pos, note, octave, clef_pos, clef in self.sglyphs:
+                glyph_id = glyph.get_main_id()
+                glyph_type = glyph_id.split(".")[0]
+                glyph_form = glyph_id.split(".")[1:]
+                # lg.debug("sg[1]:{0} s:{1} sg{2}".format(sg[1], s+1, sg))
+                # structure: g, stave, g.offset_x, note, strt_pos
+                if staff == s+1:
+                    j_glyph = { 'type': glyph_type,
+                                'form': glyph_form,
+                                'coord': [glyph.offset_x, glyph.offset_y, glyph.offset_x + glyph.ncols, glyph.offset_y + glyph.nrows],
+                                'strt_pitch': note,
+                                'octv': octave,
+                                'strt_pos': strt_pos,
+                                'clef_pos': clef_pos,
+                                'clef': clef}
+                    contents.append(j_glyph)  
+            data[s] = {'coord':stave, 'content':contents}
+        return data
         
     def find_staves(self):
-
+        
         if self.sfnd_algorithm is 0:
             s = musicstaves.StaffFinder_miyao(self.image)
         elif self.sfnd_algorithm is 1:
@@ -236,7 +263,9 @@ class AomrObject(object):
                 'avg_lines': avg_lines
             }
             all_line_positions.append(self.page_result['staves'][i])
-        return all_line_positions
+        self.staff_locations = all_line_positions
+        
+        # return all_line_positions
         
     def staff_coords(self):
         """ 
@@ -245,7 +274,9 @@ class AomrObject(object):
         st_coords = []
         for i, staff in enumerate(self.staves):
             st_coords.append(self.page_result['staves'][i]['coords'])
-        return st_coords
+        
+        self.staff_coordinates = st_coords
+        # return st_coords
         
         
     def remove_stafflines(self):
@@ -269,14 +300,46 @@ class AomrObject(object):
         musicstaves_no_staves.remove_staves(u'all', num_stafflines)
         self.img_no_st = musicstaves_no_staves.image
         
-        
-    def miyao_pitch_find(self, glyphs):
+    
+    def avg_lines_pitch_finder(self, glyphs):
+        """ Pitch Find.
+            pitch find algorithm for all glyphs in a page
+            Returns a list of processed glyphs with the following structure:
+                glyph, stave_number, offset_x, note_name, start_position
+        """
+        proc_glyphs = [] # processed glyphs
+        av_punctum = self.average_punctum(glyphs)
+        for g in glyphs:
+            glyph_id = g.get_main_id()
+            glyph_type = glyph_id.split(".")[0]
+            if glyph_type != '_group':
+                if glyph_type == 'neume':
+                    center_of_mass = self.process_neume(g)
+                else:
+                    center_of_mass = self.x_projection_vector(g)
+                glyph_array = self.glyph_staff_y_pos_ave(g, center_of_mass)
+                strt_pos = 2 * (glyph_array[0][2]) + glyph_array[0][0] + 2
+                stave = glyph_array[0][1] + 1
+                if glyph_type == 'division' or glyph_type =='alteration':
+                    note = None
+            else:
+                note = None
+                stave = None
+                strt_pos=None
+
+            proc_glyphs.append([g, stave, g.offset_x, strt_pos])
+
+        sorted_glyphs = self.sort_glyphs(proc_glyphs)
+        return sorted_glyphs
+    
+    
+    def miyao_pitch_finder(self, glyphs):
         """
             Returns a set of glyphs with pitches
         """
         proc_glyphs = []
-        st_bound_coords = self.staff_coords()
-        st_full_coords = self.find_staves()
+        st_bound_coords = self.staff_coordinates
+        st_full_coords = self.staff_locations
         
         # what to do if there are no punctum on a page???
         av_punctum = self.average_punctum(glyphs)
@@ -293,23 +356,31 @@ class AomrObject(object):
                 center_of_mass = self.x_projection_vector(g)
                 
             if glyph_type == '_group':
-                strt_pos = None
-                st_no = None
-                center_of_mass = 0
+                continue
+                # strt_pos = None
+                # st_no = None
+                # center_of_mass = 0
             
             else:
-                st, st_no = self._return_staff_no(g, st_bound_coords, st_full_coords, center_of_mass)
-                miyao_line = self._return_vertical_line(g, st[0])
+                stinfo = self._return_staff_no(g, center_of_mass)
+                if stinfo is None:
+                    continue
+                else:
+                    st_no, st = stinfo
+                miyao_line = self._return_vertical_line(g, st_no[0])
                 
                 if glyph_type == 'division' or glyph_type =='alteration':
                     strt_pos = None
+                    st = None
                 elif glyph_type == "neume" or glyph_type == "custos" or glyph_type == "clef":
-                    line_or_space, line_num = self._return_line_or_space_no(g, center_of_mass, st, miyao_line) # line (0) or space (1), no
+                    line_or_space, line_num = self._return_line_or_space_no(g, center_of_mass, st_no, miyao_line) # line (0) or space (1), no
                     strt_pos = self.strt_pos_find(g, line_or_space, line_num) 
                 else:
                     strt_pos = None
-                    st_no = None
-            proc_glyphs.append([g, st_no, g.offset_x, strt_pos])
+                    st = None
+            
+            
+            proc_glyphs.append([g, st, g.offset_x, strt_pos])
             
         sorted_glyphs = self.sort_glyphs(proc_glyphs)
         return sorted_glyphs
@@ -363,8 +434,6 @@ class AomrObject(object):
         """
         sorted_glyphs = sorted(proc_glyphs, key = itemgetter(1,2))
         
-        lg.debug("Sorted Glyphs: {0}".format(sorted_glyphs))
-        
         # declare this, otherwise it might be undefined if a clef isn't the first
         # thing on the line. It's probably incorrect, but it's better than 
         # exploding.
@@ -384,25 +453,11 @@ class AomrObject(object):
                 
                 # array 3 is the glyph_strt_pos
                 glyph_array[3] = 6 - glyph_array[3] / 2
-                
-                
-                lg.debug("My clef line is : {0}".format(my_clef_line))
-                lg.debug("Does this update the glyph array: {0}".format(glyph_array))
-                
                 glyph_array.extend([None, None, None, None])
                 
             elif this_glyph_type == 'neume' or this_glyph_type == 'custos':
-                lg.debug("=================================================")
-                lg.debug("I'm going to be working with a clef like: {0}".format(my_clef))
-                lg.debug("That clef is on line {0}".format(my_clef_line))
-                lg.debug("I am actually on line {0}".format(glyph_array[3]))
-                
                 pitch = self.SCALE[glyph_array[3] - shift]
                 octave = self.find_octave(my_clef, my_clef_line, glyph_array[3])
-                
-                lg.debug("Octave is {0}".format(octave))
-                lg.debug("Pitch is {0}".format(pitch))
-                
                 glyph_array.extend([pitch, octave, my_clef_line, my_clef])
                 # lg.debug("Glyph array: {0}".format(glyph_array))
             else:
@@ -425,16 +480,14 @@ class AomrObject(object):
             shift = glyph_array[3] - 1
             return shift
             
-    def _return_staff_no(self, g, st_bound_coords, st_full_coords, center_of_mass):
+    def _return_staff_no(self, g, center_of_mass):
         """
             Returns the staff and staff number where a specific glyph is located 
         """
-        
-        for i, s in enumerate(st_bound_coords):
+        for i, s in enumerate(self.staff_coordinates):
             if 0.5*(3* s[1] - s[3]) <= g.offset_y + center_of_mass < 0.5*(3 * s[3] - s[1]): # GVM: considering the ledger lines in an unorthodox way.
-                st_no = st_full_coords[i]['line_positions']
+                st_no = self.staff_locations[i]['line_positions']
                 return st_no, i+1
-                
                 
     def _return_vertical_line(self, g, st):
         """
@@ -627,13 +680,13 @@ class AomrObject(object):
         com = s / v
         return com
         
-    def glyph_staff_y_pos_ave(self, g, center_of_mass, st_position):
+    def glyph_staff_y_pos_ave(self, g, center_of_mass):
         """ Glyph Staff Average y-Position.
             calculates between what stave lines a certain glyph is located
         """
         glyph_array = []
         y = round(g.offset_y + center_of_mass) # y is the y_position of the center of mass of a glyph
-        for s, staff in enumerate(st_position):
+        for s, staff in enumerate(self.staff_locations):
             for l, line in enumerate(staff['avg_lines'][1:]):
                 diff = (0.5 * (line - staff['avg_lines'][l]))
                 if math.floor(line-diff/2) <= y <= math.ceil(line+diff/2): # Is the glyph on a line ?
@@ -647,38 +700,6 @@ class AomrObject(object):
                 else:
                     pass
         return glyph_array
-        
-    def pitch_find(self, glyphs, st_position):
-        """ Pitch Find.
-            pitch find algorithm for all glyphs in a page
-            Returns a list of processed glyphs with the following structure:
-                glyph, stave_number, offset_x, note_name, start_position
-        """
-        proc_glyphs = [] # processed glyphs
-        av_punctum = self.average_punctum(glyphs)
-        for g in glyphs:
-            glyph_id = g.get_main_id()
-            glyph_type = glyph_id.split(".")[0]
-            if glyph_type != '_group':
-                if glyph_type == 'neume':
-                    center_of_mass = self.process_neume(g)
-                else:
-                    center_of_mass = self.x_projection_vector(g)
-                glyph_array = self.glyph_staff_y_pos_ave(g, center_of_mass, st_position)
-                strt_pos = 2 * (glyph_array[0][2]) + glyph_array[0][0] + 2
-                stave = glyph_array[0][1] + 1
-                if glyph_type == 'division' or glyph_type =='alteration':
-                    note = None
-            else:
-                note = None
-                stave = None
-                strt_pos=None
-                
-            proc_glyphs.append([g, stave, g.offset_x, strt_pos])
-        
-        sorted_glyphs = self.sort_glyphs(proc_glyphs)  
-        lg.debug("sorted glyphs: {0}".format(sorted_glyphs))
-        return sorted_glyphs
         
     def process_neume(self, g):
         """
@@ -733,4 +754,6 @@ class AomrObject(object):
             this_glyph = glyph
         glyph_center_of_mass = self.x_projection_vector(this_glyph)
         return glyph_center_of_mass, glyph.offset_y
-            
+    
+    
+    
