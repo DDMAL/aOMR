@@ -175,9 +175,16 @@ class AomrMeiOutput(object):
                 if self.glyph['form'][0] not in self.NEUME_NOTES.keys():
                     continue
                 else:
-                    self.layer.add_child(self._create_neume_element())
+                    try:
+                        self.layer.add_child(self._create_neume_element())
+                    except Exception:
+                        lg.debug("Cannot add neume element {0}. Skipping.".format(self.glyph))
+                        
             elif c['type'] == 'clef':
-                self.layer.add_child(self._create_clef_element())
+                try:
+                    self.layer.add_child(self._create_clef_element())
+                except Exception:
+                    lg.debug("Cannot add clef element {0}. Skipping.".format(self.glyph))
             elif c['type'] == 'division':
                 self.layer.add_child(self._create_division_element())
                 if "final" in c['form']:
@@ -188,7 +195,7 @@ class AomrMeiOutput(object):
                     new_staff.attributes = {'n': self.staff_num}
                     new_layer = self._create_layer_element()
                     new_layer.attributes = {'n': 1}
-                    
+                
                     self.layer = new_layer
                     self.staffel = new_staff
                     self.staffdef = new_staffdef
@@ -197,10 +204,15 @@ class AomrMeiOutput(object):
                     self.section.add_child(self.staffel)
                 
             elif c['type'] == 'custos':
-                self.layer.add_child(self._create_custos_element())
+                try:
+                    self.layer.add_child(self._create_custos_element())
+                except Exception:
+                    lg.debug("Cannot add custos element {0}. Skipping".format(self.glyph))
+                    
             elif c['type'] == "alteration":
                 # staffel.add_child(self._create_alteration_element()) #GVM
                 pass
+                
         return sysbrk
         
         

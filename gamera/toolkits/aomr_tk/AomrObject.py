@@ -47,6 +47,10 @@ class AomrObject(object):
         
         # the result of the staff finder. Mostly for convenience
         self.staves = None
+        
+        self.staff_locations = None
+        self.staff_coordinates = None
+        
         # a global to keep track of the number of stafflines.
         self.num_stafflines = None
         # cache this once so we don't have to constantly load it
@@ -79,16 +83,24 @@ class AomrObject(object):
         }
         
     def run(self, page_glyphs, pitch_staff_technique=0):
+        lg.debug("Running the finding code.")
+        
+        lg.debug("1. Finding staves.")
         self.find_staves()
+        
+        lg.debug("2. Finding staff coordinates")
         self.staff_coords()
             
         if pitch_staff_technique is 0:
-            pitches = self.miyao_pitch_finder(page_glyphs)
+            lg.debug("3a. Finding technique is miyao.")
+            self.sglyphs = self.miyao_pitch_finder(page_glyphs)
         else:
-            pitches = self.avg_lines_pitch_finder(page_glyphs)
+            lg.debug("3b. Finding technique is average lines.")
+            self.sglyphs = self.avg_lines_pitch_finder(page_glyphs)
         
-        self.sglyphs = sorted(pitches, key=itemgetter(1,2))
+        # self.sglyphs = sorted(unordered_glyphs, key=itemgetter(1,2))
         
+        lg.debug("5. Constructing JSON output.")
         data = {}
         for s,stave in enumerate(self.staff_coordinates):
             contents = []
@@ -109,9 +121,12 @@ class AomrObject(object):
                                 'clef': clef}
                     contents.append(j_glyph)  
             data[s] = {'coord':stave, 'content':contents}
+        
+        lg.debug("6. Returning the data. Done running for this pag.")
         return data
         
     def find_staves(self):
+        print "Running find staves."
         
         if self.sfnd_algorithm is 0:
             s = musicstaves.StaffFinder_miyao(self.image)
@@ -121,20 +136,31 @@ class AomrObject(object):
             s = musicstaves.StaffFinder_projections(self.image)
         else:
             raise AomrStaffFinderNotFoundError("The staff finding algorithm was not found.")
-            
-        s.find_staves()
-        av_lines = s.get_average()
-        if len(self._flatten(s.linelist)) == 0:
-            # no lines were found
-            return None
         
-        # get a polygon object. This stores a set of vertices for x,y values along the staffline.
-        self.staves = s.get_polygon()
+        scanlines = 20
+        blackness = 0.8
+        tolerance = -1
         
-        if len(self.staves) < self.lines_per_staff:
-            # the number of lines found was less than expected.
-            return None
+        # there is no one right value for these things. We'll give it the old college try
+        # until we find something that works.
+        while not self.staves:
+            s.find_staves(self.lines_per_staff, scanlines, blackness, tolerance)
+            av_lines = s.get_average()
+            if len(self._flatten(s.linelist)) == 0:
+                # no lines were found
+                return None
+        
+            # get a polygon object. This stores a set of vertices for x,y values along the staffline.
+            self.staves = s.get_polygon()
             
+            if not self.staves:
+                lg.debug("No staves found. Decreasing blackness.")
+                blackness -= 0.1
+        
+        # if len(self.staves) < self.lines_per_staff:
+        #     # the number of lines found was less than expected.
+        #     return None
+        
         all_line_positions = []
         
         for i, staff in enumerate(self.staves):
@@ -185,6 +211,9 @@ class AomrObject(object):
                 # slice off a chunk of the shortest line
                 short_end = shortest_line[-lendiff:]
                 long_end = longest_line[-lendiff:]
+                
+                lg.debug(" shortest end: {0}".format(short_end))
+                lg.debug(" longest end: {0}".format(long_end))                
                 
                 for p,pt in enumerate(long_end):
                     pt_x = pt[0]
@@ -264,6 +293,7 @@ class AomrObject(object):
             }
             all_line_positions.append(self.page_result['staves'][i])
         self.staff_locations = all_line_positions
+        lg.debug("Returning from finding staves.")
         
         # return all_line_positions
         
@@ -271,6 +301,7 @@ class AomrObject(object):
         """ 
             Returns the coordinates for each one of the staves
         """
+        lg.debug("Getting staff coordinates")
         st_coords = []
         for i, staff in enumerate(self.staves):
             st_coords.append(self.page_result['staves'][i]['coords'])
@@ -366,21 +397,20 @@ class AomrObject(object):
                 if stinfo is None:
                     continue
                 else:
-                    st_no, st = stinfo
-                miyao_line = self._return_vertical_line(g, st_no[0])
+                    staff_locations, staff_number = stinfo
+                    
+                miyao_line = self._return_vertical_line(g, staff_locations[0])
                 
                 if glyph_type == 'division' or glyph_type =='alteration':
                     strt_pos = None
-                    st = None
                 elif glyph_type == "neume" or glyph_type == "custos" or glyph_type == "clef":
-                    line_or_space, line_num = self._return_line_or_space_no(g, center_of_mass, st_no, miyao_line) # line (0) or space (1), no
+                    line_or_space, line_num = self._return_line_or_space_no(g, center_of_mass, staff_locations, miyao_line) # line (0) or space (1), no
                     strt_pos = self.strt_pos_find(g, line_or_space, line_num) 
                 else:
                     strt_pos = None
-                    st = None
+                    staff_number = None
             
-            
-            proc_glyphs.append([g, st, g.offset_x, strt_pos])
+            proc_glyphs.append([g, staff_number, g.offset_x, strt_pos])
             
         sorted_glyphs = self.sort_glyphs(proc_glyphs)
         return sorted_glyphs
@@ -440,27 +470,43 @@ class AomrObject(object):
         shift = 0
         my_clef = None
         my_clef_line = None
-        for glyph_array in sorted_glyphs:
-            # this_glyph, staff, horizontal_offset, glyph_strt_pos = glyph_array
-            
-            this_glyph_id = glyph_array[0].get_main_id()
-            this_glyph_type = this_glyph_id.split(".")[0]
-            if this_glyph_type == 'clef':
-                my_clef = this_glyph_id
-                
-                my_clef_line = copy.deepcopy(glyph_array[3])
+        
+        def __glyph_type(g):
+            return g[0].get_main_id().split(".")[0]
+        
+        for i, glyph_array in enumerate(sorted_glyphs):
+            gtype = __glyph_type(glyph_array)
+            if gtype == 'clef':
+                # my_clef = this_glyph_id
+                # 
+                # my_clef_line = copy.deepcopy(glyph_array[3])
+                # clef shift ensures we use the real lines, not the imaginary ones.
                 shift = self.clef_shift(glyph_array)
-                
                 # array 3 is the glyph_strt_pos
                 glyph_array[3] = 6 - glyph_array[3] / 2
                 glyph_array.extend([None, None, None, None])
-                
-            elif this_glyph_type == 'neume' or this_glyph_type == 'custos':
+            elif gtype == "neume" or gtype == "custos":
                 pitch = self.SCALE[glyph_array[3] - shift]
+                
+                # find the nearest prior clef.
+                revglyphs = reversed(sorted_glyphs[0:i])
+                for gl in revglyphs:
+                    if __glyph_type(gl) == "clef":
+                        my_clef = gl[0].get_main_id()
+                        my_clef_line = copy.deepcopy(gl[3])
+                        break
+                        
+                if my_clef is None:
+                    lg.debug("My clef is None! setting default c clef for {0}".format(glyph_array))
+                    my_clef = "clef.c"
+                if my_clef_line is None:
+                    lg.debug("My clef_line is None! setting default of line 3 for {0}".format(glyph_array))
+                    my_clef_line = 3
+                
                 octave = self.find_octave(my_clef, my_clef_line, glyph_array[3])
                 glyph_array.extend([pitch, octave, my_clef_line, my_clef])
-                # lg.debug("Glyph array: {0}".format(glyph_array))
             else:
+                # pdb.set_trace()
                 glyph_array.extend([None, None, None, None])
                 
         return sorted_glyphs
@@ -471,7 +517,12 @@ class AomrObject(object):
         """
         this_clef = glyph_array[0]
         this_clef_id = this_clef.get_main_id()
-        this_clef_type = this_clef_id.split(".")[1]
+        try:
+            this_clef_type = this_clef_id.split(".")[1]
+        except IndexError:
+            # in case we've got an error.
+            this_clef_type = "c"
+            
         shift = 0
         if this_clef_type == 'c':
             shift = glyph_array[3] - 4
@@ -485,14 +536,17 @@ class AomrObject(object):
             Returns the staff and staff number where a specific glyph is located 
         """
         for i, s in enumerate(self.staff_coordinates):
+            staff_number = i + 1
             if 0.5*(3* s[1] - s[3]) <= g.offset_y + center_of_mass < 0.5*(3 * s[3] - s[1]): # GVM: considering the ledger lines in an unorthodox way.
-                st_no = self.staff_locations[i]['line_positions']
-                return st_no, i+1
+                staff_location = self.staff_locations[i]['line_positions']
+                return staff_location, staff_number
                 
     def _return_vertical_line(self, g, st):
         """
             Returns the miyao line number just after the glyph, starting from 0
         """
+        
+        # TODO: FIXME. I always return 0.
         for j, stf in enumerate(st[1:]):
             if stf[0] > g.offset_x:
                 return j
@@ -508,17 +562,39 @@ class AomrObject(object):
                 Space = 1
             
         """
+        pdb.set_trace()
+        
+        #horiz_diff = number of pixels between two points.
+        # 848 - 771  = 77
         horz_diff = float(st[0][miyao_line][0] - st[0][miyao_line-1][0])
+        
         for i, stf in enumerate(st[1:]):
+            # -1
             vert_diff_up = float(stf[miyao_line][1] - stf[miyao_line-1][1]) # y_pos difference with the upper miyao line
+            
+            # 0
             vert_diff_lo = float(stf[miyao_line+1][1] - stf[miyao_line][1]) # y_pos difference with the lower miyao line
-            factor_up = vert_diff_up/horz_diff
-            factor_lo = vert_diff_lo/horz_diff
+            
+            # -1 / 77 
+            factor_up = vert_diff_up / horz_diff
+            
+            # 0 / 77
+            factor_lo = vert_diff_lo / horz_diff
+            
+            # g.x = 790
+            # 790 - 771 = 19
             diff_x_glyph_bar = float(glyph.offset_x - stf[miyao_line-1][0]) # difference between the glyph x_pos and the previous bar
+            
+            # (-1/77) * 19 = -0.2
             vert_pos_shift_up = factor_up * diff_x_glyph_bar # vert_pos_shift is the shifted vertical position of each line for each x position
+            
+            # 0
             vert_pos_shift_lo = factor_lo * diff_x_glyph_bar # vert_pos_shift is the shifted vertical position of each line for each x position
             
+            # (848 + 0) - (771 + -0.2)
             diff = (stf[miyao_line][1] + vert_pos_shift_lo) - (st[i][miyao_line-1][1] + vert_pos_shift_up)
+            
+            # 848 + 6 * (6 * 77.2)/16 > 
             if stf[miyao_line][1] + 6*diff/16 > glyph.offset_y + center_of_mass:
                 line_or_space = 0
                 return line_or_space, i
@@ -691,11 +767,9 @@ class AomrObject(object):
                 diff = (0.5 * (line - staff['avg_lines'][l]))
                 if math.floor(line-diff/2) <= y <= math.ceil(line+diff/2): # Is the glyph on a line ?
                     glyph_array.append([0, s, l])                    
-                    lg.debug("Glyph array is : {0}".format(glyph_array))
                     return glyph_array
                 elif math.floor(line+diff/2) <= y <= math.ceil(line+3*diff/2): # Is the glyph on a space ?
                     glyph_array.append([1, s, l])
-                    lg.debug("Glyph array is : {0}".format(glyph_array))
                     return glyph_array
                 else:
                     pass
