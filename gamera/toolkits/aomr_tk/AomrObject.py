@@ -828,6 +828,3 @@ class AomrObject(object):
             this_glyph = glyph
         glyph_center_of_mass = self.x_projection_vector(this_glyph)
         return glyph_center_of_mass, glyph.offset_y
-    
-    
-    
