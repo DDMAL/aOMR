@@ -44,8 +44,8 @@ f = logging.Formatter("%(levelname)s %(asctime)s On Line: %(lineno)d %(message)s
 h = logging.StreamHandler()
 h.setFormatter(f)
 
-lg.setLevel(logging.DEBUG)
-lg.addHandler(h)
+# lg.setLevel(logging.DEBUG)
+# lg.addHandler(h)
 
 
 if has_gui.has_gui:
@@ -101,18 +101,24 @@ if has_gui.has_gui:
             menu.Append(oip_process_id, "Open an MEI OIP file")
             wx.EVT_MENU(parent, oip_process_id, self.openOipFile)
             
-            menu.AppendSeparator()
-            
-            send_to_ax_id = wx.NewId()
-            menu.Append(send_to_ax_id, "Send TIFF Files to Aruspix for Preprocessing")
-            wx.EVT_MENU(parent, send_to_ax_id, self.sendToAruspix)
-            
             parent.PopupMenu(menu, wx.Point(x, y))
             
         def double_click(self):
             pass
             
         def createAOMRobj(self, event):
+            # find class belonging to menu entry
+            # global swap
+            # tmpdir = None
+            # index = -1
+            # for i, m in enumerate(self._menuids):
+            #     if m == event.GetId():
+            #         index = i
+            #         break
+            # if index < 0:
+            #     return
+            # ms_module=self.classes[index]
+            
             # ask for parameters
             dialog=Args([FileOpen("Image file", "", "*.*"),
                     Choice("Binarization (If necessary)", choices=[
@@ -174,36 +180,50 @@ if has_gui.has_gui:
             aomr_file.run()
             
             # DEBUGGING: Shows intermediate files from the object in the Gamera shell.
-            self._shell.run("rgb = load_image(r'{0}')".format(aomr_file.rgb_filename))
+            # self._shell.run("rgb = load_image(r'{0}')".format(aomr_file.rgb_filename))
             # self._shell.run("img_no_st = load_image(r'{0}')".format(aomr_file.nost_filename))
             
+            # filename = dialog_args['filename']
+            # imagename = os.path.basename(os.path.splitext(filename)[0])
+            # lg.debug("Raw imagename: {0}".format(imagename))
+            # 
+            # imagename = re.sub(r'[^a-zA-Z0-9]', "_", imagename)
+            # lg.debug("Imagename after formatting: {0}".format(imagename))
+            
+            # load the image into gamera
+            # image = load_image(filename)
+            # self._shell.run("{0} = load_image(r'{1}')".format(imagename, filename))
+            
+            # if image.data.pixel_type != ONEBIT:
+            #     self._shell.run("{0} = {0}.to_onebit()".format(imagename))
+                
+            # self._shell.run("{0} = {1}.{2}({3}, {4})".format(imagename, self.label,
+            #                                             ms_module, imagename, dialog_args['neume_type']))
+            
+            # res = aomr_file.process_image()
+            # if dialog_args['neume_type']:
+            #     # process neume type stuff if the checkbox is set
+            #     img_size = aomr_file.image_size()
+                
+            # if dialog_args['display_image']:
+            #     # display image if checkbox is set
+            #     self._shell.run("{0} = load_image(r'{1}')".format(imagename, filename))
+            #     # aomr_file.get_img()
+                
+            # if dialog_args['staff_position']:
+            #     # do processing with staff position if set
+            #     staff_position = aomr_file.get_staff_positions()
+            #     lg.debug(staff_position)
+                
+            # if dialog_args['staff_removal']:
+            #     # process staff removal if set
+            #     pdb.set_trace()
+            #     img_no_st = aomr_file.remove_staves()
+            #     self._shell.run("{0}_no_st = load_image(r'{1}')".format(imagename, img_no_st))                    
+        
         def openAxzFile(self):
             pass
         
         def openOipFile(self):
             pass
-        
-        def sendToAruspix(self, event):
-            from gamera.toolkits.aomr_tk.AomrAruspixIntegration import AomrAruspixIntegration
-            dialog=Args(
-                [
-                 Directory("Path to Aruspix.app", os.path.join("/Applications", "Aruspix.app"), "*.*"),
-                 Directory("Directory of TIFF Files", "", "*.*"),
-                 Directory("Output directory", "", "*.*"),
-                ],
-                "Select Aruspix Options"
-            )
-            params=dialog.show()
-            if params is None:
-                return
-            
-            dialog_args = {
-                "path_to_ax": params[0],
-                "input_dir": params[1],
-                "output_dir": params[2],
-            }
-            proc = AomrAruspixIntegration(**dialog_args)
-            proc.run()
-            
-            
     AomrModuleIcon.register()

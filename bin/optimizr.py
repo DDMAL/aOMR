@@ -77,11 +77,16 @@ def process_axz_directory(directory, class_glyphs, class_weights, outputdir):
         #     continue
             
         for f in filenames:
-            if f == ".DS_Store":
+            if f.startswith("."):
                 continue
                 
             pagenum = f.split("_")[-1].strip('.axz')
+            
+            if int(pagenum) < 1426:
+                continue
+            
             print "Loading page ", str(pagenum)
+            
             
             # create an output directory
             outdir = os.path.join(outputdir, pagenum)
@@ -117,12 +122,13 @@ def process_axz_directory(directory, class_glyphs, class_weights, outputdir):
             aomr_obj = AomrObject(sfile, **aomr_opts)
             
             try:
-                s = aomr_obj.find_staves()
+                aomr_obj.find_staves()
             except Exception, e:
                 lg.debug("Cannot find staves: {0} because {1}".format(pagenum, e))
                 continue
             
-            if not s:
+            if not aomr_obj.staff_locations:
+                lg.debug("No Staves were found? That's strange.")
                 # no staves were found
                 continue
             
@@ -240,4 +246,4 @@ if __name__ == "__main__":
     
     ##### Load up the AXZ Files
     axz = process_axz_directory(args[1], os.path.join(args[2], "classifier_glyphs_gp_cleaned.xml"), os.path.join(args[2], "classifier_weights_optimized_march31.xml"), args[2])
-    print "Done!"    
+    print "Done!"
