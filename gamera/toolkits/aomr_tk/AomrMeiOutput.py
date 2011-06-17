@@ -426,25 +426,6 @@ class AomrMeiOutput(object):
                         note_octaves.append(4)
                     elif this_pos > (actual_line + 3):
                         note_octaves.append(2)
-
-                # lg.debug('clef_pos:{0}, actual_line:{1}, clef_type:{2}, note_octaves:{3}'.format(clef_pos, actual_line, clef_type, note_octaves))
-
-
-                # if clef_type == "c":
-                #     
-                #     if clef_pos >= this_pos > (clef_pos - 7):
-                #         note_octaves.append(4)
-                #     elif this_pos <= (clef_pos - 7):
-                #         note_octaves.append(5)
-                #     elif this_pos > clef_pos:
-                #         note_octaves.append(3)
-                # elif clef_type == "f":
-                #     if this_pos <= (clef_pos - 3):
-                #         note_octaves.append(4)
-                #     elif (clef_pos - 4) < this_pos <= (clef_pos + 3):
-                #         note_octaves.append(3)
-                #     elif this_pos > (clef_pos + 3):
-                #         note_octaves.append(2)
             
         if full_width_episema is True:
             epi = self._create_episema_element()

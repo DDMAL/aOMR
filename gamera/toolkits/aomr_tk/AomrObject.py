@@ -459,23 +459,6 @@ class AomrObject(object):
                 octv = 4
             elif my_strt_pos > (actual_line + 3):
                 octv = 2
-        
-        
-        # if clef_type == "c":
-        #     if dividing_line >= my_strt_pos > (dividing_line - 7):
-        #         octv = 4
-        #     elif my_strt_pos <= (dividing_line - 7):
-        #         octv = 5
-        #     elif my_strt_pos > dividing_line:
-        #         octv = 3
-        # elif clef_type == "f":
-        #     if my_strt_pos <= (dividing_line - 3):
-        #         octv = 4
-        #     elif (dividing_line - 4) < my_strt_pos <= (dividing_line + 3):
-        #         octv = 3
-        #     elif my_strt_pos > (dividing_line + 3):
-        #         octv = 2
-        # lg.debug("clef: {0}, clef_line: {1}, actual_line: {4}, my_strt_pos: {2}, octave:{3}".format(clef, clef_line, my_strt_pos, octv, actual_line))
         return octv
         
     def sort_glyphs(self, proc_glyphs):
@@ -569,11 +552,7 @@ class AomrObject(object):
         
         # TODO: FIXME. I always return 0.
         for j, stf in enumerate(st[1:]):
-            # print j, g, g.offset_y, stf[0]
-            # lg.debug("_return_vertical_line, g: {0}, st: {1}".format(stf[0], g))
             if int(stf[0]) > int(g.offset_x):
-                # lg.debug("FOO {0}, {1}".format(stf[0], g.offset_x))
-                # lg.debug("es mayor!:{0}".format(j))
                 return j
         else:
             return j
