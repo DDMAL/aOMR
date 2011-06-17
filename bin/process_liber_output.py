@@ -52,9 +52,9 @@ def process_aruspix_directory(axdir, outputdir):
             
             lg.debug(int(pagenum))
             
-            if int(pagenum) <= 50:
-                lg.debug("Skipping")
-                continue
+            # if int(pagenum) <= 50:
+            #     lg.debug("Skipping")
+            #     continue
             
             outdir = os.path.join(outputdir, pagenum)
             if not os.path.exists(outdir):
@@ -176,9 +176,9 @@ def aomr_remaining_pages(outdir, classifier):
             lg.debug("Skipping page {0}".format(pnum))
             continue
         
-        # corrpg = "{0}_corr_page_glyphs.xml".format(folder_no.zfill(4))
-        badpg = "bad_{0}_corr_page_glyphs.xml".format(folder_no.zfill(4))
-        if badpg in filenames:
+        corrpg = "{0}_corr_page_glyphs.xml".format(folder_no.zfill(4))
+        # badpg = "bad_{0}_corr_page_glyphs.xml".format(folder_no.zfill(4))
+        if not corrpg in filenames:
             # we need to perform aomr.
             original_image = os.path.join(dirpath, "{0}_staves_only.tiff".format(folder_no.zfill(4)))
             aomr_obj = AomrObject(original_image, **aomr_opts)
@@ -246,8 +246,8 @@ def create_mei_files(outdir):
         folder_no = os.path.basename(dirpath)
         pnum = int(folder_no)
         
-        if not "bad_{0}_corr_page_glyphs.xml".format(folder_no.zfill(4)) in filenames:
-            continue
+        # if not "bad_{0}_corr_page_glyphs.xml".format(folder_no.zfill(4)) in filenames:
+        #     continue
         
         lg.debug("Generating MEI file for {0}".format(pnum))
         
@@ -363,13 +363,13 @@ def main(config):
     
     # process_pageglyphs_directory(pgdir, outdir)
     
-    # classifier = config.get('gamera', 'classifier')
-    # aomr_remaining_pages(outdir, classifier)
+    classifier = config.get('gamera', 'classifier')
+    aomr_remaining_pages(outdir, classifier)
     
     # ocr_pages(outdir)
     
     create_mei_files(outdir)
-    highlight_for_testing(outdir, testdir)
+    # highlight_for_testing(outdir, testdir)
     
 if __name__ == "__main__":
     usage = "usage: %prog [options]"

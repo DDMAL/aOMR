@@ -1,5 +1,5 @@
 from gamera.core import *
-from gamera.plugins.aomr_tk.AomrExceptions import *
+from gamera.toolkits.aomr_tk.AomrExceptions import *
 
 import zipfile
 import os

@@ -71,7 +71,20 @@ class AomrObject(object):
             # BUGFIX: sometimes an image loses its resolution after being binarized.
             if self.image.resolution < 1:
                 self.image.resolution = self.image_resolution
-                
+        
+        # check the amount of blackness of the image. If it's inverted,
+        # the black area will vastly outweigh the white area.
+        area = self.image.area().tolist()[0]
+        black_area = self.image.black_area()[0]
+        
+        if area == 0:
+            raise AomrError("Cannot divide by a zero area. Something is wrong.")
+            
+        if (black_area / area) > 0.7:
+            # if it is greater than 70% black, we'll invert the image. This is an in-place operation.
+            lg.debug("Inverting the colours.")
+            self.image.invert()
+            
         self.image_size = [self.image.ncols, self.image.nrows]
         
         # store the image without stafflines
@@ -126,8 +139,6 @@ class AomrObject(object):
         return data
         
     def find_staves(self):
-        print "Running find staves."
-        
         if self.sfnd_algorithm is 0:
             s = musicstaves.StaffFinder_miyao(self.image)
         elif self.sfnd_algorithm is 1:
@@ -136,37 +147,42 @@ class AomrObject(object):
             s = musicstaves.StaffFinder_projections(self.image)
         else:
             raise AomrStaffFinderNotFoundError("The staff finding algorithm was not found.")
-        
+
         scanlines = 20
         blackness = 0.8
         tolerance = -1
-        
+
         # there is no one right value for these things. We'll give it the old college try
         # until we find something that works.
         while not self.staves:
+            if blackness <= 0.3:
+                # we want to return if we've reached a limit and still can't
+                # find staves.
+                return None
+
             s.find_staves(self.lines_per_staff, scanlines, blackness, tolerance)
             av_lines = s.get_average()
             if len(self._flatten(s.linelist)) == 0:
                 # no lines were found
                 return None
-        
+
             # get a polygon object. This stores a set of vertices for x,y values along the staffline.
             self.staves = s.get_polygon()
-            
+
             if not self.staves:
                 lg.debug("No staves found. Decreasing blackness.")
                 blackness -= 0.1
-        
+
         # if len(self.staves) < self.lines_per_staff:
         #     # the number of lines found was less than expected.
         #     return None
-        
+
         all_line_positions = []
-        
+
         for i, staff in enumerate(self.staves):
             yv = []
             xv = []
-            
+
             # linepoints is an array of arrays of vertices describing the 
             # stafflines in the staves.
             #
@@ -177,99 +193,78 @@ class AomrObject(object):
             #   ...
             # ]
             line_positions = []
-            
+
             for staffline in staff:
                 pts = staffline.vertices
                 yv += [p.y for p in pts]
                 xv += [p.x for p in pts]
                 line_positions.append([(p.x,p.y) for p in pts])
-            
+
             ulx,uly = min(xv),min(yv)
             lrx,lry = max(xv),max(yv)
-            
+
             # To accurately interpret objects above and below, we need to project 
-            # ledger lines on the top and bottom. To do this, we estimate points
-            # based on the line positions we already have.
+            # ledger lines on the top and bottom.
             #
             # Since we can't *actually* get the points, we'll predict based on the
             # first and last positions of the top and bottom lines.
             # first, get the top two and bottom two positions
-            ledger_lines_top = line_positions[0:2]
-            ledger_lines_bottom = line_positions[-2:]
-            
-            # fix their lengths to be equal
-            if len(ledger_lines_top[0]) != len(ledger_lines_top[1]):
-                if len(ledger_lines_top[0]) > len(ledger_lines_top[1]):
-                    longest_line = ledger_lines_top[0]
-                    shortest_line = ledger_lines_top[1]
-                else:
-                    longest_line = ledger_lines_top[1]
-                    shortest_line = ledger_lines_top[0]
-                
-                lendiff = len(longest_line) - len(shortest_line)
-                
-                # slice off a chunk of the shortest line
-                short_end = shortest_line[-lendiff:]
-                long_end = longest_line[-lendiff:]
-                
-                lg.debug(" shortest end: {0}".format(short_end))
-                lg.debug(" longest end: {0}".format(long_end))                
-                
-                for p,pt in enumerate(long_end):
-                    pt_x = pt[0]
-                    pt_y = short_end[p][1]
-                    short_end[p] = (pt_x, pt_y)
-                
-                shortest_line.extend(short_end)
-                
-            # fix their lengths to be equal
-            if len(ledger_lines_bottom[0]) != len(ledger_lines_bottom[1]):
-                if len(ledger_lines_bottom[0]) > len(ledger_lines_bottom[1]):
-                    longest_line = ledger_lines_bottom[0]
-                    shortest_line = ledger_lines_bottom[1]
-                else:
-                    longest_line = ledger_lines_bottom[1]
-                    shortest_line = ledger_lines_bottom[0]
-                lendiff = len(longest_line) - len(shortest_line)
-                # slice off a chunk of the shortest line
-                short_end = shortest_line[-lendiff:]
-                long_end = longest_line[-lendiff:]
-                for p,pt in enumerate(long_end):
-                    pt_x = pt[0]
-                    pt_y = short_end[p][1]
-                    short_end[p] = (pt_x, pt_y)
-                shortest_line.extend(short_end)
-            
+            lines_top = line_positions[0:2]
+            lines_bottom = line_positions[-2:]
+
+            # find the start and end points for the existing lines:
+            top_first_start_y = lines_top[0][0][1]
+            top_first_end_y = lines_top[0][-1][1]
+
+            top_second_start_y = lines_top[1][0][1]
+            top_second_end_y = lines_top[1][-1][1]
+
+            # find the average staff space by taking the start and end points
+            # averaging the height.
+            top_begin_height = top_second_start_y - top_first_start_y
+            top_end_height = top_second_end_y - top_second_end_y
+
+            average_top_space_diff = int(round((top_begin_height + top_end_height) * 0.5))
             imaginary_lines = []
-            
+
             # take the second line. we'll then subtract each point from the corresponding
             # value in the first.
             i_line_1 = []
             i_line_2 = []
-            for j,point in enumerate(ledger_lines_top[1]):
-                diff_y = point[1] - ledger_lines_top[0][j][1]
+            for j,point in enumerate(lines_top[0]):
                 pt_x = point[0]
-                pt_y_1 = ledger_lines_top[0][j][1] - diff_y
-                pt_y_2 = pt_y_1 - diff_y
+                pt_y_1 = point[1] - (average_top_space_diff * 2)
+                # pt_y_1 = lines_top[0][j][1] - average_top_space_diff
+                pt_y_2 = pt_y_1 - (average_top_space_diff * 2)
                 i_line_1.append((pt_x, pt_y_1))
                 i_line_2.append((pt_x, pt_y_2))
-            
+
             # insert these. Make sure the highest line is added last.
             line_positions.insert(0, i_line_1)
             line_positions.insert(0, i_line_2)
-            
+
             # now do the bottom ledger lines
+            bottom_first_start_y = lines_bottom[0][0][1]
+            bottom_first_end_y = lines_bottom[0][-1][1]
+
+            bottom_second_start_y = lines_bottom[1][0][1]
+            bottom_second_end_y = lines_bottom[1][-1][1]
+
+            bottom_begin_height = bottom_second_start_y - bottom_first_start_y
+            bottom_end_height = bottom_second_end_y - bottom_second_end_y
+
+            average_bottom_space_diff = int(round((bottom_begin_height + bottom_end_height) * 0.5))
+
             i_line_1 = []
             i_line_2 = []
-            for k,point in enumerate(ledger_lines_bottom[1]):
-                diff_y = point[1] - ledger_lines_bottom[0][k][1]
+            for k,point in enumerate(lines_bottom[1]):
                 pt_x = point[0]
-                pt_y_1 = ledger_lines_bottom[1][k][1] + diff_y
-                pt_y_2 = pt_y_1 + diff_y
+                pt_y_1 = point[1] + (average_bottom_space_diff * 2)
+                pt_y_2 = pt_y_1 + (average_bottom_space_diff * 2)
                 i_line_1.append((pt_x, pt_y_1))
                 i_line_2.append((pt_x, pt_y_2))
             line_positions.extend([i_line_1, i_line_2])
-            
+
             # average lines y_position
             avg_lines = []
             for l, line in enumerate(av_lines[i]):
@@ -280,7 +275,7 @@ class AomrObject(object):
             avg_lines.insert(1, avg_lines[1] - diff_up)
             avg_lines.append(avg_lines[5] + diff_lo)
             avg_lines.append(avg_lines[5] + 2 * diff_lo) # not using the 8th line
-            
+
             self.page_result['staves'][i] = {
                 'staff_no': i+1,
                 'coords': [ulx, uly, lrx, lry],
@@ -292,10 +287,10 @@ class AomrObject(object):
                 'avg_lines': avg_lines
             }
             all_line_positions.append(self.page_result['staves'][i])
+
+        # pdb.set_trace()
         self.staff_locations = all_line_positions
-        lg.debug("Returning from finding staves.")
-        
-        # return all_line_positions
+        return True
         
     def staff_coords(self):
         """ 
