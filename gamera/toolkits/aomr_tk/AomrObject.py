@@ -406,6 +406,9 @@ class AomrObject(object):
                 elif glyph_type == "neume" or glyph_type == "custos" or glyph_type == "clef":
                     line_or_space, line_num = self._return_line_or_space_no(g, center_of_mass, staff_locations, miyao_line) # line (0) or space (1), no
                     strt_pos = self.strt_pos_find(g, line_or_space, line_num) 
+                    lg.debug("glyph_id: {0}, glyph: {1}".format(glyph_id, g))
+                    lg.debug("\nst[0]: {0}\nmiyao line: {1}".format(staff_locations[0], miyao_line))
+                    lg.debug("line (0) or space(1): {0}, number: {1}, Start Position: {2}".format(line_or_space, line_num, strt_pos))
                 else:
                     strt_pos = None
                     staff_number = None
@@ -413,6 +416,7 @@ class AomrObject(object):
             proc_glyphs.append([g, staff_number, g.offset_x, strt_pos])
             
         sorted_glyphs = self.sort_glyphs(proc_glyphs)
+        lg.debug('SG:{0}'.format(sorted_glyphs))
         return sorted_glyphs
         
     def biggest_cc(self, g_cc):
@@ -471,7 +475,7 @@ class AomrObject(object):
         #         octv = 3
         #     elif my_strt_pos > (dividing_line + 3):
         #         octv = 2
-        lg.debug("clef: {0}, clef_line: {1}, actual_line: {4}, my_strt_pos: {2}, octave:{3}".format(clef, clef_line, my_strt_pos, octv, actual_line))
+        # lg.debug("clef: {0}, clef_line: {1}, actual_line: {4}, my_strt_pos: {2}, octave:{3}".format(clef, clef_line, my_strt_pos, octv, actual_line))
         return octv
         
     def sort_glyphs(self, proc_glyphs):
@@ -565,10 +569,14 @@ class AomrObject(object):
         
         # TODO: FIXME. I always return 0.
         for j, stf in enumerate(st[1:]):
-            if stf[0] > g.offset_x:
+            # print j, g, g.offset_y, stf[0]
+            # lg.debug("_return_vertical_line, g: {0}, st: {1}".format(stf[0], g))
+            if int(stf[0]) > int(g.offset_x):
+                # lg.debug("FOO {0}, {1}".format(stf[0], g.offset_x))
+                # lg.debug("es mayor!:{0}".format(j))
                 return j
-            else:
-                return j
+        else:
+            return j
                 
     def _return_line_or_space_no(self, glyph, center_of_mass, st, miyao_line):
         """

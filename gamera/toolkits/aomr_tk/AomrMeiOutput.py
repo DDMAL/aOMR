@@ -427,7 +427,7 @@ class AomrMeiOutput(object):
                     elif this_pos > (actual_line + 3):
                         note_octaves.append(2)
 
-                lg.debug('clef_pos:{0}, actual_line:{1}, clef_type:{2}, note_octaves:{3}'.format(clef_pos, actual_line, clef_type, note_octaves))
+                # lg.debug('clef_pos:{0}, actual_line:{1}, clef_type:{2}, note_octaves:{3}'.format(clef_pos, actual_line, clef_type, note_octaves))
 
 
                 # if clef_type == "c":
