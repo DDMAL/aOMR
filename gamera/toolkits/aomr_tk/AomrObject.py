@@ -121,7 +121,7 @@ class AomrObject(object):
                                 'clef': clef}
                     contents.append(j_glyph)  
             data[s] = {'coord':stave, 'content':contents}
-        
+        # print data
         lg.debug("6. Returning the data. Done running for this pag.")
         return data
         
@@ -439,22 +439,39 @@ class AomrObject(object):
         clef_type = clef.split(".")[-1] # "f" or "c"
         dividing_line = clef_line
         octv = 0
+        actual_line = 10 - (2*(clef_line-1))
         
         if clef_type == "c":
-            if dividing_line >= my_strt_pos > (dividing_line - 7):
+            if my_strt_pos <= actual_line:
                 octv = 4
-            elif my_strt_pos <= (dividing_line - 7):
-                octv = 5
-            elif my_strt_pos > dividing_line:
+            elif my_strt_pos > actual_line + 7:
+                octv = 2 # write the third case, when octv = 5
+            else:
                 octv = 3
         elif clef_type == "f":
-            if my_strt_pos <= (dividing_line - 3):
-                octv = 4
-            elif (dividing_line - 4) < my_strt_pos <= (dividing_line + 3):
+            if (actual_line + 3) >= my_strt_pos > (actual_line - 3):
                 octv = 3
-            elif my_strt_pos > (dividing_line + 3):
+            elif my_strt_pos < (actual_line - 3):
+                octv = 4
+            elif my_strt_pos > (actual_line + 3):
                 octv = 2
         
+        
+        # if clef_type == "c":
+        #     if dividing_line >= my_strt_pos > (dividing_line - 7):
+        #         octv = 4
+        #     elif my_strt_pos <= (dividing_line - 7):
+        #         octv = 5
+        #     elif my_strt_pos > dividing_line:
+        #         octv = 3
+        # elif clef_type == "f":
+        #     if my_strt_pos <= (dividing_line - 3):
+        #         octv = 4
+        #     elif (dividing_line - 4) < my_strt_pos <= (dividing_line + 3):
+        #         octv = 3
+        #     elif my_strt_pos > (dividing_line + 3):
+        #         octv = 2
+        lg.debug("clef: {0}, clef_line: {1}, actual_line: {4}, my_strt_pos: {2}, octave:{3}".format(clef, clef_line, my_strt_pos, octv, actual_line))
         return octv
         
     def sort_glyphs(self, proc_glyphs):
@@ -562,7 +579,7 @@ class AomrObject(object):
                 Space = 1
             
         """
-        pdb.set_trace()
+        #pdb.set_trace()
         
         #horiz_diff = number of pixels between two points.
         # 848 - 771  = 77
