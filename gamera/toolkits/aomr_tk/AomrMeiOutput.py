@@ -409,22 +409,42 @@ class AomrMeiOutput(object):
                         n_idx += len(self.SCALE)
                 idx = n_idx
                 self._neume_pitches.append(self.SCALE[n_idx])
-                
+
+                actual_line = 10 - (2*(clef_pos-1))
+
                 if clef_type == "c":
-                    
-                    if clef_pos >= this_pos > (clef_pos - 7):
+                    if this_pos <= actual_line:
                         note_octaves.append(4)
-                    elif this_pos <= (clef_pos - 7):
-                        note_octaves.append(5)
-                    elif this_pos > clef_pos:
+                    elif this_pos > actual_line + 7:
+                        note_octaves.append(2)
+                    else:
                         note_octaves.append(3)
                 elif clef_type == "f":
-                    if this_pos <= (clef_pos - 3):
-                        note_octaves.append(4)
-                    elif (clef_pos - 4) < this_pos <= (clef_pos + 3):
+                    if (actual_line + 3) >= this_pos > (actual_line - 3):
                         note_octaves.append(3)
-                    elif this_pos > (clef_pos + 3):
+                    elif this_pos < (actual_line - 3):
+                        note_octaves.append(4)
+                    elif this_pos > (actual_line + 3):
                         note_octaves.append(2)
+
+                lg.debug('clef_pos:{0}, actual_line:{1}, clef_type:{2}, note_octaves:{3}'.format(clef_pos, actual_line, clef_type, note_octaves))
+
+
+                # if clef_type == "c":
+                #     
+                #     if clef_pos >= this_pos > (clef_pos - 7):
+                #         note_octaves.append(4)
+                #     elif this_pos <= (clef_pos - 7):
+                #         note_octaves.append(5)
+                #     elif this_pos > clef_pos:
+                #         note_octaves.append(3)
+                # elif clef_type == "f":
+                #     if this_pos <= (clef_pos - 3):
+                #         note_octaves.append(4)
+                #     elif (clef_pos - 4) < this_pos <= (clef_pos + 3):
+                #         note_octaves.append(3)
+                #     elif this_pos > (clef_pos + 3):
+                #         note_octaves.append(2)
             
         if full_width_episema is True:
             epi = self._create_episema_element()

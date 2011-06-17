@@ -445,7 +445,7 @@ class AomrObject(object):
             if my_strt_pos <= actual_line:
                 octv = 4
             elif my_strt_pos > actual_line + 7:
-                octv = 2 # write the third case, when octv = 5
+                octv = 2 
             else:
                 octv = 3
         elif clef_type == "f":
