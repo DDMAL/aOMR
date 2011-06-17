@@ -77,27 +77,17 @@ def process_axz_directory(directory, class_glyphs, class_weights, outputdir):
         #     continue
             
         for f in filenames:
-            if f.startswith("."):
+            if f == ".DS_Store":
                 continue
                 
             pagenum = f.split("_")[-1].strip('.axz')
-            
-            if int(pagenum) < 1426:
-                continue
-            
             print "Loading page ", str(pagenum)
-            
             
             # create an output directory
             outdir = os.path.join(outputdir, pagenum)
             os.mkdir(outdir)
             
             axzfile = os.path.join(dirpath, f)
-            
-            # if Caylin hasn't corrected this file yet...
-            # if not os.path.getmtime(axzfile) > time.mktime(time.strptime("01 Mar 2011", "%d %b %Y")):
-            #     os.rmdir(outdir)
-            #     continue
             
             ax = AxFile(axzfile, "")
             axtmp = ax.tmpdir
@@ -106,6 +96,7 @@ def process_axz_directory(directory, class_glyphs, class_weights, outputdir):
             # shutil.move(tfile[1], os.path.join(outdir, "original_image.tiff"))
             
             sfile = os.path.join(outdir, "original_image.tiff")
+
             save_image(staves, sfile)
             
             # lg.debug("Tempfile is: {0}".format(tfile[1]))
@@ -116,21 +107,24 @@ def process_axz_directory(directory, class_glyphs, class_weights, outputdir):
                 'staff_finder': 0,
                 'staff_removal': 0,
                 'binarization': 0,
-                'discard_size': 6
+                'discard_size': 12 # GVM, was 6 
             }
             
             aomr_obj = AomrObject(sfile, **aomr_opts)
+
             
             try:
-                aomr_obj.find_staves()
+                lg.debug("Finding Staves")
+                s = aomr_obj.find_staves()
             except Exception, e:
                 lg.debug("Cannot find staves: {0} because {1}".format(pagenum, e))
                 continue
             
-            if not aomr_obj.staff_locations:
-                lg.debug("No Staves were found? That's strange.")
-                # no staves were found
-                continue
+            lg.debug("S is: {0}".format(s))
+            if not s:
+                lg.debug("no staves were found")
+                os.remove(sfile)
+                os.rmdir(outdir)
             
             try:
                 aomr_obj.remove_stafflines()
@@ -138,7 +132,7 @@ def process_axz_directory(directory, class_glyphs, class_weights, outputdir):
                 lg.debug("Cannot remove stafflines: {0} because {1}".format(pagenum, e))
                 continue
             
-            cknn = knn.kNNNonInteractive(class_glyphs, 'all', 1)
+            cknn = knn.kNNNonInteractive(class_glyphs, 'all', True, 1)
             # cknn.load_settings(class_weights)
             ccs = aomr_obj.img_no_st.cc_analysis()
             func = classify.BoundingBoxGroupingFunction(4)
@@ -150,9 +144,7 @@ def process_axz_directory(directory, class_glyphs, class_weights, outputdir):
                 max_graph_size=16
             )
             
-            
-            
-            # save all the files into this directory
+            lg.debug("save all the files into this directory")
             cknn.save_settings(os.path.join(outdir, "classifier_settings.xml"))
             
             cknn.generate_features_on_glyphs(classified_image)
@@ -161,10 +153,15 @@ def process_axz_directory(directory, class_glyphs, class_weights, outputdir):
                s.add("_split." + split[0])
             s.add("_group")
             s.add("_group._part")
-            for g in cknn.get_glyphs():
-                for idx in g.id_name:
-                    s.add(idx[1])
-                    
+            
+            
+            
+            
+            avg_punctum_col = aomr_obj.average_punctum(cknn.get_glyphs())
+            print 'average punctum column size = ', avg_punctum_col
+
+            glyphs_center_of_mass = aomr_obj.x_projection_vector(cknn.get_glyphs(), avg_punctum_col, aomr_opts.get('discard_size'))
+            print 'center of mass for each glyph  = ', glyphs_center_of_mass
             gamera_xml.WriteXMLFile(glyphs=classified_image, with_features=True).write_filename(os.path.join(outdir, "page_glyphs.xml"))
             # gamera_xml.WriteXMLFile(symbol_table=s).write_filename(os.path.join(outdir, "symbol_table.xml"))
             # cknn.to_xml_filename(os.path.join(outdir, "classifier_glyphs.xml"), with_features=True)
@@ -246,4 +243,4 @@ if __name__ == "__main__":
     
     ##### Load up the AXZ Files
     axz = process_axz_directory(args[1], os.path.join(args[2], "classifier_glyphs_gp_cleaned.xml"), os.path.join(args[2], "classifier_weights_optimized_march31.xml"), args[2])
-    print "Done!"
+    print "Done!"    
