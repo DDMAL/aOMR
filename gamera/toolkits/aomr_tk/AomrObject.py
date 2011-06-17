@@ -817,14 +817,14 @@ class AomrObject(object):
             else:
                 this_glyph = g
                 
-            g_center_of_mass, offset_y = self.check_special_neumes(this_glyph)
+            sub_glyph_center_of_mass, offset_y = self.check_special_neumes(this_glyph)
             
             if "podatus" in glyph_var or "epiphonus" in glyph_var or "cephalicus" in glyph_var or "scandicus" in glyph_var:
                 if check_additions is True:
-                    center_of_mass = this_glyph.offset_y - g.offset_y + g_center_of_mass
+                    center_of_mass = this_glyph.offset_y - g.offset_y + sub_glyph_center_of_mass
                     return center_of_mass
                 else:
-                    center_of_mass = offset_y - this_glyph.offset_y + g_center_of_mass
+                    center_of_mass = offset_y - this_glyph.offset_y + sub_glyph_center_of_mass
                     return center_of_mass
             
             if check_additions:
@@ -843,8 +843,8 @@ class AomrObject(object):
             this_glyph = self.biggest_cc(glyph.splity())
         else:
             this_glyph = glyph
-        glyph_center_of_mass = self.x_projection_vector(this_glyph)
-        return glyph_center_of_mass, glyph.offset_y
+        sub_glyph_center_of_mass = self.x_projection_vector(this_glyph)
+        return sub_glyph_center_of_mass, glyph.offset_y
     
     
     
