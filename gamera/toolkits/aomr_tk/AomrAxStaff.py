@@ -3,11 +3,29 @@ import os
 class AomrAxStaff(object):
     def __init__(self, **kwargs):
         rstring = "You must pass {0} into this class"
-        self.staff = kwargs['staff'] if 'staff' in kwargs.values() else raise AomrAxStaffError(rstring.format('staff'))
-        self.staff_height = kwargs['staff_height'] if 'staff_height' in kwargs.values() else raise AomrAxStaffError(rstring.format('staff_height'))
-        self.ymax = kwargs['ymax'] if 'ymax' in kwargs.values() else raise AomrAxStaffError(rstring.format('ymax'))
-        self.staffspace_height = kwargs['staffspace_height'] if 'staffspace_height' in kwargs.values() else raise AomrAxStaffError(rstring.format('staffspace_height'))
-        self.staffline_height = kwargs['staffline_height'] if 'staffline_height' in kwargs.values() else raise AomrAxStaffError(rstring.format('staffline_height'))
+        if 'staff' in kwargs.values():
+            self.staff = kwargs['staff'] 
+        else:
+            raise AomrAxStaffError(rstring.format('staff'))
+        
+        if 'staff_height' in kwargs.values():
+            self.staff_height = kwargs['staff_height'] 
+        else:
+            raise AomrAxStaffError(rstring.format('staff_height'))
+        if 'ymax' in kwargs.values():
+            self.ymax = kwargs['ymax']    
+        else:
+            raise AomrAxStaffError(rstring.format('ymax'))
+            
+        if 'staffspace_height' in kwargs.values():
+            self.staffspace_height = kwargs['staffspace_height']
+        else:
+            raise AomrAxStaffError(rstring.format('staffspace_height'))
+        
+        if 'staffline_height' in kwargs.values():
+            self.staffline_height = kwargs['staffline_height'] 
+        else:
+            raise AomrAxStaffError(rstring.format('staffline_height'))
         
         self.glyphs = []
         self.gt_glyphs = []

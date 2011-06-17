@@ -23,7 +23,7 @@ class AomrAxFile(object):
         :Authors: Laurent Pugin and Jason Hockman (1.0); Andrew Hankinson and Gabriel Vigliensoni (2.0)
     """
     def __init__(self, filename):
-        if os.path.splitext(filename)[-1] not ".axz":
+        if os.path.splitext(filename)[-1] != ".axz":
             raise AomrNotAnAruspixFileError("The supplied file is not an Aruspix file.")
         self.filename = filename
         self.tmpdir = tempfile.mkdtemp()
