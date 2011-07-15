@@ -13,7 +13,7 @@ from pymei.Import import xmltomei
 import time, shutil
 
 import logging
-lg = logging.getLogger('pitch_find')
+lg = logging.getLogger('zones_fixing')
 f = logging.Formatter("%(levelname)s %(asctime)s On Line: %(lineno)d %(message)s")
 h = logging.StreamHandler()
 h.setFormatter(f)
@@ -22,59 +22,40 @@ lg.setLevel(logging.DEBUG)
 lg.addHandler(h)
 
 
-def scandicus_fixing(mei_file):
+def zone_fixing(mei_file, output_folder):
     """
-        Compares the pitches of the ground truth and the classifier
+        Fixes the hand-entered glyphs
     """
-    # error = 0
-    # m = mei_file.split('/')[-1]
-    # n = m.split('.')[-2] + '_GT.mei'
-    # ground_truth = os.path.join(ground_truth_directory, n)
-    # ground_truth = xmltomei.xmltomei(ground_truth)
     mei_file = xmltomei.xmltomei(mei_file)
-    
-
     neumes_in_mei_file = mei_file.search('neume')
-    
 
     for n in neumes_in_mei_file:
         # print n
-        neume_type = n.attribute_by_name('name').value#, n.children[0].attribute_by_name('pname').value
+        neume_type = n.attribute_by_name('name').value
         if neume_type == 'scandicus' or neume_type == 'salicus':
             neume_facs = n.attribute_by_name('facs').value
+            result_zone = mei_file.get_by_id_ref("xml:id", neume_facs)
             no_notes = len(n.descendants_by_name('note'))
 
-
-            result_zone = mei_file.get_by_id_ref("xml:id", neume_facs)
             ulx = result_zone[0].attribute_by_name('ulx').value
             uly = result_zone[0].attribute_by_name('uly').value
             lrx = result_zone[0].attribute_by_name('lrx').value
             lry = result_zone[0].attribute_by_name('lry').value
-            
-            print neume_type, no_notes, ulx, uly, lrx, lry
-            new_lrx = (int(ulx)+no_notes*17)
-            # print new_lrx
-            result_zone[0].attribute_by_name('lrx').value(new_lrx)
 
-            print neume_type, no_notes, ulx, uly, lrx, lry
+            fixed_lrx = (int(ulx) + (no_notes - 1) * 17) # 17 pixels for each avg_punctum_width
+            fixed_lry = (int(uly) + (no_notes + 1) * 17)
             
-            # neume_zone = mei_file.get_by_facs(facs_in_neume)
-            # print neume_zone
-    
-    # all_elements = mei_file.flat()
-    # for each in all_elements:
-    #     # print each
-    #     # print each.name
-    #     if each.name == 'neume':
-    #         print each
-    #         # print each.children_by_name()
-    #         # print each.name.descendants_by_name('nc')
-    #         # print each.element
+            result_zone[0].attributes = {'lrx': fixed_lrx, 'lry': fixed_lry}
+            lg.debug("{0} {1} ({2}, {3}), lrx : {4} -> {5}, lry : {6} -> {7}".format(neume_type, no_notes, ulx, uly, lrx, result_zone[0].attribute_by_name('lrx').value, lry, result_zone[0].attribute_by_name('lry').value))
+            
 
+            
+            
+    meitoxml.meitoxml(mei_file, os.path.join(output_folder, 'fixed.mei'))
     
     
 if __name__ == "__main__":
-    usage = "usage: %prog [options] working_directory ground_truth_directory output_directory staff_algorithm"
+    usage = "usage: %prog [options] mei_file output_folder"
     opts = OptionParser(usage = usage)
     options, args = opts.parse_args()
     init_gamera()
@@ -84,12 +65,7 @@ if __name__ == "__main__":
 
 
     mei_file = args[0]
-    # mei_file = args[1]
-    scandicus_fixing(mei_file)
-
-    no_glyphs = 0
-    no_errors = 0
-
-
+    output_folder = args[1]
+    zone_fixing(mei_file, output_folder)
 
     print "\nDone!\n"
