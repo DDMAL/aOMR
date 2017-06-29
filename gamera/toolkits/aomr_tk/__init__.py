@@ -22,9 +22,9 @@ from gamera.gui.matplotlib_support import *
 from gamera import classify
 from gamera import knn
 
-from gamera.toolkits.aruspix.ax_file import AxFile
-from gamera.toolkits.aruspix.ax_page import AxPage
-from gamera.toolkits.aruspix.ax_staff import AxStaff
+# from gamera.toolkits.aruspix.ax_file import AxFile
+# from gamera.toolkits.aruspix.ax_page import AxPage
+# from gamera.toolkits.aruspix.ax_staff import AxStaff
 
 from gamera.toolkits import musicstaves
 from gamera.toolkits.musicstaves import stafffinder_miyao
