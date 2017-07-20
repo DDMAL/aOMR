@@ -274,13 +274,13 @@ class AomrObject(object):
                 mean = np.mean(colvector)
                 sd = np.std(colvector)
 
-                magic_number = 2  # max allowed deviation. How to find the best magic_number?
+                max_sd = 2  # max allowed deviation. How to find this best max stdev magic number?
 
                 # if sd is more than a threshold, find the culprit, estimate
                 # the missing point, and add it to line_positions
-                if sd > magic_number:
+                if sd > max_sd:
                     for d, col in enumerate(colvector):
-                        if col > (mean + magic_number):
+                        if col > (mean + max_sd):
                             # estimate x position
                             filtered_vector = self.outlier_removal(colvector)
                             filtered_vector_mean = int(np.round(np.mean(filtered_vector)))
@@ -500,10 +500,10 @@ class AomrObject(object):
                 # center_of_mass = 0
 
             else:
-                lg.debug("\nglyph_id: {0}, glyph: {1}".format(glyph_id, g))
+                # lg.debug("\nglyph_id: {0}, glyph: {1}".format(glyph_id, g))
                 stinfo = self._return_staff_no(g, center_of_mass)
                 if stinfo is None:
-                    lg.debug("stinfo is None\n")
+                    # lg.debug("stinfo is None\n")
                     continue
                 else:
                     staff_locations, staff_number = stinfo
@@ -519,8 +519,8 @@ class AomrObject(object):
                     line_or_space, line_num = self._return_line_or_space_no(g, center_of_mass, staff_locations, miyao_line) # line (0) or space (1), no
                     strt_pos = self.strt_pos_find(g, line_or_space, line_num) 
                     # lg.debug("\n\nglyph_id: {0}, glyph: {1}".format(glyph_id, g))
-                    lg.debug("\nst[0]: {0}\nmiyao line: {1}".format(staff_locations[0], miyao_line))
-                    lg.debug("line (0) or space(1): {0}, number: {1}, Start Position: {2}\n".format(line_or_space, line_num, strt_pos))
+                    # lg.debug("\nst[0]: {0}\nmiyao line: {1}".format(staff_locations[0], miyao_line))
+                    # lg.debug("line (0) or space(1): {0}, number: {1}, Start Position: {2}\n".format(line_or_space, line_num, strt_pos))
                 else:
                     strt_pos = None
                     staff_number = None
@@ -681,14 +681,14 @@ class AomrObject(object):
 
         # horiz_diff = number of pixels between two points.
         # 848 - 771  = 77
-        lg.debug("glyph_id: {0}, miyao_line:{1}".format(glyph.get_main_id(), miyao_line))
-        lg.debug("st: {0}".format(st))
+        # lg.debug("glyph_id: {0}, miyao_line:{1}".format(glyph.get_main_id(), miyao_line))
+        # lg.debug("st: {0}".format(st))
         horz_diff = float(st[0][miyao_line][0] - st[0][miyao_line - 1][0])
 
         for i, stf in enumerate(st[1:]):
             # -1
             # lg.debug("i: {0}, stf: {1}, miyao_line: {2}".format(i, stf, miyao_line))
-            lg.debug("i: {0}, stf: {1}".format(i, stf))
+            # lg.debug("i: {0}, stf: {1}".format(i, stf))
             vert_diff_up = float(stf[miyao_line][1] - stf[miyao_line - 1][1])  # y_pos difference with the upper miyao line
 
             # 0
