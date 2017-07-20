@@ -175,6 +175,17 @@ class AomrObject(object):
     #     sd = math.sqrt(float(reduce(lambda x, y: x + y, map(lambda x: (x - mean) ** 2, vector))) / len(vector))
     #     return mean, sd
 
+    def outlier_removal(self, vector, m=2.):
+        """
+        Return list without outlier.
+
+        https://stackoverflow.com/questions/11686720/is-there-a-numpy-builtin-to-reject-outliers-from-a-list
+        """
+        vector = np.array(vector)
+        d = np.abs(vector - np.median(vector))
+        mdev = np.median(d)
+        s = d / mdev if mdev else 0.
+        return vector[s < m]
 
     def find_staves(self):
         if self.sfnd_algorithm is 0:
@@ -241,7 +252,54 @@ class AomrObject(object):
             ulx, uly = min(xv), min(yv)
             lrx, lry = max(xv), max(yv)
 
- 
+            lg.debug("line_positions_PRE: {0}".format(line_positions))
+
+
+
+            # XUL: Write here the code to find the missing points
+            # add any missing points in each of the lines
+            # [[(1022, 549), (1261, 553), (1471, 556), (1498, 556)],
+            # [(1022, 612), (1050, 612), (1261, 617), (1497, 620)],
+            # [(1021, 674), (1050, 674), (1261, 677), (1496, 680)],
+            # [(1020, 735), (1050, 735), (1261, 740), (1471, 743), (1495, 744)]]
+
+            # Compute the longest column
+            longest_column = max([len(line) for line in line_positions])
+
+            # Iterate through each column
+            for c in range(longest_column):
+                # print "c: {0}".format(c)
+                colvector = [x[c][0] for x in line_positions]
+                # compute average and deviation per column
+                mean = np.mean(colvector)
+                sd = np.std(colvector)
+
+                magic_number = 2  # max allowed deviation. How to find the best magic_number?
+
+                # if sd is more than a threshold, find the culprit, estimate
+                # the missing point, and add it to line_positions
+                if sd > magic_number:
+                    for d, col in enumerate(colvector):
+                        if col > (mean + magic_number):
+                            # estimate x position
+                            filtered_vector = self.outlier_removal(colvector)
+                            filtered_vector_mean = int(np.round(np.mean(filtered_vector)))
+                            
+                            # estimate y position
+                            y_positions = (line_positions[d][c][1], line_positions[d][c - 1][1])
+                            y_position_mean = int(np.round(np.mean(y_positions)))
+
+                            line_positions[d].insert(c, (filtered_vector_mean, y_position_mean))
+                            # print "d: {0}, line_positions: {1}".format(d, [l for l in line_positions])
+                            # print "y_positions: {0}".format(y_positions)
+
+            lg.debug("line_positions_POST: {0}".format(line_positions))
+            # check what happens if missing point is in the first or last column
+
+
+
+
+
 
 
 
