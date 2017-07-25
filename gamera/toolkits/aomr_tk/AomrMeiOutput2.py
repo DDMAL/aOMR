@@ -249,7 +249,6 @@ class AomrMeiOutput(object):
                 except Exception:
                     lg.debug("Cannot add clef element {0}. Skipping.".format(self.glyph))
 
-
             elif c['type'] == 'division':
                 try:
                     self.layer.addChild(self._create_division_element())
@@ -263,7 +262,7 @@ class AomrMeiOutput(object):
             #         new_staff.attributes = {'n': self.staff_num}
             #         new_layer = self._create_layer_element()
             #         new_layer.attributes = {'n': 1}
-                
+
             #         self.layer = new_layer
             #         self.staffel = new_staff
             #         self.staffdef = new_staffdef
@@ -274,21 +273,19 @@ class AomrMeiOutput(object):
             # elif c['type'] == 'division':
             #     self.layer.addChild(self._create_division_element())
 
-
-
             elif c['type'] == 'custos':
                 try:
                     self.layer.addChild(self._create_custos_element())
                 except Exception:
                     lg.debug("Cannot add custos element {0}. Skipping".format(self.glyph))
-                    
+
             elif c['type'] == "alteration":
                 # staffel.add_child(self._create_alteration_element()) #GVM
                 pass
-                
+
         return sysbrk
-        
-        
+
+
 #     def _create_graphic_element(self, imgfile):
 #         graphic = mod.graphic_()
 #         graphic.id = self._idgen()
