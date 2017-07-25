@@ -255,22 +255,27 @@ class AomrMeiOutput(object):
                     self.layer.addChild(self._create_division_element())
                 except Exception:
                     lg.debug("Cannot add division element {0}. Skipping.".format(self.glyph))
-                if "final" in c['form']:
-                    self.staff_num += 1
-                    new_staff = self._create_staff_element()
-                    new_staffdef = self._create_staffdef_element()
-                    new_staffdef.attributes = {'n': self.staff_num}
-                    new_staff.attributes = {'n': self.staff_num}
-                    new_layer = self._create_layer_element()
-                    new_layer.attributes = {'n': 1}
+            #     if "final" in c['form']:
+            #         self.staff_num += 1
+            #         new_staff = self._create_staff_element()
+            #         new_staffdef = self._create_staffdef_element()
+            #         new_staffdef.attributes = {'n': self.staff_num}
+            #         new_staff.attributes = {'n': self.staff_num}
+            #         new_layer = self._create_layer_element()
+            #         new_layer.attributes = {'n': 1}
                 
-                    self.layer = new_layer
-                    self.staffel = new_staff
-                    self.staffdef = new_staffdef
-                    self.staffgrp.addChild(self.staffdef)
-                    self.staffel.addChild(self.layer)
-                    self.section.addChild(self.staffel)
-                
+            #         self.layer = new_layer
+            #         self.staffel = new_staff
+            #         self.staffdef = new_staffdef
+            #         self.staffgrp.addChild(self.staffdef)
+            #         self.staffel.addChild(self.layer)
+            #         self.section.addChild(self.staffel)
+
+            # elif c['type'] == 'division':
+            #     self.layer.addChild(self._create_division_element())
+
+
+
             elif c['type'] == 'custos':
                 try:
                     self.layer.addChild(self._create_custos_element())
@@ -620,23 +625,26 @@ class AomrMeiOutput(object):
 
         return clef
 
-#     def _create_division_element(self):
-#         division = mod.division_()
-#         division.id = self._idgen()
-#         zone = self._create_zone_element()
-#         division.facs = zone.id
-        
-#         if self.glyph['form']:
-#             division.attributes = {'form': self.glyph['form'][0]}
-        
-#         return division
-    
-#     # def _create_alteration_element(self):
-#     #     alteration = mod.alteration_()
-#     #     alteration.id = self._idgen()
-#     #     zone = self._create_zone_element()
-#     #     alteration.facs = zone.id
-#     #     return alteration    
+    def _create_division_element(self):
+        # division = mod.division_()
+        division = MeiElement("division")
+        # division.id = self._idgen()
+        zone = self._create_zone_element()
+        # division.facs = zone.id
+        division.addAttribute("facs", zone.getId())
+
+        if self.glyph['form']:
+            # division.attributes = {'form': self.glyph['form'][0]}
+            division.addAttribute("form", self.glyph['form'][0])
+
+        return division
+
+    # def _create_alteration_element(self):
+    #     alteration = mod.alteration_()
+    #     alteration.id = self._idgen()
+    #     zone = self._create_zone_element()
+    #     alteration.facs = zone.id
+    #     return alteration    
     
 #     def _idgen(self):
 #         """ Returns a UUID. """
