@@ -243,16 +243,11 @@ class AomrMeiOutput(object):
                     except Exception:
                         lg.debug("Cannot add neume element {0}. Skipping.".format(self.glyph))
 
-            # elif c['type'] == 'clef':
-            #     try:
-            #         self.layer.addChild(self._create_clef_element())
-            #     except Exception:
-            #         lg.debug("Cannot add clef element {0}. Skipping.".format(self.glyph))
-
             elif c['type'] == 'clef':
-                self.layer.addChild(self._create_clef_element())
-                print 'BLING CLEF'
-
+                try:
+                    self.layer.addChild(self._create_clef_element())
+                except Exception:
+                    lg.debug("Cannot add clef element {0}. Skipping.".format(self.glyph))
 
 
             elif c['type'] == 'division':
@@ -321,7 +316,7 @@ class AomrMeiOutput(object):
     def _create_zone_element(self):
         # zone = mod.zone_()
         zone = MeiElement("zone")
-        print 'ZONE1'
+
         # zone.id = self._idgen()
         # zone.attributes = {'ulx': self.glyph['coord'][0], 'uly': self.glyph['coord'][1], \
         #                     'lrx': self.glyph['coord'][2], 'lry': self.glyph['coord'][3]}
@@ -331,12 +326,10 @@ class AomrMeiOutput(object):
         zone.addAttribute("lrx", str(self.glyph["coord"][2]))
         zone.addAttribute("lry", str(self.glyph["coord"][3]))
 
-        print 'ZONE2'
-
 
         # self.surface.add_child(zone)
         self.surface.addChild(zone)
-        print 'ZONE3'
+
         return zone
     
 #     def _create_layer_element(self):
@@ -618,7 +611,7 @@ class AomrMeiOutput(object):
         # print 'BLING2'
         zone = self._create_zone_element()
         # clef.facs = zone.id
-        clef.addAttribute("FACS", zone.getId())
+        clef.addAttribute("facs", zone.getId())
 
 
         # clef.attributes = {"line": self.glyph['strt_pos'], 'shape': self.glyph['form'][0].upper() }
