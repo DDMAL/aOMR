@@ -270,9 +270,6 @@ class AomrMeiOutput(object):
             #         self.staffel.addChild(self.layer)
             #         self.section.addChild(self.staffel)
 
-            # elif c['type'] == 'division':
-            #     self.layer.addChild(self._create_division_element())
-
             elif c['type'] == 'custos':
                 try:
                     self.layer.addChild(self._create_custos_element())
@@ -595,14 +592,23 @@ class AomrMeiOutput(object):
 #         dot.id = self._idgen()
 #         dot.attributes = {"form": "aug"}
 #         return dot
-    
-#     def _create_custos_element(self):
-#         custos = mod.custos_()
-#         custos.id = self._idgen()
-#         zone = self._create_zone_element()
-#         custos.facs = zone.id
-#         custos.pitchname = self.glyph['strt_pitch']
-#         return custos
+
+    def _create_custos_element(self):
+        # custos = mod.custos_()
+        # custos.id = self._idgen()
+        custos = MeiElement("custos")
+        zone = self._create_zone_element()
+
+        # custos.facs = zone.id
+        custos.addAttribute("facs", zone.getId())
+
+        custos.pitchname = self.glyph['strt_pitch']
+        custos.addAttribute("pname", custos.pitchname)
+
+        custos.octave = self.glyph['octv']
+        custos.addAttribute("oct", str(custos.octave))
+
+        return custos
 
     def _create_clef_element(self):
         # clef = mod.clef_()
