@@ -492,42 +492,45 @@ class AomrMeiOutput(object):
                 else:
                     raise AomrMeiNoteIntervalMismatchError("There is a mismatch between the number of notes and number of intervals.")
 
-    #         # note elements = torculus.2.2.he.ve
-    #         # ivals = [2,2]
-    #         # torculus = ['u','d']
-    #         this_pos = copy.deepcopy(self.glyph['strt_pos'])
-    #         for n in xrange(len(ivals)):
-    #             # get the direction
-    #             dir = this_neume_form[n]
-    #             iv = ivals[n]
-    #             n_idx = idx
-    #             if dir == "u":
-    #                 n_idx = ((idx + iv) % len(self.SCALE)) - 1
-    #                 this_pos -= (iv - 1)
-    #             elif dir == "d":
-    #                 n_idx = idx - (iv - 1)
-    #                 this_pos += (iv - 1)
-    #                 if n_idx < 0:
-    #                     n_idx += len(self.SCALE)
-    #             idx = n_idx
-    #             self._neume_pitches.append(self.SCALE[n_idx])
 
-    #             actual_line = 10 - (2 * (clef_pos - 1))
+            # note elements = torculus.2.2.he.ve
+            # ivals = [2,2]
+            # torculus = ['u','d']
+            this_pos = copy.deepcopy(self.glyph['strt_pos'])
+            for n in xrange(len(ivals)):
+                # get the direction
+                dir = this_neume_form[n]
+                iv = ivals[n]
+                n_idx = idx
+                if dir == "u":
+                    n_idx = ((idx + iv) % len(self.SCALE)) - 1
+                    this_pos -= (iv - 1)
+                elif dir == "d":
+                    n_idx = idx - (iv - 1)
+                    this_pos += (iv - 1)
+                    if n_idx < 0:
+                        n_idx += len(self.SCALE)
+                idx = n_idx
+                self._neume_pitches.append(self.SCALE[n_idx])
 
-    #             if clef_type == "c":
-    #                 if this_pos <= actual_line:
-    #                     note_octaves.append(4)
-    #                 elif this_pos > actual_line + 7:
-    #                     note_octaves.append(2)
-    #                 else:
-    #                     note_octaves.append(3)
-    #             elif clef_type == "f":
-    #                 if (actual_line + 3) >= this_pos > (actual_line - 3):
-    #                     note_octaves.append(3)
-    #                 elif this_pos < (actual_line - 3):
-    #                     note_octaves.append(4)
-    #                 elif this_pos > (actual_line + 3):
-    #                     note_octaves.append(2)
+                actual_line = 10 - (2 * (clef_pos - 1))
+
+                if clef_type == "c":
+                    if this_pos <= actual_line:
+                        note_octaves.append(4)
+                    elif this_pos > actual_line + 7:
+                        note_octaves.append(2)
+                    else:
+                        note_octaves.append(3)
+                elif clef_type == "f":
+                    if (actual_line + 3) >= this_pos > (actual_line - 3):
+                        note_octaves.append(3)
+                    elif this_pos < (actual_line - 3):
+                        note_octaves.append(4)
+                    elif this_pos > (actual_line + 3):
+                        note_octaves.append(2)
+
+        lg.debug("Neume pitches: {0}".format(self._neume_pitches))
 
         if full_width_episema is True:
             epi = self._create_episema_element()
@@ -550,47 +553,50 @@ class AomrMeiOutput(object):
         if has_horizontal_episema:
             self.__note_addition_figurer_outer("he", heidxs)
 
-        # for n in xrange(num_notes):
-        #     p = self._neume_pitches[n]
-        #     o = note_octaves[n]
-        #     nt = self._create_note_element(p)
-        #     nt.attributes = {"oct": o}
-            
-    #         if n == 0 and full_width_episema is True:
-    #             epi.attributes = {"startid": nt.id}
-    #         elif n == num_notes and full_width_episema is True:
-    #             epi.attributes = {"endid": nt.id}
-            
-    #         if has_quilisma:
-    #             if n in qidxs:
-    #                 neumecomponent.attributes = {"quilisma": "true"}
-            
-    #         if has_dot:
-    #             if n in dotidxs:
-    #                 d = self._create_dot_element()
-    #                 nt.add_child(d)
-            
-    #         if has_vertical_episema:
-    #             if n in veidxs:
-    #                 ep = self._create_episema_element()
-    #                 ep.attributes = {"form": "vertical", "startid": nt.id}
-    #                 self.layer.add_child(ep)
-            
-    #         if has_horizontal_episema:
-    #             if n in heidxs:
-    #                 local_horizontal_episema = self._create_episema_element()
-    #                 local_horizontal_episema.attributes = {"form": "horizontal", "startid": nt.id}
-    #                 self.layer.add_child(local_horizontal_episema)
-                    
-            
-    #         if n == num_notes - 1 and local_horizontal_episema:
-    #             # we've reached the end, and we have an HE we need to close up.
-    #             local_horizontal_episema.attributes = {"endid": nt.id}
-                
-    #         nc.append(nt)
-    #     neumecomponent.add_children(nc)
 
-        print 'BLING8'
+
+        for n in xrange(num_notes):
+            p = self._neume_pitches[n]
+            o = note_octaves[n]
+            nt = self._create_note_element(p)
+            # nt.attributes = {"oct": o}
+            nt.addAttribute("oct", str(o))
+
+            # if n == 0 and full_width_episema is True:
+            #     # epi.attributes = {"startid": nt.id}
+            #     epi.addAttribute("startid", nt.getId())
+            # elif n == num_notes and full_width_episema is True:
+            #     # epi.attributes = {"endid": nt.id}
+            #     epi.addAttribute("endid", nt.getId())
+
+            # if has_quilisma:
+            #     if n in qidxs:
+            #         neumecomponent.attributes = {"quilisma": "true"}
+
+            # if has_dot:
+            #     if n in dotidxs:
+            #         d = self._create_dot_element()
+            #         nt.add_child(d)
+
+            # if has_vertical_episema:
+            #     if n in veidxs:
+            #         ep = self._create_episema_element()
+            #         ep.attributes = {"form": "vertical", "startid": nt.id}
+            #         self.layer.add_child(ep)
+
+            # if has_horizontal_episema:
+            #     if n in heidxs:
+            #         local_horizontal_episema = self._create_episema_element()
+            #         local_horizontal_episema.attributes = {"form": "horizontal", "startid": nt.id}
+            #         self.layer.add_child(local_horizontal_episema)
+
+            # if n == num_notes - 1 and local_horizontal_episema:
+            #     # we've reached the end, and we have an HE we need to close up.
+            #     local_horizontal_episema.attributes = {"endid": nt.id}
+
+            nc.append(nt)
+        neumecomponent.addChild(nc)
+
         return neume
 
 
@@ -598,12 +604,13 @@ class AomrMeiOutput(object):
 
 
 
-#     def _create_note_element(self, pname=None):
-#         note = mod.note_()
-#         note.id = self._idgen()
-#         note.pitchname = pname
-#         return note
-    
+    def _create_note_element(self, pname=None):
+        # note = mod.note_()
+        note = MeiElement("note")
+        # note.id = self._idgen()
+        note.pitchname = pname
+        return note
+
 #     def _create_dot_element(self):
 #         dot = mod.dot_()
 #         dot.id = self._idgen()
