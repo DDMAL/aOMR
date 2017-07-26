@@ -15,5 +15,5 @@ class AomrMeiPitchNotFoundError(AomrError): pass
 class AomrMeiNoteIntervalMismatchError(AomrError): pass
 
 # AOMR Aruspix Errors
-class AomrNotAnAruspixFileError(AomrError): pass
-class AomrAruspixPackageError(AomrError): pass
+# class AomrNotAnAruspixFileError(AomrError): pass
+# class AomrAruspixPackageError(AomrError): pass

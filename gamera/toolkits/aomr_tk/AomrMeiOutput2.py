@@ -1,5 +1,5 @@
 from gamera.plugin import *
-# from gamera.toolkits.aomr_tk.AomrExceptions import *
+from gamera.toolkits.aomr_tk.AomrExceptions import *
 
 
 from pymei import MeiDocument, MeiElement, MeiAttribute, documentToFile
