@@ -44,7 +44,8 @@ class AomrMeiOutput(object):
         'salicus': ['u', 'u'],
         'scandicus': ['u', 'u'],
         'torculus': ['u', 'd'],
-        'ancus': ['d', 'd'],  # See note 1 below
+        'ancus': ['d', 'd'],
+        'climacus': ['d', 'd']  # See note 1 below
     }
 
     # given an alternate form, how many notes does it add to the neume?
@@ -60,19 +61,19 @@ class AomrMeiOutput(object):
         self._recognition_results = incoming_data
 
         # self.mei = mod.mei_()
-        # self.staff = None
-        # self.staff_num = 1
-        # self.glyph = None
+        self.md = MeiDocument()
+        self.mei = MeiElement("mei")
 
-        # self._note_elements = None
-        # self._neume_pitches = []
+        self.staff = None
+        self.staff_num = 1
+        self.glyph = None
+
+        self._note_elements = None
+        self._neume_pitches = []
 
         # set up a basic MEI document structure
 
         # header
-        self.md = MeiDocument()
-
-        self.mei = MeiElement("mei")
         self.md.setRootElement(self.mei)
 
         self.meihead = MeiElement('meiHead')
@@ -231,17 +232,28 @@ class AomrMeiOutput(object):
             
             lg.debug("GLYPH: {0}".format(c))
 
+            # if c['type'] == 'neume':
+            #     if not self.glyph['form']:
+            #         lg.debug("Skipping glyph: {0}".format(self.glyph))
+            #         continue
+            #     if self.glyph['form'][0] not in self.NEUME_NOTES.keys():
+            #         continue
+            #     else:
+            #         try:
+            #             self.layer.addChild(self._create_neume_element())
+            #         except Exception:
+            #             lg.debug("Cannot add neume element {0}. Skipping.".format(self.glyph))
+
+
             if c['type'] == 'neume':
-                if not self.glyph['form']:
-                    lg.debug("Skipping glyph: {0}".format(self.glyph))
-                    continue
-                if self.glyph['form'][0] not in self.NEUME_NOTES.keys():
-                    continue
-                else:
-                    try:
-                        self.layer.addChild(self._create_neume_element())
-                    except Exception:
-                        lg.debug("Cannot add neume element {0}. Skipping.".format(self.glyph))
+                self.layer.addChild(self._create_neume_element())
+
+
+
+
+
+
+
 
             elif c['type'] == 'clef':
                 try:
@@ -376,106 +388,110 @@ class AomrMeiOutput(object):
 #         system.id = self._idgen()
 #         return system
     
-#     def _create_episema_element(self):
-#         epi = mod.episema_()
-#         epi.id = self._idgen()
-#         return epi
+    def _create_episema_element(self):
+        # epi = mod.episema_()
+        epi = MeiElement("episema")
+        # epi.id = self._idgen()
+        return epi
 
-    # def _create_neume_element(self):
-    #     full_width_episema = False
-    #     has_dot = False
-    #     has_vertical_episema = False
-    #     has_horizontal_episema = False
-    #     has_quilisma = False
-    #     this_neume_form = None
-    #     local_horizontal_episema = None
+    def _create_neume_element(self):
+        full_width_episema = False
+        has_dot = False
+        has_vertical_episema = False
+        has_horizontal_episema = False
+        has_quilisma = False
+        this_neume_form = None
+        local_horizontal_episema = None
 
-    #     start_octave = self.glyph['octv']
-    #     clef_pos = self.glyph['clef_pos']
-    #     clef_type = self.glyph['clef'].split(".")[-1]  # f or c.
+        start_octave = self.glyph['octv']
+        clef_pos = self.glyph['clef_pos']
+        clef_type = self.glyph['clef'].split(".")[-1]  # f or c.
 
     #     # neume = mod.neume_()
-    #     neume = MeiElement("neume")
+        neume = MeiElement("neume")
+
     #     # neume.id = self._idgen()
     #     neume.id = neume.getId()
-    #     # zone = self._create_zone_element()
-    #     zone = MeiElement("zone")
-    #     # neume.facs = zone.id
-    #     neume.facs = zone.getId()
+        zone = self._create_zone_element()
 
+        # zone = MeiElement("zone")
+    #     # neume.facs = zone.id
+        neume.addAttribute("facs", zone.getId())
     #     # neumecomponent = mod.nc_()
-    #     neumecomponent = MeiElement("nc")
+        neumecomponent = MeiElement("nc")
+
     #     # neumecomponent.id = self._idgen()
     #     neumecomponent.id = neumecomponent.getId()
     #     # neume.add_child(neumecomponent)
-    #     neume.addChild(neumecomponent)
+        neume.addChild(neumecomponent)
 
-    #     if self.glyph['form'][0] == "he":
-    #         full_width_episema = True
-    #         del self.glyph['form'][0]
+        if self.glyph['form'][0] == "he":
+            full_width_episema = True
+            del self.glyph['form'][0]
 
-    #     # we've removed any global he's, so
-    #     # any leftovers should be local.
-    #     if 'he' in self.glyph['form']:
-    #         has_horizontal_episema = True
+        # we've removed any global he's, so
+        # any leftovers should be local.
+        if 'he' in self.glyph['form']:
+            has_horizontal_episema = True
 
-    #     if 'dot' in self.glyph['form']:
-    #         has_dot = True
+        if 'dot' in self.glyph['form']:
+            has_dot = True
 
-    #     if 'q' in self.glyph['form']:
-    #         has_quilisma = True
+        if 'q' in self.glyph['form']:
+            has_quilisma = True
 
-    #     if 've' in self.glyph['form']:
-    #         has_vertical_episema = True
+        if 've' in self.glyph['form']:
+            has_vertical_episema = True
 
-    #     if 'inclinatum' in self.glyph['form']:
+        if 'inclinatum' in self.glyph['form']:
     #         neumecomponent.attributes = {'inclinatum': 'true'}
+            neumecomponent.addAttribute('inclinatum', 'true')
 
     #     neume.attributes = {'name': self.glyph['form'][0]}
-        
-    #     if 'compound' in self.glyph['form']:
-    #         # do something and create a new set of pitch contours
-    #         this_neume_form = [y for y in (self.__parse_contour(n) for n in self.glyph['form']) if y]
-    #         self._note_elements = [y for y in (self.__parse_steps(n) for n in self.glyph['form']) if y]
-    #     else:
-    #         this_neume_form = copy.deepcopy(self.NEUME_NOTES[self.glyph['form'][0]])
-    #         self._note_elements = self.glyph['form'][1:]
-    #     # get the form so we can find the number of notes we need to construct.
-        
-    #     num_notes = len(this_neume_form) + 1
-    #     # we don't have an off-by-one problem here, since an added interval means an added note
-    #     check_additional = [i for i in self.ADD_NOTES.keys() if i in self.glyph['form'][1:]]
-    #     if check_additional:
-    #         for f in check_additional:
-    #             this_neume_form.extend(self.ADD_NOTES[f])
-                
-    #             ## THIS SHOULD BE CHANGED. Otherwise we may end up with two attributes with the
-    #             # same name.
-    #             neume.attributes = {"variant": f}
-            
-    #         num_notes = num_notes + len(check_additional)
-            
-    #     self._neume_pitches = []
-    #     # note elements are everything after the first form. This determines the shape a note takes.
-    #     self._neume_pitches.append(self.glyph['strt_pitch'])
-    #     nc = []
-    #     note_octaves = [start_octave]
-    #     if num_notes > 1:
-    #         # we need to figure out the rest of the pitches in the neume.
-    #         ivals = [int(d) for d in self._note_elements if d.isdigit()]
-    #         try:
-    #             idx = self.SCALE.index(self.glyph['strt_pitch'])
-    #         except ValueError:
-    #             raise AomrMeiPitchNotFoundError("The pitch {0} was not found in the scale".format(self.glyph['strt_pitch']))
-                
-    #         if len(ivals) != (num_notes - 1):
-    #             if 'scandicus' in self.glyph['form']:
-    #                 diffr = abs(len(ivals) - (num_notes - 1))
-    #                 num_notes = num_notes + diffr
-    #                 this_neume_form.extend(diffr * 'u')
-    #             else:
-    #                 raise AomrMeiNoteIntervalMismatchError("There is a mismatch between the number of notes and number of intervals.")
-            
+        neume.addAttribute("name", self.glyph['form'][0])
+
+        if 'compound' in self.glyph['form']:
+            # do something and create a new set of pitch contours
+            this_neume_form = [y for y in (self.__parse_contour(n) for n in self.glyph['form']) if y]
+            self._note_elements = [y for y in (self.__parse_steps(n) for n in self.glyph['form']) if y]
+        else:
+            this_neume_form = copy.deepcopy(self.NEUME_NOTES[self.glyph['form'][0]])
+            self._note_elements = self.glyph['form'][1:]
+        # get the form so we can find the number of notes we need to construct.
+
+        num_notes = len(this_neume_form) + 1
+        # we don't have an off-by-one problem here, since an added interval means an added note
+        check_additional = [i for i in self.ADD_NOTES.keys() if i in self.glyph['form'][1:]]
+        if check_additional:
+            for f in check_additional:
+                this_neume_form.extend(self.ADD_NOTES[f])
+
+                ## THIS SHOULD BE CHANGED. Otherwise we may end up with two attributes with the same name.
+                # neume.attributes = {"variant": f}
+                neume.addAttribute("variant", f)
+            num_notes = num_notes + len(check_additional)
+
+        self._neume_pitches = []
+        # note elements are everything after the first form. This determines the shape a note takes.
+        self._neume_pitches.append(self.glyph['strt_pitch'])
+        nc = []
+        note_octaves = [start_octave]
+        if num_notes > 1:
+            # we need to figure out the rest of the pitches in the neume.
+            ivals = [int(d) for d in self._note_elements if d.isdigit()]
+            try:
+                idx = self.SCALE.index(self.glyph['strt_pitch'])
+            except ValueError:
+                raise AomrMeiPitchNotFoundError("The pitch {0} was not found in the scale".format(self.glyph['strt_pitch']))
+
+            if len(ivals) != (num_notes - 1):
+                if 'scandicus' in self.glyph['form']:
+                    diffr = abs(len(ivals) - (num_notes - 1))
+                    num_notes = num_notes + diffr
+                    this_neume_form.extend(diffr * 'u')
+                else:
+                    raise AomrMeiNoteIntervalMismatchError("There is a mismatch between the number of notes and number of intervals.")
+
     #         # note elements = torculus.2.2.he.ve
     #         # ivals = [2,2]
     #         # torculus = ['u','d']
@@ -512,33 +528,33 @@ class AomrMeiOutput(object):
     #                     note_octaves.append(4)
     #                 elif this_pos > (actual_line + 3):
     #                     note_octaves.append(2)
-            
-    #     if full_width_episema is True:
-    #         epi = self._create_episema_element()
-    #         epi.attributes = {"form": "horizontal"}
-    #         self.layer.add_child(epi)
-        
-    #     qidxs = []
-    #     if has_quilisma:
-    #         self.__note_addition_figurer_outer("q", qidxs)
-            
-    #     dotidxs = []
-    #     if has_dot:
-    #         self.__note_addition_figurer_outer("dot", dotidxs)
-            
-    #     veidxs = []
-    #     if has_vertical_episema:
-    #         self.__note_addition_figurer_outer("ve", veidxs)
-                            
-    #     heidxs = []
-    #     if has_horizontal_episema:
-    #         self.__note_addition_figurer_outer("he", heidxs)
-            
-    #     for n in xrange(num_notes):
-    #         p = self._neume_pitches[n]
-    #         o = note_octaves[n]
-    #         nt = self._create_note_element(p)
-    #         nt.attributes = {"oct": o}
+
+        if full_width_episema is True:
+            epi = self._create_episema_element()
+            epi.attributes = {"form": "horizontal"}
+            self.layer.add_child(epi)
+
+        qidxs = []
+        if has_quilisma:
+            self.__note_addition_figurer_outer("q", qidxs)
+
+        dotidxs = []
+        if has_dot:
+            self.__note_addition_figurer_outer("dot", dotidxs)
+
+        veidxs = []
+        if has_vertical_episema:
+            self.__note_addition_figurer_outer("ve", veidxs)
+
+        heidxs = []
+        if has_horizontal_episema:
+            self.__note_addition_figurer_outer("he", heidxs)
+
+        # for n in xrange(num_notes):
+        #     p = self._neume_pitches[n]
+        #     o = note_octaves[n]
+        #     nt = self._create_note_element(p)
+        #     nt.attributes = {"oct": o}
             
     #         if n == 0 and full_width_episema is True:
     #             epi.attributes = {"startid": nt.id}
@@ -573,8 +589,9 @@ class AomrMeiOutput(object):
                 
     #         nc.append(nt)
     #     neumecomponent.add_children(nc)
-        
-    #     return neume
+
+        print 'BLING8'
+        return neume
 
 
 
@@ -653,43 +670,44 @@ class AomrMeiOutput(object):
 #         """ Returns a UUID. """
 #         return "{0}-{1}".format('m', str(uuid.uuid4()))
 
-#     def __parse_contour(self, form):
-#         # removes the contour indicator from the neume
-#         # and creates a neume form.
-#         if len(form) is 2 and (form.startswith("u") or form.startswith("d")):
-#             # do something
-#             return form[0]
-#         else:
-#             return None
-    
-#     def __parse_steps(self, form):
-#         if len(form) is 2 and (form.startswith("u") or form.startswith("d")):
-#             return form[1]
-#         else:
-#             return None
-    
-#     def __note_addition_figurer_outer(self, ntype, idxarray):
-#         for i,n in enumerate(self.glyph['form']):
-#             if n == ntype:
-#                 j = copy.copy(i) - 1
-#                 if j == 0:
-#                     idxarray.append(0)
-#                 while j:
-#                     if self.__is_valid_note_indicator(self.glyph['form'][j]):
-#                         idxarray.append(j)
-#                         break
-#                     else:
-#                         j -= 1
-        
-    
-#     def __is_valid_note_indicator(self, form):
-#         # used to test if a form is a valid indicator of a note (and not a q, dot, or anything else)
-#         if form.isdigit():
-#             return True
-#         elif len(form) == 2 and form.startswith("u") or form.startswith("d"):
-#             return True
-#         else:
-#             return False
+    def __parse_contour(self, form):
+        # removes the contour indicator from the neume
+        # and creates a neume form.
+        if len(form) is 2 and (form.startswith("u") or form.startswith("d")):
+            # do something
+            return form[0]
+        else:
+            return None
+
+    def __parse_steps(self, form):
+        if len(form) is 2 and (form.startswith("u") or form.startswith("d")):
+            return form[1]
+        else:
+            return None
+
+    def __note_addition_figurer_outer(self, ntype, idxarray):
+        lg.debug('Note addition')
+        for i, n in enumerate(self.glyph['form']):
+            if n == ntype:
+                j = copy.copy(i) - 1
+                if j == 0:
+                    idxarray.append(0)
+                while j:
+                    if self.__is_valid_note_indicator(self.glyph['form'][j]):
+                        idxarray.append(j)
+                        break
+                    else:
+                        j -= 1
+
+    def __is_valid_note_indicator(self, form):
+        # used to test if a form is a valid indicator of a note (and not a q, dot, or anything else)
+        lg.debug('Valid note')
+        if form.isdigit():
+            return True
+        elif len(form) == 2 and form.startswith("u") or form.startswith("d"):
+            return True
+        else:
+            return False
 
 
 
