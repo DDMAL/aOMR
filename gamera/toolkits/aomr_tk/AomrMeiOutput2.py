@@ -5,13 +5,31 @@ from gamera.toolkits.aomr_tk.AomrExceptions import *
 from pymei import MeiDocument, MeiElement, MeiAttribute, documentToFile
 
 import logging
+
+# create logger
 lg = logging.getLogger('aomr')
-f = logging.Formatter("%(levelname)s %(asctime)s On Line: %(lineno)d %(message)s")
+lg.setLevel(logging.DEBUG)
+
+# create console handler and set level to debug
 h = logging.StreamHandler()
+h.setLevel(logging.DEBUG)
+
+# create formatter
+f = logging.Formatter("%(levelname)s %(asctime)s On Line: %(lineno)d %(message)s")
+
+# add formatter to ch
 h.setFormatter(f)
 
-# lg.setLevel(logging.DEBUG)
+# add ch to logger
 lg.addHandler(h)
+
+# 'application' code
+lg.debug('debug message')
+lg.info('info message')
+lg.warn('warn message')
+lg.error('error message')
+lg.critical('critical message')
+
 
 # [staff_number, c.offset_x, c.offset_y, note, line_number, 
 #   glyph_kind, actual_glyph, glyph_char, uod, c.ncols, c.nrows]
