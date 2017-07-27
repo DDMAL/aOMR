@@ -13,10 +13,6 @@ h.setFormatter(f)
 # lg.setLevel(logging.DEBUG)
 lg.addHandler(h)
 
-import uuid
-import pdb
-import copy
-
 # [staff_number, c.offset_x, c.offset_y, note, line_number, 
 #   glyph_kind, actual_glyph, glyph_char, uod, c.ncols, c.nrows]
 #
@@ -83,26 +79,13 @@ class AomrMeiOutput(object):
         self.meihead.addChild(self.filedesc)
 
         self.titlestmt = MeiElement('titleStmt')
-        # self.filedesc = mod.filedesc_()
         self.filedesc.addChild(self.titlestmt)
 
-        # self.titlestmt = mod.titlestmt_()
-        # self.title = mod.title_()
         self.title = MeiElement('title')
         self.titlestmt.addChild(self.title)
-        
 
-        # self.pubstmt = mod.pubstmt_()
         self.pubstmt = MeiElement('pubStmt')
         self.filedesc.addChild(self.pubstmt)
-
-
-#         self.titlestmt.add_child(self.title)
-#         self.filedesc.add_children([self.titlestmt, self.pubstmt])
-#         self.meihead.add_child(self.filedesc)
-#         self.mei.add_child(self.meihead)
-
-
 
 #         # music
         self.music = MeiElement("music")
@@ -128,36 +111,19 @@ class AomrMeiOutput(object):
 #         self.layout.add_child(self.pg)
 #         self.music.add_child(self.layout)
 
-#         self.body = mod.body_()
-#         self.music.add_child(self.body)
         self.body = MeiElement("body")
         self.music.addChild(self.body)
 
-#         self.mdiv = mod.mdiv_()
-#         self.mdiv.attributes = {"type": "solesmes"}
-#         self.body.add_child(self.mdiv)
         self.mdiv = MeiElement("mdiv")
         self.mdiv.addAttribute("type", "solesmes")
         self.body.addChild(self.mdiv)
 
-#         self.score = mod.score_()
-#         self.mdiv.add_child(self.score)
         self.score = MeiElement("score")
         self.mdiv.addChild(self.score)
 
-#         self.scoredef = mod.scoredef_()
-#         self.score.add_child(self.scoredef)
         self.scoredef = MeiElement("scoreDef")
         self.score.addChild(self.scoredef)
 
-#         self.section = mod.section_()
-#         self.pagebreak = self._create_pb_element()
-#         self.pagebreak.attributes = {"pageref": self.pg.id}
-
-#         self.section.add_child(self.pagebreak)
-#         self.score.add_child(self.section)
-
-#         self.staffgrp = self._create_staffgrp_element()
         self.staffgrp = MeiElement("staffGrp")
         self.scoredef.addChild(self.staffgrp)
 
@@ -170,15 +136,6 @@ class AomrMeiOutput(object):
         self.section = MeiElement("section")
         self.score.addChild(self.section)
 
-#         self.staffgrp.add_child(self.staffdef)
-#         self.scoredef.add_child(self.staffgrp)
-
-#         self.layer = self._create_layer_element()
-#         self.layer.attributes = {'n': 1}
-#         self.staffel = self._create_staff_element()
-#         self.staffel.attributes = {'n': self.staff_num}
-#         self.staffel.add_child(self.layer)
-#         self.section.add_child(self.staffel)
         self.staffel = MeiElement("staff")  # GVM: staffel corresponds to staff
         self.staffel.addAttribute("n", "0")  # GVM: how to generate n
         self.section.addChild(self.staffel)
@@ -190,51 +147,30 @@ class AomrMeiOutput(object):
         for sysnum, syst in self._recognition_results.iteritems():
             self.system = syst
             self.systembreak = self._parse_system(sysnum, syst)
-            # z = mod.zone_()
-            # z.id = self._idgen()
             z = MeiElement("zone")
-            # z.attributes = {'ulx': self.system['coord'][0], 'uly': self.system['coord'][1], \
-                                # 'lrx': self.system['coord'][2], 'lry': self.system['coord'][3]}
             z.addAttribute("ulx", str(self.system["coord"][0]))
             z.addAttribute("uly", str(self.system["coord"][1]))
             z.addAttribute("lrx", str(self.system["coord"][2]))
             z.addAttribute("lry", str(self.system["coord"][3]))
 
             self.surface.addChild(z)
-            # self.system.facs = z.id
-            # s = self._create_system_element()
-            # s.facs = z.id
-            # self.pg.add_child(s)
-            # self.systembreak.attributes = {"systemref": s.id}
             self.systembreak.addAttribute("facs", z.getId())
-
-
-
-#         self.mei.add_child(self.music)
 
 #         if not self.staffel.descendants_by_name('neume'):
 #             self.staffgrp.remove_child(self.staffdef)
 #             self.section.remove_child(self.staffel)
 
-#         self.md = MeiDocument.MeiDocument()
-#         self.md.addelement(self.mei)
         documentToFile(self.md, '/Users/gabriel/Downloads/foo.mei')
         print 'Saved file'
 
     def _parse_system(self, sysnum, syst):
-        # sysbrk = self._create_sb_element()
         sysbrk = MeiElement("sb")
-        # sysbrk.attributes = {"n": sysnum + 1}
         sysbrk.addAttribute("n", str(sysnum + 1))
-        # self.layer.add_child(sysbrk)
         self.layer.addChild(sysbrk)
-        # staffel = self._create_staff_element()
-        # staffel.attributes = {'n': stfnum}
 
         for c in self.system['content']:
             # parse the glyphs per staff.
             self.glyph = c
-            
             lg.debug("GLYPH: {0}".format(c))
 
             if c['type'] == 'neume':
@@ -249,16 +185,8 @@ class AomrMeiOutput(object):
                     except Exception:
                         lg.debug("Cannot add neume element {0}. Skipping.".format(self.glyph))
 
-
             # if c['type'] == 'neume':
             #     self.layer.addChild(self._create_neume_element())
-
-
-
-
-
-
-
 
             elif c['type'] == 'clef':
                 try:
@@ -305,7 +233,7 @@ class AomrMeiOutput(object):
 #         graphic.id = self._idgen()
 #         graphic.attributes = {'xlink:href': imgfile}
 #         return graphic
-    
+
 #     def _create_alteration_element(self):
 #         accid = mod.accid_()
 #         accid.id = self._idgen()
@@ -313,90 +241,81 @@ class AomrMeiOutput(object):
 #             accid.attributes = {"accid": "s"}
 #         elif self.glyph['form'] is "flat":
 #             accid.attributes = {"accid": "f"}
-        
+
 #         zone = self._create_zone_element()
 #         note.facs = zone.id
-        
+
 #         return accid
-        
+
 #     def _create_surface_element(self):
 #         surface = mod.surface_()
 #         surface.id = self._idgen()
 #         return surface
-    
+
 #     def _create_facsimile_element(self):
 #         facsimile = mod.facsimile_()
 #         facsimile.id = self._idgen()
 #         return facsimile
-    
-    def _create_zone_element(self):
-        # zone = mod.zone_()
-        zone = MeiElement("zone")
 
-        # zone.id = self._idgen()
-        # zone.attributes = {'ulx': self.glyph['coord'][0], 'uly': self.glyph['coord'][1], \
-        #                     'lrx': self.glyph['coord'][2], 'lry': self.glyph['coord'][3]}
+    def _create_zone_element(self):
+        zone = MeiElement("zone")
 
         zone.addAttribute("ulx", str(self.glyph["coord"][0]))
         zone.addAttribute("uly", str(self.glyph["coord"][1]))
         zone.addAttribute("lrx", str(self.glyph["coord"][2]))
         zone.addAttribute("lry", str(self.glyph["coord"][3]))
 
-
-        # self.surface.add_child(zone)
         self.surface.addChild(zone)
 
         return zone
-    
+
 #     def _create_layer_element(self):
 #         layer = mod.layer_()
 #         layer.id = self._idgen()
 #         return layer
-    
+
 #     def _create_staffgrp_element(self):
 #         stfgrp = mod.staffgrp_()
 #         stfgrp.id = self._idgen()
 #         return stfgrp
-    
+
 #     def _create_staffdef_element(self):
 #         stfdef = mod.staffdef_()
 #         stfdef.id = self._idgen()
 #         return stfdef
-    
+
 #     def _create_staff_element(self):
 #         staff = mod.staff_()
 #         staff.id = self._idgen()
 #         return staff
-    
+
 #     def _create_sb_element(self):
 #         sb = mod.sb_()
 #         sb.id = self._idgen()
 #         return sb
-        
+
 #     def _create_pb_element(self):
 #         pb = mod.pb_()
 #         pb.id = self._idgen()
 #         return pb
-    
+
 #     def _create_layout_element(self):
 #         layout = mod.layout_()
 #         layout.id = self._idgen()
 #         return layout
-    
+
 #     def _create_page_element(self):
 #         page = mod.page_()
 #         page.id = self._idgen()
 #         return page
-    
+
 #     def _create_system_element(self):
 #         system = mod.system_()
 #         system.id = self._idgen()
 #         return system
-    
+
     def _create_episema_element(self):
-        # epi = mod.episema_()
         epi = MeiElement("episema")
-        # epi.id = self._idgen()
         return epi
 
     def _create_neume_element(self):
@@ -412,22 +331,11 @@ class AomrMeiOutput(object):
         clef_pos = self.glyph['clef_pos']
         clef_type = self.glyph['clef'].split(".")[-1]  # f or c.
 
-    #     # neume = mod.neume_()
         neume = MeiElement("neume")
-
-    #     # neume.id = self._idgen()
-    #     neume.id = neume.getId()
         zone = self._create_zone_element()
-
-        # zone = MeiElement("zone")
-    #     # neume.facs = zone.id
         neume.addAttribute("facs", zone.getId())
-    #     # neumecomponent = mod.nc_()
         neumecomponent = MeiElement("nc")
 
-    #     # neumecomponent.id = self._idgen()
-    #     neumecomponent.id = neumecomponent.getId()
-    #     # neume.add_child(neumecomponent)
         neume.addChild(neumecomponent)
 
         if self.glyph['form'][0] == "he":
@@ -449,10 +357,8 @@ class AomrMeiOutput(object):
             has_vertical_episema = True
 
         if 'inclinatum' in self.glyph['form']:
-    #         neumecomponent.attributes = {'inclinatum': 'true'}
             neumecomponent.addAttribute('inclinatum', 'true')
 
-    #     neume.attributes = {'name': self.glyph['form'][0]}
         neume.addAttribute("name", self.glyph['form'][0])
 
         if 'compound' in self.glyph['form']:
@@ -472,7 +378,6 @@ class AomrMeiOutput(object):
                 this_neume_form.extend(self.ADD_NOTES[f])
 
                 ## THIS SHOULD BE CHANGED. Otherwise we may end up with two attributes with the same name.
-                # neume.attributes = {"variant": f}
                 neume.addAttribute("variant", f)
             num_notes = num_notes + len(check_additional)
 
@@ -497,7 +402,6 @@ class AomrMeiOutput(object):
                     this_neume_form.extend(diffr * 'u')
                 else:
                     raise AomrMeiNoteIntervalMismatchError("There is a mismatch between the number of notes and number of intervals.")
-
 
             # note elements = torculus.2.2.he.ve
             # ivals = [2,2]
@@ -536,8 +440,6 @@ class AomrMeiOutput(object):
                     elif this_pos > (actual_line + 3):
                         note_octaves.append(2)
 
-        # lg.debug("Neume pitches: {0}".format(self._neume_pitches))
-
         if full_width_episema is True:
             epi = self._create_episema_element()
             epi.attributes = {"form": "horizontal"}
@@ -559,27 +461,20 @@ class AomrMeiOutput(object):
         if has_horizontal_episema:
             self.__note_addition_figurer_outer("he", heidxs)
 
-
-
         for n in xrange(num_notes):
             p = self._neume_pitches[n]
             o = note_octaves[n]
             nt = self._create_note_element(p)
-            # nt.attributes = {"oct": o}
             nt.addAttribute("oct", str(o))
             nt.addAttribute("pname", nt.pitchname)
 
-
             if n == 0 and full_width_episema is True:
-                # epi.attributes = {"startid": nt.id}
                 epi.addAttribute("startid", nt.getId())
             elif n == num_notes and full_width_episema is True:
-                # epi.attributes = {"endid": nt.id}
                 epi.addAttribute("endid", nt.getId())
 
             if has_quilisma:
                 if n in qidxs:
-                    # neumecomponent.attributes = {"quilisma": "true"}
                     neumecomponent.addAttribute("quilisma", "true")
 
             # if has_dot:
@@ -590,7 +485,6 @@ class AomrMeiOutput(object):
             if has_vertical_episema:
                 if n in veidxs:
                     ep = self._create_episema_element()
-                    # ep.attributes = {"form": "vertical", "startid": nt.id}
                     ep.addAttribute("form", "vertical")
                     ep.addAttribute("startid", nt.getId())
                     self.layer.addChild(ep)
@@ -598,7 +492,6 @@ class AomrMeiOutput(object):
             if has_horizontal_episema:
                 if n in heidxs:
                     local_horizontal_episema = self._create_episema_element()
-                    # local_horizontal_episema.attributes = {"form": "horizontal", "startid": nt.id}
                     local_horizontal_episema.addAttribute("form", "horizontal")
                     local_horizontal_episema.addAttribute("startid", nt.getId())
                     self.layer.addChild(local_horizontal_episema)
@@ -610,40 +503,25 @@ class AomrMeiOutput(object):
 
             nc.append(nt)
 
-        # lg.debug("nc: {0}".format(nc))
-
-        # lg.debug("neumecomponent: {0}".format(neumecomponent))
-
-        # originally it was:
-        # neumecomponent.addChild(nc)
-        # but nc is a list of notes, and so
         for n in nc:
             neumecomponent.addChild(n)
 
         return neume
 
     def _create_note_element(self, pname=None):
-        # note = mod.note_()
         note = MeiElement("note")
-        # note.id = self._idgen()
         note.pitchname = pname
         return note
 
     def _create_dot_element(self):
-        # dot = mod.dot_()
         dot = MeiElement("dot")
-        # dot.id = self._idgen()
-        # dot.attributes = {"form": "aug"}
         dot.addAttribute("form", "aug")
         return dot
 
     def _create_custos_element(self):
-        # custos = mod.custos_()
-        # custos.id = self._idgen()
         custos = MeiElement("custos")
         zone = self._create_zone_element()
 
-        # custos.facs = zone.id
         custos.addAttribute("facs", zone.getId())
 
         custos.pitchname = self.glyph['strt_pitch']
@@ -655,33 +533,22 @@ class AomrMeiOutput(object):
         return custos
 
     def _create_clef_element(self):
-        # clef = mod.clef_()
         clef = MeiElement("clef")
-
-        # clef.id = self._idgen()
-        # clef.id = clef.getId()
-
         zone = self._create_zone_element()
-        # clef.facs = zone.id
+
         clef.addAttribute("facs", zone.getId())
-
-
-        # clef.attributes = {"line": self.glyph['strt_pos'], 'shape': self.glyph['form'][0].upper() }
         clef.addAttribute("line", str(self.glyph["strt_pos"]))
         clef.addAttribute("shape", str(self.glyph["form"][0].upper()))
 
         return clef
 
     def _create_division_element(self):
-        # division = mod.division_()
         division = MeiElement("division")
-        # division.id = self._idgen()
         zone = self._create_zone_element()
-        # division.facs = zone.id
+
         division.addAttribute("facs", zone.getId())
 
         if self.glyph['form']:
-            # division.attributes = {'form': self.glyph['form'][0]}
             division.addAttribute("form", self.glyph['form'][0])
 
         return division
@@ -691,17 +558,12 @@ class AomrMeiOutput(object):
     #     alteration.id = self._idgen()
     #     zone = self._create_zone_element()
     #     alteration.facs = zone.id
-    #     return alteration    
-    
-#     def _idgen(self):
-#         """ Returns a UUID. """
-#         return "{0}-{1}".format('m', str(uuid.uuid4()))
+    #     return alteration
 
     def __parse_contour(self, form):
         # removes the contour indicator from the neume
         # and creates a neume form.
         if len(form) is 2 and (form.startswith("u") or form.startswith("d")):
-            # do something
             return form[0]
         else:
             return None
