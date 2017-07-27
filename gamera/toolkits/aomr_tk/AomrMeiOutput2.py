@@ -83,14 +83,19 @@ class AomrMeiOutput(object):
         self.meihead.addChild(self.filedesc)
 
         self.titlestmt = MeiElement('titleStmt')
+        # self.filedesc = mod.filedesc_()
         self.filedesc.addChild(self.titlestmt)
 
-        self.title = MeiElement('title')
-        self.titlestmt.addChild(self.title)
-        # self.filedesc = mod.filedesc_()
         # self.titlestmt = mod.titlestmt_()
         # self.title = mod.title_()
+        self.title = MeiElement('title')
+        self.titlestmt.addChild(self.title)
+        
+
         # self.pubstmt = mod.pubstmt_()
+        self.pubstmt = MeiElement('pubStmt')
+        self.filedesc.addChild(self.pubstmt)
+
 
 #         self.titlestmt.add_child(self.title)
 #         self.filedesc.add_children([self.titlestmt, self.pubstmt])
@@ -232,21 +237,21 @@ class AomrMeiOutput(object):
             
             lg.debug("GLYPH: {0}".format(c))
 
-            # if c['type'] == 'neume':
-            #     if not self.glyph['form']:
-            #         lg.debug("Skipping glyph: {0}".format(self.glyph))
-            #         continue
-            #     if self.glyph['form'][0] not in self.NEUME_NOTES.keys():
-            #         continue
-            #     else:
-            #         try:
-            #             self.layer.addChild(self._create_neume_element())
-            #         except Exception:
-            #             lg.debug("Cannot add neume element {0}. Skipping.".format(self.glyph))
-
-
             if c['type'] == 'neume':
-                self.layer.addChild(self._create_neume_element())
+                if not self.glyph['form']:
+                    lg.debug("Skipping glyph: {0}".format(self.glyph))
+                    continue
+                if self.glyph['form'][0] not in self.NEUME_NOTES.keys():
+                    continue
+                else:
+                    try:
+                        self.layer.addChild(self._create_neume_element())
+                    except Exception:
+                        lg.debug("Cannot add neume element {0}. Skipping.".format(self.glyph))
+
+
+            # if c['type'] == 'neume':
+            #     self.layer.addChild(self._create_neume_element())
 
 
 
@@ -471,6 +476,7 @@ class AomrMeiOutput(object):
                 neume.addAttribute("variant", f)
             num_notes = num_notes + len(check_additional)
 
+
         self._neume_pitches = []
         # note elements are everything after the first form. This determines the shape a note takes.
         self._neume_pitches.append(self.glyph['strt_pitch'])
@@ -530,7 +536,7 @@ class AomrMeiOutput(object):
                     elif this_pos > (actual_line + 3):
                         note_octaves.append(2)
 
-        lg.debug("Neume pitches: {0}".format(self._neume_pitches))
+        # lg.debug("Neume pitches: {0}".format(self._neume_pitches))
 
         if full_width_episema is True:
             epi = self._create_episema_element()
@@ -561,48 +567,60 @@ class AomrMeiOutput(object):
             nt = self._create_note_element(p)
             # nt.attributes = {"oct": o}
             nt.addAttribute("oct", str(o))
+            nt.addAttribute("pname", nt.pitchname)
 
-            # if n == 0 and full_width_episema is True:
-            #     # epi.attributes = {"startid": nt.id}
-            #     epi.addAttribute("startid", nt.getId())
-            # elif n == num_notes and full_width_episema is True:
-            #     # epi.attributes = {"endid": nt.id}
-            #     epi.addAttribute("endid", nt.getId())
 
-            # if has_quilisma:
-            #     if n in qidxs:
-            #         neumecomponent.attributes = {"quilisma": "true"}
+            if n == 0 and full_width_episema is True:
+                # epi.attributes = {"startid": nt.id}
+                epi.addAttribute("startid", nt.getId())
+            elif n == num_notes and full_width_episema is True:
+                # epi.attributes = {"endid": nt.id}
+                epi.addAttribute("endid", nt.getId())
+
+            if has_quilisma:
+                if n in qidxs:
+                    # neumecomponent.attributes = {"quilisma": "true"}
+                    neumecomponent.addAttribute("quilisma", "true")
 
             # if has_dot:
             #     if n in dotidxs:
             #         d = self._create_dot_element()
             #         nt.add_child(d)
 
-            # if has_vertical_episema:
-            #     if n in veidxs:
-            #         ep = self._create_episema_element()
-            #         ep.attributes = {"form": "vertical", "startid": nt.id}
-            #         self.layer.add_child(ep)
+            if has_vertical_episema:
+                if n in veidxs:
+                    ep = self._create_episema_element()
+                    # ep.attributes = {"form": "vertical", "startid": nt.id}
+                    ep.addAttribute("form", "vertical")
+                    ep.addAttribute("startid", nt.getId())
+                    self.layer.addChild(ep)
 
-            # if has_horizontal_episema:
-            #     if n in heidxs:
-            #         local_horizontal_episema = self._create_episema_element()
-            #         local_horizontal_episema.attributes = {"form": "horizontal", "startid": nt.id}
-            #         self.layer.add_child(local_horizontal_episema)
+            if has_horizontal_episema:
+                if n in heidxs:
+                    local_horizontal_episema = self._create_episema_element()
+                    # local_horizontal_episema.attributes = {"form": "horizontal", "startid": nt.id}
+                    local_horizontal_episema.addAttribute("form", "horizontal")
+                    local_horizontal_episema.addAttribute("startid", nt.getId())
+                    self.layer.addChild(local_horizontal_episema)
 
-            # if n == num_notes - 1 and local_horizontal_episema:
-            #     # we've reached the end, and we have an HE we need to close up.
-            #     local_horizontal_episema.attributes = {"endid": nt.id}
+            if n == num_notes - 1 and local_horizontal_episema:
+                # we've reached the end, and we have an HE we need to close up.
+                local_horizontal_episema.attributes = {"endid": nt.id}
+                local_horizontal_episema.addAttribute("endid", nt.getId())
 
             nc.append(nt)
-        neumecomponent.addChild(nc)
+
+        # lg.debug("nc: {0}".format(nc))
+
+        # lg.debug("neumecomponent: {0}".format(neumecomponent))
+
+        # originally it was:
+        # neumecomponent.addChild(nc)
+        # but nc is a list of notes, and so
+        for n in nc:
+            neumecomponent.addChild(n)
 
         return neume
-
-
-
-
-
 
     def _create_note_element(self, pname=None):
         # note = mod.note_()
@@ -611,11 +629,13 @@ class AomrMeiOutput(object):
         note.pitchname = pname
         return note
 
-#     def _create_dot_element(self):
-#         dot = mod.dot_()
-#         dot.id = self._idgen()
-#         dot.attributes = {"form": "aug"}
-#         return dot
+    def _create_dot_element(self):
+        # dot = mod.dot_()
+        dot = MeiElement("dot")
+        # dot.id = self._idgen()
+        # dot.attributes = {"form": "aug"}
+        dot.addAttribute("form", "aug")
+        return dot
 
     def _create_custos_element(self):
         # custos = mod.custos_()
@@ -640,7 +660,7 @@ class AomrMeiOutput(object):
 
         # clef.id = self._idgen()
         # clef.id = clef.getId()
-        # print 'BLING2'
+
         zone = self._create_zone_element()
         # clef.facs = zone.id
         clef.addAttribute("facs", zone.getId())
