@@ -149,6 +149,9 @@ class AomrMeiOutput(object):
 #         self.staffdef.attributes = {'n': self.staff_num}
         self.staffdef = MeiElement("staffDef")
         self.staffdef.addAttribute("n", "0")  # GVM: what the n number means, and how to generate it?
+        # The number of lines and the notation type should be given as input
+        self.staffdef.addAttribute("lines", "4") 
+        self.staffdef.addAttribute("notationtype", "neume")
         self.staffgrp.addChild(self.staffdef)
 
         self.section = MeiElement("section")
@@ -180,11 +183,13 @@ class AomrMeiOutput(object):
 
         documentToFile(self.md, '/Users/gabriel/Downloads/foo.mei')
         print 'Saved file'
+        return
 
     def _parse_system(self, sysnum, syst):
         sysbrk = MeiElement("sb")
         sysbrk.addAttribute("n", str(sysnum + 1))
         self.layer.addChild(sysbrk)
+
 
         for c in self.system['content']:
             # parse the glyphs per staff.
@@ -208,6 +213,7 @@ class AomrMeiOutput(object):
 
             elif c['type'] == 'clef':
                 try:
+                    self._create_staffDef_clef()
                     self.layer.addChild(self._create_clef_element())
                 except Exception:
                     lg.debug("Cannot add clef element {0}. Skipping.".format(self.glyph))
@@ -559,6 +565,13 @@ class AomrMeiOutput(object):
         clef.addAttribute("shape", str(self.glyph["form"][0].upper()))
 
         return clef
+
+    def _create_staffDef_clef(self):
+        """
+        Add line and shape attributes to clef.
+        """
+        self.staffdef.addAttribute("clef.line", str(self.glyph["strt_pos"]))
+        self.staffdef.addAttribute("clef.shape", str(self.glyph["form"][0].upper()))
 
     def _create_division_element(self):
         division = MeiElement("division")
